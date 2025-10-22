@@ -1,23 +1,16 @@
 {
-  "name": "main",
+  "name": "@mono/main",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "serve": "vite preview",
-    "test": "vitest run",
-    "format": "biome format --write",
-    "lint": "biome lint --write",
-    "check": "biome check"
+    "test": "vitest run"
   },
   "dependencies": {
     "@convex-dev/react-query": "0.0.0-alpha.11",
-    "@radix-ui/react-label": "^2.1.7",
-    "@radix-ui/react-select": "^2.2.6",
-    "@radix-ui/react-slider": "^1.3.6",
-    "@radix-ui/react-slot": "^1.2.3",
-    "@radix-ui/react-switch": "^1.2.6",
+    "@mono/ui": "workspace:*",
     "@t3-oss/env-core": "^0.13.8",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/nitro-v2-vite-plugin": "^1.133.19",
@@ -30,15 +23,9 @@
     "@tanstack/react-router-ssr-query": "^1.131.7",
     "@tanstack/react-start": "^1.132.0",
     "@tanstack/router-plugin": "^1.132.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "convex": "^1.27.3",
-    "lucide-react": "^0.544.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwind-merge": "^3.0.2",
-    "tailwindcss": "^4.0.6",
-    "tw-animate-css": "^1.3.6",
     "vite-tsconfig-paths": "^5.1.4",
     "zod": "^4.1.11"
   },
