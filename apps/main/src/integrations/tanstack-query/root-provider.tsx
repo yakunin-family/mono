@@ -1,7 +1,16 @@
+/* eslint-disable react/react-in-jsx-scope */
+import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-export function getContext() {
-  const queryClient = new QueryClient();
+export function getContext(convexQueryClient: ConvexQueryClient) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        queryKeyHashFn: convexQueryClient.hashFn(),
+        queryFn: convexQueryClient.queryFn(),
+      },
+    },
+  });
   return {
     queryClient,
   };

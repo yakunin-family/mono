@@ -9,7 +9,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@convex-dev/better-auth": "^0.9.6",
     "@convex-dev/react-query": "0.0.0-alpha.11",
+    "@mono/backend": "workspace:*",
     "@mono/ui": "workspace:*",
     "@t3-oss/env-core": "^0.13.8",
     "@tailwindcss/vite": "^4.0.6",
@@ -23,6 +25,7 @@
     "@tanstack/react-router-ssr-query": "^1.131.7",
     "@tanstack/react-start": "^1.132.0",
     "@tanstack/router-plugin": "^1.132.0",
+    "better-auth": "1.3.29",
     "convex": "^1.27.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
