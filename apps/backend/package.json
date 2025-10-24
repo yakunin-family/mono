@@ -9,7 +9,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@mono/eslint": "workspace:*",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0"
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.9.6",

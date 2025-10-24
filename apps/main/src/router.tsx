@@ -1,4 +1,3 @@
-/* eslint-disable react/react-in-jsx-scope */
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
