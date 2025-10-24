@@ -1,5 +1,4 @@
 export default {
-  ignores: ["**/routeTree.gen.ts"],
   // Lint then format TypeScript and JavaScript files
   "**/*.(ts|tsx|js|jsx|mjs)": (filenames) => [
     `npx eslint --fix ${filenames.join(" ")}`,
