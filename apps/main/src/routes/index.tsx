@@ -1,23 +1,25 @@
-/* eslint-disable react/react-in-jsx-scope */
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { api } from "@mono/backend/convex/_generated/api";
-import { Button } from "@mono/ui";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
+import StarterKit from "@tiptap/starter-kit";
+import { useMemo } from "react";
 
 export const Route = createFileRoute("/")({ component: App });
 
 function App() {
-  const data = useQuery(convexQuery(api.todos.list, {}));
-  const add = useMutation({
-    mutationFn: useConvexMutation(api.todos.add),
+  const editor = useEditor({
+    extensions: [StarterKit], // define your extension array
+    content: "<p>Hello World!</p>", // initial content
   });
 
+  // Memoize the provider value to avoid unnecessary re-renders
+  const providerValue = useMemo(() => ({ editor }), [editor]);
+
   return (
-    <div className="mt-10">
-      <Button onClick={() => add.mutate({ text: "New Todo" })}>test</Button>
-      Hello World
-      {JSON.stringify(data.data || "[]")}
-    </div>
+    <EditorContext.Provider value={providerValue}>
+      <EditorContent editor={editor} />
+      <FloatingMenu editor={editor}>This is the floating menu</FloatingMenu>
+      <BubbleMenu editor={editor}>This is the bubble menu</BubbleMenu>
+    </EditorContext.Provider>
   );
 }
