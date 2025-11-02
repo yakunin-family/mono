@@ -3,17 +3,36 @@ import { Server } from "@hocuspocus/server";
 const server = Server.configure({
   port: 1234,
 
-  // Optional: Add authentication
+  // Authentication hook
   async onAuthenticate(data) {
     const { token } = data;
 
-    // TODO: Implement your authentication logic here
-    // For now, we'll allow all connections
-    // You can integrate with your Better Auth setup later
-    console.log("Authentication request:", { token });
+    // TODO: Integrate with Convex to verify lesson access
+    // For now, we'll allow all connections for development
+    //
+    // Production implementation should:
+    // 1. Verify the auth token with Better Auth/Convex
+    // 2. Get the user ID from the token
+    // 3. Extract lesson ID from data.documentName
+    // 4. Query Convex to check if user can access the lesson:
+    //    - Check if user is the teacher who owns the lesson
+    //    - OR check if user is a student with lessonAccess record
+    // 5. Reject connection if access denied
+    //
+    // Example:
+    // const userId = await verifyAuthToken(token);
+    // const lessonId = data.documentName;
+    // const hasAccess = await checkLessonAccess(userId, lessonId);
+    // if (!hasAccess) {
+    //   throw new Error("Access denied to this lesson");
+    // }
+
+    console.log("Authentication request:", {
+      token: token ? "present" : "none",
+      document: data.documentName,
+    });
 
     return {
-      // Return user data that will be available in other hooks
       user: {
         id: token || "anonymous",
         name: token || "Anonymous User",
@@ -21,12 +40,15 @@ const server = Server.configure({
     };
   },
 
-  // Optional: Handle document creation
+  // Handle document creation
   async onCreateDocument(data) {
-    console.log("Document created:", data.documentName);
+    console.log("Document created:", {
+      documentName: data.documentName,
+      socketId: data.socketId,
+    });
   },
 
-  // Optional: Handle document updates
+  // Handle document updates
   async onChange(data) {
     console.log("Document changed:", {
       document: data.documentName,
@@ -34,11 +56,12 @@ const server = Server.configure({
     });
   },
 
-  // Optional: Handle connection events
+  // Handle connection events
   async onConnect(data) {
     console.log("Client connected:", {
       document: data.documentName,
       socketId: data.socketId,
+      user: data.context?.user,
     });
   },
 
@@ -55,16 +78,21 @@ const server = Server.configure({
   async onStoreDocument(data) {
     // Store the document in your database
     // data.document contains the Y.Doc
-    // data.documentName is the document identifier
+    // data.documentName is the document identifier (lesson ID)
     const update = Y.encodeStateAsUpdate(data.document);
-    // await db.saveDocument(data.documentName, update);
+    // await convex.mutation(api.lessons.saveLessonContent, {
+    //   lessonId: data.documentName,
+    //   content: Array.from(update),
+    // });
   },
 
   async onLoadDocument(data) {
     // Load the document from your database
-    // const storedUpdate = await db.loadDocument(data.documentName);
-    // if (storedUpdate) {
-    //   Y.applyUpdate(data.document, storedUpdate);
+    // const stored = await convex.query(api.lessons.getLessonContent, {
+    //   lessonId: data.documentName,
+    // });
+    // if (stored?.content) {
+    //   Y.applyUpdate(data.document, new Uint8Array(stored.content));
     // }
     return data.document;
   },

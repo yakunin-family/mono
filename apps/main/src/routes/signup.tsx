@@ -1,3 +1,4 @@
+import { api } from "@mono/backend";
 import {
   Button,
   Card,
@@ -18,14 +19,14 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
+import { useConvex } from "convex/react";
 import { useState } from "react";
 
 import { signUp } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/signup")({
   beforeLoad: ({ context }) => {
-    // Redirect if already logged in
-    if (context.userId) {
+    if (context.user) {
       throw redirect({ to: "/" });
     }
   },
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/signup")({
 function SignupPage() {
   const navigate = useNavigate();
   const [globalError, setGlobalError] = useState("");
+  const convex = useConvex();
 
   const form = useForm({
     defaultValues: {
@@ -45,7 +47,7 @@ function SignupPage() {
     onSubmit: async ({ value }) => {
       setGlobalError("");
 
-      await signUp.email(
+      const { data, error } = await signUp.email(
         {
           email: value.email,
           password: value.password,
@@ -55,11 +57,20 @@ function SignupPage() {
           onError: (ctx) => {
             setGlobalError(ctx.error.message || "Failed to create account");
           },
-          onSuccess: () => {
-            navigate({ to: "/" });
-          },
         },
       );
+
+      if (error) {
+        setGlobalError(error.message || "Failed to create account");
+        return;
+      }
+
+      await convex.mutation(api.userProfiles.createUserProfile, {
+        userId: data.user.id,
+        displayName: value.name,
+      });
+
+      navigate({ to: "/" });
     },
   });
 

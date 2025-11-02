@@ -13,7 +13,11 @@ const config = defineConfig({
     }),
     nitroV2Plugin(),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      spa: {
+        enabled: true,
+      },
+    }),
     viteReact(),
   ],
 });

@@ -2,6 +2,11 @@
   "name": "@mono/backend",
   "private": true,
   "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./convex/*": "./convex/*"
+  },
   "scripts": {
     "dev": "convex dev",
     "deploy": "convex deploy",
