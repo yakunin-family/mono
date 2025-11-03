@@ -1,17 +1,20 @@
 import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { Infer, v } from "convex/values";
+
+const userRoles = v.union(v.literal("teacher"), v.literal("student"));
+export type UserRole = Infer<typeof userRoles>;
 
 const userProfiles = defineTable({
   userId: v.string(), // Better Auth user ID
   isTeacherActive: v.boolean(),
   isStudentActive: v.boolean(),
-  activeRole: v.optional(v.union(v.literal("teacher"), v.literal("student"))),
+  activeRole: userRoles,
   teacherDisplayName: v.optional(v.string()),
 }).index("by_userId", ["userId"]);
+export type UserProfile = Infer<typeof schemas.tables.userProfiles.validator>;
 
 const students = defineTable({
   teacherId: v.string(), // User ID of the teacher who created this
-  nickname: v.string(),
   inviteToken: v.string(), // Unique token for "join me" link
   linkedUserId: v.optional(v.string()), // Actual user ID after signup
   createdAt: v.number(),
@@ -19,26 +22,33 @@ const students = defineTable({
   .index("by_teacherId", ["teacherId"])
   .index("by_inviteToken", ["inviteToken"])
   .index("by_linkedUserId", ["linkedUserId"]);
+export type Student = Infer<typeof schemas.tables.students.validator>;
 
-const lessons = defineTable({
+const documents = defineTable({
   teacherId: v.string(),
   title: v.string(),
   description: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
 }).index("by_teacherId", ["teacherId"]);
+export type Document = Infer<typeof schemas.tables.documents.validator>;
 
-const lessonAccess = defineTable({
-  lessonId: v.id("lessons"),
+const documentAccess = defineTable({
+  documentId: v.id("documents"),
   studentRecordId: v.id("students"),
   sharedAt: v.number(),
 })
-  .index("by_lessonId", ["lessonId"])
+  .index("by_documentId", ["documentId"])
   .index("by_studentRecordId", ["studentRecordId"]);
+export type DocumentAccess = Infer<
+  typeof schemas.tables.documentAccess.validator
+>;
 
-export default defineSchema({
+const schemas = defineSchema({
   userProfiles,
   students,
-  lessons,
-  lessonAccess,
+  documents,
+  documentAccess,
 });
+
+export default schemas;

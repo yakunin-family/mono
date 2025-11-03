@@ -6,14 +6,16 @@ import { authComponent } from "./auth";
 export const createUserProfile = mutation({
   args: {
     userId: v.string(),
+    role: v.union(v.literal("teacher"), v.literal("student")),
     displayName: v.optional(v.string()),
   },
-  handler: async (ctx, { userId, displayName }) => {
+  handler: async (ctx, { userId, role, displayName }) => {
     await ctx.db.insert("userProfiles", {
       userId,
-      teacherDisplayName: displayName,
-      isTeacherActive: false,
-      isStudentActive: false,
+      teacherDisplayName: role === "teacher" ? displayName : undefined,
+      isTeacherActive: role === "teacher",
+      isStudentActive: role === "student",
+      activeRole: role,
     });
   },
 });

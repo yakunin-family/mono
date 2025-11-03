@@ -6,13 +6,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
 } from "@mono/ui";
-import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface AddStudentModalProps {
   isOpen: boolean;
@@ -22,100 +18,103 @@ interface AddStudentModalProps {
 export function AddStudentModal({ isOpen, onClose }: AddStudentModalProps) {
   const queryClient = useQueryClient();
   const convex = useConvex();
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
 
   const createStudentMutation = useMutation({
-    mutationFn: async (nickname: string) => {
-      return convex.mutation(api.students.createStudent, { nickname });
+    mutationFn: async () => {
+      return convex.mutation(api.students.createStudent, {});
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: ["convex", api.students.getMyStudents],
       });
-      onClose();
+      // Generate invite link
+      const link = `${window.location.origin}/join/${data.inviteToken}`;
+      setInviteLink(link);
     },
   });
 
-  const form = useForm({
-    defaultValues: {
-      nickname: "",
-    },
-    onSubmit: async ({ value }) => {
-      await createStudentMutation.mutateAsync(value.nickname);
-    },
-  });
+  const handleCopyLink = () => {
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink);
+    }
+  };
+
+  const handleClose = () => {
+    setInviteLink(null);
+    onClose();
+  };
 
   if (!isOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/50" onClick={handleClose} />
 
       {/* Modal */}
       <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2">
         <Card>
           <CardHeader>
-            <CardTitle>Add New Student</CardTitle>
+            <CardTitle>Create Student Invite Link</CardTitle>
           </CardHeader>
           <CardContent>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                form.handleSubmit();
-              }}
-            >
-              <div className="space-y-4">
-                <form.Field
-                  name="nickname"
-                  validators={{
-                    onBlur: ({ value }) => {
-                      if (!value) return "Nickname is required";
-                      if (value.length < 2)
-                        return "Nickname must be at least 2 characters";
-                      return undefined;
-                    },
-                  }}
-                >
-                  {(field) => (
-                    <Field>
-                      <FieldLabel htmlFor={field.name}>
-                        Student Nickname
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
+            <div className="space-y-4">
+              {!inviteLink ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Create an invite link that students can use to sign up and join
+                    your class.
+                  </p>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleClose}
+                      disabled={createStudentMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => createStudentMutation.mutate()}
+                      disabled={createStudentMutation.isPending}
+                    >
+                      {createStudentMutation.isPending
+                        ? "Creating..."
+                        : "Create Invite Link"}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <p className="mb-2 text-sm text-muted-foreground">
+                      Share this link with your student:
+                    </p>
+                    <div className="flex gap-2">
+                      <input
                         type="text"
-                        placeholder="e.g., John, Maria, Alex"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        disabled={form.state.isSubmitting}
+                        value={inviteLink}
+                        readOnly
+                        className="flex-1 rounded-md border bg-muted px-3 py-2 text-sm"
                       />
-                      <FieldError
-                        errors={field.state.meta.errors.map((e) => ({
-                          message: e,
-                        }))}
-                      />
-                    </Field>
-                  )}
-                </form.Field>
+                      <Button onClick={handleCopyLink}>Copy</Button>
+                    </div>
+                  </div>
+                  <Button onClick={handleClose} className="w-full">
+                    Done
+                  </Button>
+                </>
+              )}
 
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onClose}
-                    disabled={form.state.isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={form.state.isSubmitting}>
-                    {form.state.isSubmitting ? "Creating..." : "Create Student"}
-                  </Button>
+              {createStudentMutation.isError && (
+                <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                  {createStudentMutation.error instanceof Error
+                    ? createStudentMutation.error.message
+                    : "Failed to create invite link. Please try again."}
                 </div>
-              </div>
-            </form>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

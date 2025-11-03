@@ -1,12 +1,8 @@
-// auth.tsx
-import schema from "@mono/backend/convex/schema.js";
-import { Infer } from "convex/values";
+import { UserProfile } from "@mono/backend";
 import { createContext, ReactNode, useContext } from "react";
 
-type User = Infer<typeof schema.tables.userProfiles.validator>;
-
 interface UserContext {
-  user: User;
+  user: UserProfile;
 }
 
 const UserContext = createContext<UserContext | null>(null);
@@ -14,7 +10,7 @@ const UserContext = createContext<UserContext | null>(null);
 export function useUser() {
   const context = useContext(UserContext);
   if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
+    throw new Error("useUser must be used within UserProvider");
   }
   return context;
 }
@@ -24,7 +20,7 @@ export function UserProvider({
   user,
 }: {
   children: ReactNode;
-  user: User;
+  user: UserProfile;
 }) {
   return (
     <UserContext.Provider value={{ user }}>{children}</UserContext.Provider>

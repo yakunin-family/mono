@@ -118,7 +118,9 @@ export function TeacherDashboard() {
             {students.map((student) => (
               <Card key={student._id}>
                 <CardHeader>
-                  <CardTitle className="text-lg">{student.nickname}</CardTitle>
+                  <CardTitle className="text-lg">
+                    {student.studentName || "Pending signup"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">

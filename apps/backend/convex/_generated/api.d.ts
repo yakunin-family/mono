@@ -14,7 +14,6 @@ import type * as betterAuth__generated_server from "../betterAuth/_generated/ser
 import type * as betterAuth_adapter from "../betterAuth/adapter.js";
 import type * as betterAuth_auth from "../betterAuth/auth.js";
 import type * as http from "../http.js";
-import type * as lessons from "../lessons.js";
 import type * as students from "../students.js";
 import type * as userProfiles from "../userProfiles.js";
 
@@ -39,7 +38,6 @@ declare const fullApi: ApiFromModules<{
   "betterAuth/adapter": typeof betterAuth_adapter;
   "betterAuth/auth": typeof betterAuth_auth;
   http: typeof http;
-  lessons: typeof lessons;
   students: typeof students;
   userProfiles: typeof userProfiles;
 }>;

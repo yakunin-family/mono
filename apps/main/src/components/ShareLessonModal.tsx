@@ -102,7 +102,9 @@ export function ShareLessonModal({
                         onChange={() => toggleStudent(student._id)}
                       />
                       <div className="flex-1">
-                        <div className="font-medium">{student.nickname}</div>
+                        <div className="font-medium">
+                          {student.studentName || "Pending signup"}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {student.linkedUserId ? "Active" : "Invite Pending"}
                         </div>
@@ -159,7 +161,7 @@ export function ShareLessonModal({
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      {student.nickname}
+                      {student.studentName || "Pending signup"}
                     </div>
                   ))}
                 </div>

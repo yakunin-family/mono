@@ -13,25 +13,21 @@ import {
   Input,
 } from "@mono/ui";
 import { useForm } from "@tanstack/react-form";
-import {
-  createFileRoute,
-  Link,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { useState } from "react";
 
 import { signUp } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/signup")({
-  beforeLoad: ({ context }) => {
-    if (context.user) {
-      throw redirect({ to: "/" });
-    }
-  },
+export const Route = createFileRoute("/_auth/signup")({
   component: SignupPage,
 });
+
+type FormValues = {
+  name: string;
+  email: string;
+  password: string;
+};
 
 function SignupPage() {
   const navigate = useNavigate();
@@ -43,7 +39,7 @@ function SignupPage() {
       name: "",
       email: "",
       password: "",
-    },
+    } as FormValues,
     onSubmit: async ({ value }) => {
       setGlobalError("");
 
@@ -67,6 +63,7 @@ function SignupPage() {
 
       await convex.mutation(api.userProfiles.createUserProfile, {
         userId: data.user.id,
+        role: "teacher",
         displayName: value.name,
       });
 
@@ -101,9 +98,9 @@ function SignupPage() {
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Create an account</CardTitle>
+            <CardTitle className="text-xl">Create a Teacher Account</CardTitle>
             <CardDescription>
-              Enter your information to get started
+              Start creating lessons and inviting students
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -238,6 +235,9 @@ function SignupPage() {
                   <Link to="/login" className="underline underline-offset-4">
                     Sign in
                   </Link>
+                </div>
+                <div className="text-center text-sm text-muted-foreground">
+                  Are you a student? Ask your teacher for an invite link
                 </div>
               </div>
             </form>

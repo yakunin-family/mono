@@ -11,12 +11,10 @@ function generateInviteToken(): string {
   );
 }
 
-// Create a student (teacher action)
+// Create a student invite (teacher action)
 export const createStudent = mutation({
-  args: {
-    nickname: v.string(),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx);
     if (!user) {
       throw new Error("Not authenticated");
@@ -32,11 +30,10 @@ export const createStudent = mutation({
       throw new Error("Teacher role not activated");
     }
 
-    // Create student with unique invite token
+    // Create student invite with unique token
     const inviteToken = generateInviteToken();
     const studentId = await ctx.db.insert("students", {
       teacherId: user._id,
-      nickname: args.nickname,
       inviteToken,
       createdAt: Date.now(),
     });
@@ -48,7 +45,7 @@ export const createStudent = mutation({
   },
 });
 
-// Get all students created by the current teacher
+// Get all students created by the current teacher (with user profile names)
 export const getMyStudents = query({
   args: {},
   handler: async (ctx) => {
@@ -62,7 +59,28 @@ export const getMyStudents = query({
       .withIndex("by_teacherId", (q) => q.eq("teacherId", user._id))
       .collect();
 
-    return students;
+    // Fetch user profiles for linked students
+    const studentsWithNames = await Promise.all(
+      students.map(async (student) => {
+        if (student.linkedUserId) {
+          const profile = await ctx.db
+            .query("userProfiles")
+            .withIndex("by_userId", (q) => q.eq("userId", student.linkedUserId!))
+            .first();
+
+          return {
+            ...student,
+            studentName: profile?.teacherDisplayName || "Unknown",
+          };
+        }
+        return {
+          ...student,
+          studentName: null, // Not signed up yet
+        };
+      })
+    );
+
+    return studentsWithNames;
   },
 });
 

@@ -21,7 +21,7 @@ import { useState } from "react";
 
 import { signIn } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/_auth/login")({
   beforeLoad: ({ context }) => {
     if (context.user) {
       throw redirect({ to: "/" });
@@ -181,9 +181,9 @@ function LoginPage() {
                   </Button>
                 </div>
                 <div className="text-center text-sm">
-                  Don&apos;t have an account?{" "}
+                  Teacher?{" "}
                   <Link to="/signup" className="underline underline-offset-4">
-                    Sign up
+                    Sign up here
                   </Link>
                 </div>
               </div>

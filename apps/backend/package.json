@@ -4,8 +4,7 @@
   "type": "module",
   "main": "./index.ts",
   "exports": {
-    ".": "./index.ts",
-    "./convex/*": "./convex/*"
+    ".": "./index.ts"
   },
   "scripts": {
     "dev": "convex dev",

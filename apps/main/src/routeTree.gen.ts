@@ -9,31 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as JoinTokenRouteImport } from './routes/join/$token'
-import { Route as ProtectedOnboardingRouteImport } from './routes/_protected/onboarding'
 import { Route as ProtectedEditorRouteImport } from './routes/_protected/editor'
-import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as ProtectedCollabRouteImport } from './routes/_protected/collab'
+import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
+import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ProtectedTeacherSubscribeRouteImport } from './routes/_protected/teacher/subscribe'
 import { Route as ProtectedLessonIdRouteImport } from './routes/_protected/lesson/$id'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
@@ -46,25 +39,25 @@ const JoinTokenRoute = JoinTokenRouteImport.update({
   path: '/join/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectedOnboardingRoute = ProtectedOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedEditorRoute = ProtectedEditorRouteImport.update({
   id: '/editor',
   path: '/editor',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedCollabRoute = ProtectedCollabRouteImport.update({
   id: '/collab',
   path: '/collab',
   getParentRoute: () => ProtectedRoute,
+} as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AuthRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -84,12 +77,10 @@ const ProtectedLessonIdRoute = ProtectedLessonIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/login': typeof AuthLoginRoute
+  '/signup': typeof AuthSignupRoute
   '/collab': typeof ProtectedCollabRoute
-  '/dashboard': typeof ProtectedDashboardRoute
   '/editor': typeof ProtectedEditorRoute
-  '/onboarding': typeof ProtectedOnboardingRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof ProtectedIndexRoute
   '/lesson/$id': typeof ProtectedLessonIdRoute
@@ -97,12 +88,10 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/login': typeof AuthLoginRoute
+  '/signup': typeof AuthSignupRoute
   '/collab': typeof ProtectedCollabRoute
-  '/dashboard': typeof ProtectedDashboardRoute
   '/editor': typeof ProtectedEditorRoute
-  '/onboarding': typeof ProtectedOnboardingRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof ProtectedIndexRoute
   '/lesson/$id': typeof ProtectedLessonIdRoute
@@ -111,13 +100,12 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_auth': typeof AuthRouteWithChildren
   '/_protected': typeof ProtectedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/_auth/login': typeof AuthLoginRoute
+  '/_auth/signup': typeof AuthSignupRoute
   '/_protected/collab': typeof ProtectedCollabRoute
-  '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/editor': typeof ProtectedEditorRoute
-  '/_protected/onboarding': typeof ProtectedOnboardingRoute
   '/join/$token': typeof JoinTokenRoute
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/lesson/$id': typeof ProtectedLessonIdRoute
@@ -130,9 +118,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/collab'
-    | '/dashboard'
     | '/editor'
-    | '/onboarding'
     | '/join/$token'
     | '/'
     | '/lesson/$id'
@@ -143,9 +129,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/collab'
-    | '/dashboard'
     | '/editor'
-    | '/onboarding'
     | '/join/$token'
     | '/'
     | '/lesson/$id'
@@ -153,13 +137,12 @@ export interface FileRouteTypes {
     | '/api/auth/$'
   id:
     | '__root__'
+    | '/_auth'
     | '/_protected'
-    | '/login'
-    | '/signup'
+    | '/_auth/login'
+    | '/_auth/signup'
     | '/_protected/collab'
-    | '/_protected/dashboard'
     | '/_protected/editor'
-    | '/_protected/onboarding'
     | '/join/$token'
     | '/_protected/'
     | '/_protected/lesson/$id'
@@ -168,34 +151,26 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthRoute: typeof AuthRouteWithChildren
   ProtectedRoute: typeof ProtectedRouteWithChildren
-  LoginRoute: typeof LoginRoute
-  SignupRoute: typeof SignupRoute
   JoinTokenRoute: typeof JoinTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_protected': {
       id: '/_protected'
       path: ''
       fullPath: ''
       preLoaderRoute: typeof ProtectedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/': {
@@ -212,25 +187,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JoinTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protected/onboarding': {
-      id: '/_protected/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof ProtectedOnboardingRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/editor': {
       id: '/_protected/editor'
       path: '/editor'
       fullPath: '/editor'
       preLoaderRoute: typeof ProtectedEditorRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/dashboard': {
-      id: '/_protected/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof ProtectedDashboardRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/collab': {
@@ -239,6 +200,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/collab'
       preLoaderRoute: typeof ProtectedCollabRouteImport
       parentRoute: typeof ProtectedRoute
+    }
+    '/_auth/signup': {
+      id: '/_auth/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/login': {
+      id: '/_auth/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -264,11 +239,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthRouteChildren {
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthSignupRoute: typeof AuthSignupRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthLoginRoute: AuthLoginRoute,
+  AuthSignupRoute: AuthSignupRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 interface ProtectedRouteChildren {
   ProtectedCollabRoute: typeof ProtectedCollabRoute
-  ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedEditorRoute: typeof ProtectedEditorRoute
-  ProtectedOnboardingRoute: typeof ProtectedOnboardingRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
   ProtectedLessonIdRoute: typeof ProtectedLessonIdRoute
   ProtectedTeacherSubscribeRoute: typeof ProtectedTeacherSubscribeRoute
@@ -276,9 +261,7 @@ interface ProtectedRouteChildren {
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedCollabRoute: ProtectedCollabRoute,
-  ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedEditorRoute: ProtectedEditorRoute,
-  ProtectedOnboardingRoute: ProtectedOnboardingRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
   ProtectedLessonIdRoute: ProtectedLessonIdRoute,
   ProtectedTeacherSubscribeRoute: ProtectedTeacherSubscribeRoute,
@@ -289,9 +272,8 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  AuthRoute: AuthRouteWithChildren,
   ProtectedRoute: ProtectedRouteWithChildren,
-  LoginRoute: LoginRoute,
-  SignupRoute: SignupRoute,
   JoinTokenRoute: JoinTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
