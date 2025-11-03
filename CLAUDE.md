@@ -8,12 +8,14 @@ This is a **pnpm monorepo** managed by **Turborepo** with the following workspac
 
 ### Apps
 
-- **`apps/main`** - Primary application using TanStack Start (React SSR framework) with Vite
+- **`apps/teacher`** - Teacher-facing application (port 3000) using TanStack Start
+- **`apps/student`** - Student-facing application (port 3001) using TanStack Start
 - **`apps/backend`** - Convex backend for real-time database and serverless functions
 - **`apps/www`** - Marketing/landing site built with Astro
 
 ### Packages
 
+- **`packages/lesson-editor`** - Shared Tiptap-based collaborative lesson editor
 - **`packages/ui`** - Shared React component library (using shadcn/ui)
 - **`packages/eslint`** - Shared ESLint configurations
 - **`packages/typescript-config`** - Shared TypeScript configurations
@@ -31,16 +33,19 @@ pnpm install
 # Run all apps in development mode
 pnpm dev
 
-# Run a specific app
-turbo dev --filter=main
-turbo dev --filter=backend
+# Run specific apps
+pnpm dev:teacher      # Teacher app on port 3000
+pnpm dev:student      # Student app on port 3001
+pnpm dev:backend      # Convex backend
 turbo dev --filter=www
 
 # Build all apps
 pnpm build
 
-# Build a specific app
-turbo build --filter=main
+# Build specific apps
+pnpm build:teacher
+pnpm build:student
+turbo build --filter=www
 
 # Type checking
 pnpm check-types
@@ -69,42 +74,71 @@ pnpm deploy  # or: convex deploy
 pnpm codegen  # or: convex codegen
 ```
 
-### Main App Commands
+### App-Specific Commands
 
 ```bash
-cd apps/main
-
-# Run tests
+# Teacher app
+cd apps/teacher
+pnpm dev    # Port 3000
+pnpm build
 pnpm test
 
-# Development server (port 3000)
-pnpm dev
-
-# Production build
+# Student app
+cd apps/student
+pnpm dev    # Port 3001
 pnpm build
-
-# Preview production build
-pnpm serve
+pnpm test
 ```
 
 ## Architecture Notes
 
-### Main App (`apps/main`)
+### Teacher App (`apps/teacher`)
 
 - **Framework**: TanStack Start (React SSR with file-based routing)
-- **Routing**: TanStack Router with file-based routes in `src/routes/`
-- **State/Data**: TanStack Query with Convex React Query integration (`@convex-dev/react-query`)
-- **Authentication**: Better Auth via Convex (`@convex-dev/better-auth`)
-- **Styling**: Tailwind CSS v4 (with `@tailwindcss/vite` plugin)
-- **Forms**: TanStack Form
-- **Editor**: Tiptap for rich text editing
-- **Environment Variables**: Type-safe env vars using `@t3-oss/env-core` (defined in `src/env.ts`)
-- **Path Aliases**: Configured via `vite-tsconfig-paths` plugin
+- **Port**: 3000 (localhost:3000)
+- **Purpose**: Teacher dashboard, lesson creation, student management
+- **Features**:
+  - Create and manage lessons
+  - Add and manage students via invite links
+  - Share lessons with students
+  - Full lesson editing capabilities
+  - Role switching to student app (if user has both roles)
 
-Key configuration files:
-- `vite.config.ts` - Vite + TanStack Start configuration
-- `src/router.tsx` - Router setup
-- `src/routeTree.gen.ts` - Auto-generated route tree (do not edit manually)
+**Key Routes**:
+- `/` - Teacher dashboard
+- `/lesson/:id` - Lesson editor (full edit access)
+- `/teacher/subscribe` - Teacher activation/subscription
+- `/login`, `/signup` - Authentication
+
+### Student App (`apps/student`)
+
+- **Framework**: TanStack Start (React SSR with file-based routing)
+- **Port**: 3001 (localhost:3001)
+- **Purpose**: Student learning interface
+- **Features**:
+  - View assigned lessons
+  - Collaborative lesson viewing/editing (limited)
+  - Student onboarding via invite links
+  - Role switching to teacher app (if user has both roles)
+
+**Key Routes**:
+- `/` - Student dashboard
+- `/lesson/:id` - Lesson viewer (limited edit access)
+- `/join/:token` - Student onboarding via teacher invite
+- `/login` - Authentication
+
+### Shared Architecture (Both Apps)
+
+- **Routing**: TanStack Router with file-based routes in `src/routes/`
+- **State/Data**: TanStack Query with Convex React Query integration
+- **Authentication**: Better Auth via Convex (shared session across apps)
+- **Styling**: Tailwind CSS v4
+- **Forms**: TanStack Form
+- **Editor**: `@mono/lesson-editor` package (shared collaborative editor)
+- **Environment Variables**: Type-safe env vars using `@t3-oss/env-core`
+- **Path Aliases**: `@/` references `src/`
+
+**Role Switching**: When users have both teacher and student roles active, they can switch between apps. The RoleSwitcher component updates the user's `activeRole` in Convex and redirects to the appropriate app URL.
 
 ### Backend (`apps/backend`)
 
@@ -129,6 +163,23 @@ defineTable({
 }).index("userId", ["userId"])
 ```
 
+### Lesson Editor Package (`packages/lesson-editor`)
+
+- **Purpose**: Shared collaborative rich-text editor used by both teacher and student apps
+- **Built with**:
+  - Tiptap (extensible rich-text editor framework)
+  - Hocuspocus (WebSocket-based collaboration provider)
+  - Yjs (CRDT for real-time collaboration)
+- **Exports**:
+  - `LessonEditor` - Main editor component with toolbar
+  - `LessonEditorToolbar` - Standalone toolbar component
+- **Props**:
+  - `lessonId` - Unique lesson identifier for collaboration
+  - `canEdit` - Boolean to control edit permissions
+  - `websocketUrl` - Optional WebSocket server URL (default: ws://127.0.0.1:1234)
+  - `onStatusChange` - Callback for connection status changes
+  - `onConnectedUsersChange` - Callback for active users count
+
 ### UI Package (`packages/ui`)
 
 - Shared component library using **shadcn/ui**
@@ -144,11 +195,19 @@ defineTable({
 
 ## Environment Setup
 
-### Main App
+### Teacher App
 
-Required environment variables in `apps/main/.env.local`:
+Required environment variables in `apps/teacher/.env.local`:
 - `VITE_CONVEX_URL` - Convex deployment URL
 - `CONVEX_DEPLOYMENT` - Convex deployment name
+
+### Student App
+
+Required environment variables in `apps/student/.env.local`:
+- `VITE_CONVEX_URL` - Convex deployment URL (same as teacher app)
+- `CONVEX_DEPLOYMENT` - Convex deployment name (same as teacher app)
+
+**Note**: Both apps share the same Convex backend and authentication system.
 
 ### Backend
 
@@ -157,14 +216,37 @@ Required environment variables in `apps/backend/.env.local`:
 
 ## Special Considerations
 
-1. **TanStack Router**: Routes are file-based in `apps/main/src/routes/`. Route tree is auto-generated; restart dev server after adding routes.
+1. **Separate Apps Architecture**:
+   - Teacher and student apps are completely separate deployments
+   - They share the same Convex backend and authentication
+   - Role switching redirects between apps (localhost:3000 ↔ localhost:3001)
+   - In production, these would be separate subdomains (e.g., teach.example.com and learn.example.com)
 
-2. **Convex Real-time**: Queries automatically subscribe to real-time updates. Mutations invalidate queries automatically.
+2. **TanStack Router**:
+   - Routes are file-based in `apps/teacher/src/routes/` and `apps/student/src/routes/`
+   - Route tree is auto-generated; restart dev server after adding routes
 
-3. **Workspace References**: Apps reference packages via `workspace:*` protocol. Changes to packages require rebuilding.
+3. **Shared Editor**:
+   - Both apps use `@mono/lesson-editor` package for lesson viewing/editing
+   - Same editor component, different permissions (canEdit prop)
+   - Real-time collaboration works across both apps via Hocuspocus WebSocket server
 
-4. **Turborepo Caching**: Build outputs are cached. Use `turbo build --force` to bypass cache.
+4. **Convex Real-time**:
+   - Queries automatically subscribe to real-time updates
+   - Mutations invalidate queries automatically
+   - Both apps connect to the same Convex deployment
 
-5. **Path Aliases**: The main app uses path aliases configured in `tsconfig.json`. Import from `@/` to reference `src/`.
+5. **Workspace References**:
+   - Apps reference packages via `workspace:*` protocol
+   - Changes to `@mono/lesson-editor` or `@mono/ui` require rebuilding affected apps
 
-6. **shadcn Components**: Must be installed from the app directory where they'll be used (typically `apps/main`), not from repo root.
+6. **Turborepo Caching**: Build outputs are cached. Use `turbo build --force` to bypass cache.
+
+7. **Path Aliases**: Both apps use path aliases configured in `tsconfig.json`. Import from `@/` to reference `src/`.
+
+8. **shadcn Components**: Must be installed from the app directory where they'll be used (`apps/teacher` or `apps/student`), not from repo root.
+
+9. **Authentication**:
+   - Better Auth sessions are shared between apps (same domain in development)
+   - Logging in to one app logs you into both
+   - User profiles track both `isTeacherActive` and `isStudentActive` roles

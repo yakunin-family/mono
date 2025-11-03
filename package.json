@@ -4,6 +4,11 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:teacher": "turbo run dev --filter=teacher",
+    "dev:student": "turbo run dev --filter=student",
+    "dev:backend": "turbo run dev --filter=backend",
+    "build:teacher": "turbo run build --filter=teacher",
+    "build:student": "turbo run build --filter=student",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
