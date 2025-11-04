@@ -43,7 +43,7 @@ function SignupPage() {
     onSubmit: async ({ value }) => {
       setGlobalError("");
 
-      const { data, error } = await signUp.email(
+      const { error } = await signUp.email(
         {
           email: value.email,
           password: value.password,
@@ -61,10 +61,8 @@ function SignupPage() {
         return;
       }
 
-      await convex.mutation(api.userProfiles.createUserProfile, {
-        userId: data.user.id,
+      await convex.mutation(api.userProfiles.create, {
         role: "teacher",
-        displayName: value.name,
       });
 
       navigate({ to: "/" });

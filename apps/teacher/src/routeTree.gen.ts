@@ -17,8 +17,6 @@ import { Route as ProtectedCollabRouteImport } from './routes/_protected/collab'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as ProtectedTeacherSubscribeRouteImport } from './routes/_protected/teacher/subscribe'
-import { Route as ProtectedLessonIdRouteImport } from './routes/_protected/lesson/$id'
 
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
@@ -58,17 +56,6 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectedTeacherSubscribeRoute =
-  ProtectedTeacherSubscribeRouteImport.update({
-    id: '/teacher/subscribe',
-    path: '/teacher/subscribe',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedLessonIdRoute = ProtectedLessonIdRouteImport.update({
-  id: '/lesson/$id',
-  path: '/lesson/$id',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
@@ -76,8 +63,6 @@ export interface FileRoutesByFullPath {
   '/collab': typeof ProtectedCollabRoute
   '/editor': typeof ProtectedEditorRoute
   '/': typeof ProtectedIndexRoute
-  '/lesson/$id': typeof ProtectedLessonIdRoute
-  '/teacher/subscribe': typeof ProtectedTeacherSubscribeRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -86,8 +71,6 @@ export interface FileRoutesByTo {
   '/collab': typeof ProtectedCollabRoute
   '/editor': typeof ProtectedEditorRoute
   '/': typeof ProtectedIndexRoute
-  '/lesson/$id': typeof ProtectedLessonIdRoute
-  '/teacher/subscribe': typeof ProtectedTeacherSubscribeRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -99,31 +82,13 @@ export interface FileRoutesById {
   '/_protected/collab': typeof ProtectedCollabRoute
   '/_protected/editor': typeof ProtectedEditorRoute
   '/_protected/': typeof ProtectedIndexRoute
-  '/_protected/lesson/$id': typeof ProtectedLessonIdRoute
-  '/_protected/teacher/subscribe': typeof ProtectedTeacherSubscribeRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/login'
-    | '/signup'
-    | '/collab'
-    | '/editor'
-    | '/'
-    | '/lesson/$id'
-    | '/teacher/subscribe'
-    | '/api/auth/$'
+  fullPaths: '/login' | '/signup' | '/collab' | '/editor' | '/' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/login'
-    | '/signup'
-    | '/collab'
-    | '/editor'
-    | '/'
-    | '/lesson/$id'
-    | '/teacher/subscribe'
-    | '/api/auth/$'
+  to: '/login' | '/signup' | '/collab' | '/editor' | '/' | '/api/auth/$'
   id:
     | '__root__'
     | '/_auth'
@@ -133,8 +98,6 @@ export interface FileRouteTypes {
     | '/_protected/collab'
     | '/_protected/editor'
     | '/_protected/'
-    | '/_protected/lesson/$id'
-    | '/_protected/teacher/subscribe'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -202,20 +165,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protected/teacher/subscribe': {
-      id: '/_protected/teacher/subscribe'
-      path: '/teacher/subscribe'
-      fullPath: '/teacher/subscribe'
-      preLoaderRoute: typeof ProtectedTeacherSubscribeRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/lesson/$id': {
-      id: '/_protected/lesson/$id'
-      path: '/lesson/$id'
-      fullPath: '/lesson/$id'
-      preLoaderRoute: typeof ProtectedLessonIdRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
   }
 }
 
@@ -235,16 +184,12 @@ interface ProtectedRouteChildren {
   ProtectedCollabRoute: typeof ProtectedCollabRoute
   ProtectedEditorRoute: typeof ProtectedEditorRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
-  ProtectedLessonIdRoute: typeof ProtectedLessonIdRoute
-  ProtectedTeacherSubscribeRoute: typeof ProtectedTeacherSubscribeRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedCollabRoute: ProtectedCollabRoute,
   ProtectedEditorRoute: ProtectedEditorRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
-  ProtectedLessonIdRoute: ProtectedLessonIdRoute,
-  ProtectedTeacherSubscribeRoute: ProtectedTeacherSubscribeRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

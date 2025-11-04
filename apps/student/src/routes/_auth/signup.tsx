@@ -43,7 +43,7 @@ function SignupPage() {
     onSubmit: async ({ value }) => {
       setGlobalError("");
 
-      const { data, error } = await signUp.email(
+      const { error } = await signUp.email(
         {
           email: value.email,
           password: value.password,
@@ -61,10 +61,8 @@ function SignupPage() {
         return;
       }
 
-      await convex.mutation(api.userProfiles.createUserProfile, {
-        userId: data.user.id,
+      await convex.mutation(api.userProfiles.create, {
         role: "teacher",
-        displayName: value.name,
       });
 
       navigate({ to: "/" });
@@ -98,7 +96,7 @@ function SignupPage() {
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Create a Teacher Account</CardTitle>
+            <CardTitle className="text-xl">Create an Account</CardTitle>
             <CardDescription>
               Start creating lessons and inviting students
             </CardDescription>
@@ -235,9 +233,6 @@ function SignupPage() {
                   <Link to="/login" className="underline underline-offset-4">
                     Sign in
                   </Link>
-                </div>
-                <div className="text-center text-sm text-muted-foreground">
-                  Are you a student? Ask your teacher for an invite link
                 </div>
               </div>
             </form>

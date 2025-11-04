@@ -181,7 +181,7 @@ function LoginPage() {
                   </Button>
                 </div>
                 <div className="text-center text-sm">
-                  Teacher?{" "}
+                  Don't have an account yet?{" "}
                   <Link to="/signup" className="underline underline-offset-4">
                     Sign up here
                   </Link>

@@ -25,10 +25,7 @@ function ProtectedLayout() {
   const userQuery = useQuery({
     queryKey: ["userProfile"],
     queryFn: async () => {
-      const userProfile = await convex.query(
-        api.userProfiles.getUserProfile,
-        {},
-      );
+      const userProfile = await convex.query(api.userProfiles.get, {});
 
       if (!userProfile) {
         throw new Error("User profile not found. Please contact support.");
