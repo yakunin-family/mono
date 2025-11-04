@@ -34,7 +34,10 @@ jobs:
           # Check if collab-server is affected
           pnpm turbo run build --filter='[HEAD^1]' --dry=json > affected.json
 
-          if grep -q '"collab-server"' affected.json; then
+          # Safely check if collab-server is affected (handle grep exit codes)
+          grep -q '"collab-server"' affected.json && AFFECTED=true || AFFECTED=false
+
+          if [ "$AFFECTED" = "true" ]; then
             echo "affected=true" >> $GITHUB_OUTPUT
             echo "Collab server deployment needed"
           else

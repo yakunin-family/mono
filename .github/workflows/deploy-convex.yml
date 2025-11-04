@@ -34,7 +34,10 @@ jobs:
           # Check if backend, teacher, or student apps are affected
           pnpm turbo run build --filter='[HEAD^1]' --dry=json > affected.json
 
-          if grep -q '"backend"\|"teacher"\|"student"' affected.json; then
+          # Safely check if apps are affected (handle grep exit codes)
+          grep -q '"backend"\|"teacher"\|"student"' affected.json && AFFECTED=true || AFFECTED=false
+
+          if [ "$AFFECTED" = "true" ]; then
             echo "affected=true" >> $GITHUB_OUTPUT
             echo "Backend deployment needed (backend, teacher, or student changed)"
           else
