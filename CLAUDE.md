@@ -12,6 +12,7 @@ This is a **pnpm monorepo** managed by **Turborepo** with the following workspac
 - **`apps/student`** - Student-facing application (port 3001) using TanStack Start
 - **`apps/backend`** - Convex backend for real-time database and serverless functions
 - **`apps/www`** - Marketing/landing site built with Astro
+- **`apps/collab-server`** - Hocuspocus WebSocket server for real-time collaboration (port 1234)
 
 ### Packages
 
@@ -213,6 +214,143 @@ Required environment variables in `apps/student/.env.local`:
 
 Required environment variables in `apps/backend/.env.local`:
 - Convex deployment credentials (set via `npx convex init` or `npx convex dev`)
+
+## CI/CD and Deployment
+
+This repository uses **GitHub Actions** with **Turborepo's affected detection** to optimize CI/CD pipelines. Only changed apps are checked, tested, and deployed.
+
+### GitHub Actions Workflows
+
+**1. CI Workflow** (`.github/workflows/ci.yml`)
+- **Triggers**: Pull requests and pushes to main
+- **Purpose**: Quality checks on affected apps only
+- **Steps**:
+  - Runs `turbo run lint --filter='[HEAD^1]'` (lint only affected)
+  - Runs `turbo run check-types --filter='[HEAD^1]'` (type-check only affected)
+  - Runs `turbo run test --filter='[HEAD^1]'` (test only affected)
+- **Optimization**: Uses Turborepo remote caching via Vercel
+
+**2. Convex Deployment** (`.github/workflows/deploy-convex.yml`)
+- **Triggers**: Pushes to main when backend, teacher, or student apps are affected
+- **Purpose**: Deploy Convex backend to production
+- **Steps**:
+  - Checks if backend/teacher/student changed
+  - Deploys via `convex deploy --cmd 'pnpm run codegen'`
+  - Requires `CONVEX_DEPLOY_KEY` secret
+
+**3. Collab Server Deployment** (`.github/workflows/deploy-collab-server.yml`)
+- **Triggers**: Pushes to main when collab-server is affected
+- **Purpose**: Build and deploy WebSocket collaboration server
+- **Steps**:
+  - Checks if collab-server changed
+  - Builds via `turbo run build --filter=collab-server`
+  - Deployment step (customizable for Railway/Render/Fly.io)
+- **Note**: Deployment step needs to be configured based on chosen platform
+
+### Deployment Strategy
+
+**Vercel Apps** (teacher, student, www):
+- **Method**: Vercel Git Integration (automatic)
+- **Build**: Handled by Vercel using `vercel.json` configuration
+- **Environment**: Each app has `vercel.json` with proper build commands
+- **Deploy**: Automatic on every push to main
+- **Preview**: Automatic preview deployments on pull requests
+
+**Convex Backend**:
+- **Method**: GitHub Actions with Convex CLI
+- **Trigger**: Deployed when backend, teacher, or student apps change
+- **Reason**: Backend must stay in sync with frontend apps
+- **Deploy**: Via `convex deploy` command in CI
+
+**Collab Server**:
+- **Method**: GitHub Actions + chosen hosting platform
+- **Trigger**: Deployed when collab-server code changes
+- **Platforms**: Supports Railway, Render, Fly.io, or custom
+- **Deploy**: Requires platform-specific configuration
+
+### Required GitHub Secrets
+
+Add these secrets in GitHub repository settings (Settings → Secrets and variables → Actions):
+
+**For Turborepo Remote Caching:**
+- `TURBO_TOKEN` - Vercel token for remote cache ([get token](https://vercel.com/account/tokens))
+- `TURBO_TEAM` - Vercel team slug (found in Vercel dashboard URL)
+
+**For Convex Deployment:**
+- `CONVEX_DEPLOY_KEY` - Convex deploy key ([get from dashboard](https://dashboard.convex.dev))
+
+**For Collab Server Deployment** (choose based on platform):
+- Railway: `RAILWAY_TOKEN`
+- Render: `RENDER_DEPLOY_HOOK_URL`
+- Fly.io: `FLY_API_TOKEN`
+- Custom: Platform-specific credentials
+
+### Turborepo Affected Detection
+
+The CI/CD pipelines use Turborepo's `--filter='[HEAD^1]'` flag to run tasks only on affected apps:
+
+```bash
+# Only lint apps that changed since last commit
+turbo run lint --filter='[HEAD^1]'
+
+# Only build affected apps
+turbo run build --filter='[HEAD^1]'
+
+# Check which apps are affected (dry run)
+turbo run build --filter='[HEAD^1]' --dry=json
+```
+
+**Benefits:**
+- Faster CI runs (only check what changed)
+- Reduced compute costs
+- Quicker feedback on PRs
+- Remote caching speeds up repeated builds
+
+### Vercel Configuration
+
+Each Vercel app has a `vercel.json` file configuring monorepo builds:
+
+**Teacher & Student** (`apps/teacher/vercel.json`, `apps/student/vercel.json`):
+```json
+{
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=<app>",
+  "outputDirectory": ".vinxi/output/public",
+  "installCommand": "pnpm install --frozen-lockfile"
+}
+```
+
+**Marketing Site** (`apps/www/vercel.json`):
+```json
+{
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=www",
+  "outputDirectory": "dist",
+  "framework": "astro"
+}
+```
+
+### Setting Up Deployments
+
+**1. Vercel Setup:**
+- Connect GitHub repository to Vercel
+- Import each app separately (teacher, student, www)
+- Vercel auto-detects monorepo and uses `vercel.json` config
+- Set environment variables in Vercel dashboard for each app
+
+**2. Convex Setup:**
+- Get deploy key from [Convex dashboard](https://dashboard.convex.dev)
+- Add `CONVEX_DEPLOY_KEY` to GitHub secrets
+- Backend will auto-deploy on app changes
+
+**3. Turborepo Cache Setup:**
+- Get Vercel token from [account settings](https://vercel.com/account/tokens)
+- Add `TURBO_TOKEN` and `TURBO_TEAM` to GitHub secrets
+- Remote caching will work for all CI runs
+
+**4. Collab Server Setup:**
+- Choose hosting platform (Railway, Render, Fly.io, etc.)
+- Uncomment appropriate deployment section in `.github/workflows/deploy-collab-server.yml`
+- Add platform-specific secrets to GitHub
+- Configure environment variables on hosting platform
 
 ## Special Considerations
 

@@ -1,0 +1,133 @@
+name: Deploy Collab Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check-affected:
+    name: Check if collab-server deployment needed
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.affected }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Check if collab-server affected
+        id: check
+        run: |
+          # Check if collab-server is affected
+          pnpm turbo run build --filter='[HEAD^1]' --dry=json > affected.json
+
+          if grep -q '"collab-server"' affected.json; then
+            echo "affected=true" >> $GITHUB_OUTPUT
+            echo "Collab server deployment needed"
+          else
+            echo "affected=false" >> $GITHUB_OUTPUT
+            echo "No collab server deployment needed"
+          fi
+
+  build-and-deploy:
+    name: Build and Deploy Collab Server
+    runs-on: ubuntu-latest
+    needs: check-affected
+    if: needs.check-affected.outputs.should_deploy == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build collab-server
+        run: pnpm turbo run build --filter=collab-server
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+      # ===================================================================
+      # DEPLOYMENT STEP - Choose one of the following options:
+      # ===================================================================
+
+      # --- OPTION 1: Railway ---
+      # Uncomment and configure for Railway deployment
+      # - name: Deploy to Railway
+      #   uses: bervProject/railway-deploy@main
+      #   with:
+      #     railway_token: ${{ secrets.RAILWAY_TOKEN }}
+      #     service: collab-server
+
+      # --- OPTION 2: Render ---
+      # Uncomment and configure for Render deployment
+      # - name: Deploy to Render
+      #   run: |
+      #     curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      # --- OPTION 3: Fly.io ---
+      # Uncomment and configure for Fly.io deployment
+      # - name: Setup Fly.io CLI
+      #   uses: superfly/flyctl-actions/setup-flyctl@master
+      #
+      # - name: Deploy to Fly.io
+      #   working-directory: apps/collab-server
+      #   run: flyctl deploy --remote-only
+      #   env:
+      #     FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # --- OPTION 4: Docker + Container Registry ---
+      # Uncomment for Docker-based deployment
+      # - name: Build and push Docker image
+      #   working-directory: apps/collab-server
+      #   run: |
+      #     echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      #     docker build -t your-registry/collab-server:${{ github.sha }} .
+      #     docker push your-registry/collab-server:${{ github.sha }}
+
+      # --- OPTION 5: Custom deployment script ---
+      # Uncomment for custom deployment
+      # - name: Deploy to production
+      #   working-directory: apps/collab-server
+      #   run: pnpm run deploy
+      #   env:
+      #     DEPLOY_KEY: ${{ secrets.COLLAB_SERVER_DEPLOY_KEY }}
+
+      # ===================================================================
+
+      - name: Deployment placeholder
+        run: |
+          echo "✅ Collab server built successfully!"
+          echo "📦 Build output available in apps/collab-server/dist"
+          echo ""
+          echo "⚠️  Next steps:"
+          echo "1. Choose a deployment platform (Railway, Render, Fly.io, etc.)"
+          echo "2. Uncomment the appropriate deployment step above"
+          echo "3. Add required secrets to GitHub repository settings"
+          echo ""
+          echo "See .github/workflows/deploy-collab-server.yml for examples"

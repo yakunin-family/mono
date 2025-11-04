@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=www",
+  "outputDirectory": "dist",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": "astro"
+}
