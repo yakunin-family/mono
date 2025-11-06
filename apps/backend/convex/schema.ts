@@ -17,7 +17,6 @@ export type UserProfile = Infer<typeof schemas.tables.userProfile.validator>;
 const teacher = defineTable({
   userId: v.string(), // Better Auth user ID
   createdAt: v.number(),
-  students: v.array(v.string()), // Array of Better Auth user IDs
 }).index("by_userId", ["userId"]);
 export type Teacher = Infer<typeof schemas.tables.teacher.validator>;
 
@@ -34,6 +33,16 @@ const student = defineTable({
 });
 export type Student = Infer<typeof schemas.tables.student.validator>;
 
+const teacherStudents = defineTable({
+  teacherId: v.string(), // Better Auth user ID
+  studentId: v.string(), // Better Auth user ID
+  joinedAt: v.number(),
+})
+  .index("by_teacherId", ["teacherId"])
+  .index("by_studentId", ["studentId"])
+  .index("by_teacher_and_student", ["teacherId", "studentId"]);
+export type TeacherStudent = Infer<typeof schemas.tables.teacherStudents.validator>;
+
 const document = defineTable({
   owner: v.string(), // Better Auth user ID
   title: v.string(),
@@ -46,6 +55,7 @@ const schemas = defineSchema({
   userProfile,
   teacher,
   student,
+  teacherStudents,
   invite,
   document,
 });

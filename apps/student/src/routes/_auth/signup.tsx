@@ -18,6 +18,7 @@ import { useConvex } from "convex/react";
 import { useState } from "react";
 
 import { signUp } from "@/lib/auth-client";
+import { getPendingInvite } from "@/lib/invite-storage";
 
 export const Route = createFileRoute("/_auth/signup")({
   component: SignupPage,
@@ -62,10 +63,16 @@ function SignupPage() {
       }
 
       await convex.mutation(api.userProfiles.create, {
-        role: "teacher",
+        role: "student",
       });
 
-      navigate({ to: "/" });
+      // Check for pending invite
+      const pendingInvite = getPendingInvite();
+      if (pendingInvite) {
+        navigate({ to: `/join/${pendingInvite}` });
+      } else {
+        navigate({ to: "/" });
+      }
     },
   });
 
@@ -98,7 +105,7 @@ function SignupPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Create an Account</CardTitle>
             <CardDescription>
-              Start creating lessons and inviting students
+              Join your teacher and start learning
             </CardDescription>
           </CardHeader>
           <CardContent>

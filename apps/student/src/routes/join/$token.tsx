@@ -7,13 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-  Input,
 } from "@mono/ui";
-import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
@@ -22,340 +16,234 @@ import {
 } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { signUp } from "@/lib/auth-client";
+import { clearPendingInvite, storePendingInvite } from "@/lib/invite-storage";
 
 export const Route = createFileRoute("/join/$token")({
-  ssr: true,
   component: JoinPage,
+  loader: async ({ params, context }) => {
+    // $token is actually the teacherUserId
+    const teacherUserId = params.token;
+
+    // Fetch teacher info for SSR
+    const teacherInfo = await context.convexQueryClient.serverHttpClient?.query(
+      api.teachers.getTeacherByUserId,
+      { userId: teacherUserId },
+    );
+
+    return { teacherInfo };
+  },
 });
 
-type FormValues = {
-  name: string;
-  email: string;
-  password: string;
-};
-
 function JoinPage() {
-  return <div>Invite link is no longer available.</div>;
+  const { token: teacherUserId } = useParams({ from: "/join/$token" });
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const convex = useConvex();
+  const { userId } = Route.useRouteContext();
+  const loaderData = Route.useLoaderData();
+  const [joinSuccess, setJoinSuccess] = useState(false);
 
-  // const { token } = useParams({ from: "/join/$token" });
-  // const navigate = useNavigate();
-  // const queryClient = useQueryClient();
-  // const convex = useConvex();
-  // const { userId } = Route.useRouteContext();
-  // const [globalError, setGlobalError] = useState("");
+  // Check if already enrolled (only if authenticated)
+  const { data: isEnrolled, isLoading: checkingEnrollment } = useQuery({
+    ...convexQuery(api.students.isEnrolledWithTeacher, {
+      teacherUserId,
+    }),
+    enabled: !!userId,
+  });
 
-  // // Fetch student info by invite token
-  // const { data: student, isLoading } = useQuery(
-  //   convexQuery(api.students.getStudentByInviteToken, { token }),
-  // );
+  // Join teacher mutation
+  const joinMutation = useMutation({
+    mutationFn: async () => {
+      return convex.mutation(api.students.joinTeacher, {
+        teacherUserId,
+      });
+    },
+    onSuccess: () => {
+      clearPendingInvite();
+      setJoinSuccess(true);
+      queryClient.invalidateQueries({
+        queryKey: ["convex", api.students.getMyTeachers],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["convex", api.students.isEnrolledWithTeacher],
+      });
 
-  // // Link student to current user (for authenticated users)
-  // const linkStudentMutation = useMutation({
-  //   mutationFn: async () => {
-  //     return convex.mutation(api.students.linkStudentToUser, {
-  //       inviteToken: token,
-  //     });
-  //   },
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({
-  //       queryKey: ["convex", api.userProfiles.getUserProfile],
-  //     });
-  //     navigate({ to: "/" });
-  //   },
-  // });
+      // Redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        navigate({ to: "/" });
+      }, 2000);
+    },
+  });
 
-  // // Student signup form (for unauthenticated users)
-  // const form = useForm({
-  //   defaultValues: {
-  //     name: "",
-  //     email: "",
-  //     password: "",
-  //   } as FormValues,
-  //   onSubmit: async ({ value }) => {
-  //     setGlobalError("");
+  // Handle unauthenticated users - store invite and redirect
+  const handleSignUp = () => {
+    storePendingInvite(teacherUserId);
+    navigate({ to: "/signup" });
+  };
 
-  //     const { data, error } = await signUp.email(
-  //       {
-  //         email: value.email,
-  //         password: value.password,
-  //         name: value.name,
-  //       },
-  //       {
-  //         onError: (ctx) => {
-  //           setGlobalError(ctx.error.message || "Failed to create account");
-  //         },
-  //       },
-  //     );
+  const handleLogin = () => {
+    storePendingInvite(teacherUserId);
+    navigate({ to: "/login" });
+  };
 
-  //     if (error) {
-  //       setGlobalError(error.message || "Failed to create account");
-  //       return;
-  //     }
+  // If teacher not found
+  if (!loaderData.teacherInfo) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-destructive">Invalid Invite</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-muted-foreground">
+              This teacher invite link is invalid. The teacher may not exist or
+              the link is incorrect.
+            </p>
+            <Button onClick={() => navigate({ to: "/" })} className="w-full">
+              Go to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  //     // Create student profile
-  //     await convex.mutation(api.userProfiles.createUserProfile, {
-  //       userId: data.user.id,
-  //       role: "student",
-  //       displayName: value.name,
-  //     });
+  const teacherName = loaderData.teacherInfo.name;
 
-  //     // Link to student record
-  //     await convex.mutation(api.students.linkStudentToUser, {
-  //       inviteToken: token,
-  //     });
+  // User is authenticated
+  if (userId) {
+    if (checkingEnrollment) {
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      );
+    }
 
-  //     navigate({ to: "/" });
-  //   },
-  // });
+    // Already enrolled
+    if (isEnrolled) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Already Enrolled!</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                You're already enrolled with <strong>{teacherName}</strong>.
+              </p>
+              <Button onClick={() => navigate({ to: "/" })} className="w-full">
+                Go to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex min-h-screen items-center justify-center">
-  //       <div className="text-muted-foreground">Loading invite...</div>
-  //     </div>
-  //   );
-  // }
+    // Show success message after joining
+    if (joinSuccess) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Successfully Joined!</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                You've successfully joined <strong>{teacherName}</strong>'s
+                classes. You can now access their lessons.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Redirecting to dashboard...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
 
-  // if (!student) {
-  //   return (
-  //     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
-  //       <Card className="w-full max-w-md">
-  //         <CardHeader>
-  //           <CardTitle className="text-destructive">Invalid Invite</CardTitle>
-  //         </CardHeader>
-  //         <CardContent>
-  //           <p className="mb-4 text-muted-foreground">
-  //             This invite link is invalid or has expired.
-  //           </p>
-  //           <Button onClick={() => navigate({ to: "/" })} className="w-full">
-  //             Go to Home
-  //           </Button>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   );
-  // }
+    // Show accept invite UI
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Join Classes</CardTitle>
+            <CardDescription>
+              <strong>{teacherName}</strong> invited you to join their classes
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-md border bg-muted p-4">
+              <h3 className="mb-2 font-medium">What happens next?</h3>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>• You'll get access to lessons from {teacherName}</li>
+                <li>
+                  • You can collaborate in real-time on language learning
+                  exercises
+                </li>
+                <li>• View and complete assigned lessons</li>
+              </ul>
+            </div>
 
-  // if (student.linkedUserId) {
-  //   return (
-  //     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
-  //       <Card className="w-full max-w-md">
-  //         <CardHeader>
-  //           <CardTitle>Invite Already Used</CardTitle>
-  //         </CardHeader>
-  //         <CardContent>
-  //           <p className="mb-4 text-muted-foreground">
-  //             This invite has already been accepted. If you think this is an
-  //             error, please contact your teacher.
-  //           </p>
-  //           <Button onClick={() => navigate({ to: "/" })} className="w-full">
-  //             Go to Home
-  //           </Button>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   );
-  // }
+            <Button
+              onClick={() => joinMutation.mutate()}
+              disabled={joinMutation.isPending}
+              className="w-full"
+            >
+              {joinMutation.isPending ? "Joining..." : "Accept Invite"}
+            </Button>
 
-  // // User is authenticated - show accept invite flow
-  // if (userId) {
-  //   return (
-  //     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
-  //       <Card className="w-full max-w-md">
-  //         <CardHeader>
-  //           <CardTitle>Accept Student Invitation</CardTitle>
-  //         </CardHeader>
-  //         <CardContent className="space-y-4">
-  //           <div>
-  //             <p className="mb-2 text-muted-foreground">
-  //               You've been invited to join the language learning platform as a
-  //               student!
-  //             </p>
-  //           </div>
+            {joinMutation.isError && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                {joinMutation.error instanceof Error
+                  ? joinMutation.error.message
+                  : "Failed to accept invite. Please try again."}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  //           <div className="rounded-md border bg-muted p-4">
-  //             <h3 className="mb-2 font-medium">What happens next?</h3>
-  //             <ul className="space-y-1 text-sm text-muted-foreground">
-  //               <li>• Your account will be linked to this student profile</li>
-  //               <li>• You'll get access to lessons from your teacher</li>
-  //               <li>
-  //                 • You can collaborate in real-time on language learning
-  //                 exercises
-  //               </li>
-  //             </ul>
-  //           </div>
+  // User is not authenticated - show landing with signup/login options
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>You're Invited!</CardTitle>
+          <CardDescription>
+            <strong>{teacherName}</strong> invited you to join their classes
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-md border bg-muted p-4">
+            <h3 className="mb-2 font-medium">What you'll get:</h3>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li>• Access to interactive language lessons</li>
+              <li>• Real-time collaboration with your teacher</li>
+              <li>• Track your learning progress</li>
+            </ul>
+          </div>
 
-  //           <Button
-  //             onClick={() => linkStudentMutation.mutate()}
-  //             disabled={linkStudentMutation.isPending}
-  //             className="w-full"
-  //           >
-  //             {linkStudentMutation.isPending ? "Joining..." : "Accept Invite"}
-  //           </Button>
+          <div className="space-y-3">
+            <Button onClick={handleSignUp} className="w-full">
+              Sign Up to Join
+            </Button>
 
-  //           {linkStudentMutation.isError && (
-  //             <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-  //               {linkStudentMutation.error instanceof Error
-  //                 ? linkStudentMutation.error.message
-  //                 : "Failed to accept invite. Please try again."}
-  //             </div>
-  //           )}
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   );
-  // }
-
-  // // User is not authenticated - show student signup form
-  // return (
-  //   <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
-  //     <div className="flex w-full max-w-sm flex-col gap-6">
-  //       <Card>
-  //         <CardHeader className="text-center">
-  //           <CardTitle className="text-xl">
-  //             Create Your Student Account
-  //           </CardTitle>
-  //           <CardDescription>
-  //             You've been invited to join the language learning platform
-  //           </CardDescription>
-  //         </CardHeader>
-  //         <CardContent>
-  //           <form
-  //             onSubmit={(e) => {
-  //               e.preventDefault();
-  //               e.stopPropagation();
-  //               form.handleSubmit();
-  //             }}
-  //           >
-  //             <div className="grid gap-6">
-  //               <div className="grid gap-6">
-  //                 <form.Field
-  //                   name="name"
-  //                   validators={{
-  //                     onBlur: ({ value }) => {
-  //                       if (!value) return "Name is required";
-  //                       if (value.length < 2)
-  //                         return "Name must be at least 2 characters";
-  //                       return undefined;
-  //                     },
-  //                   }}
-  //                 >
-  //                   {(field) => (
-  //                     <Field>
-  //                       <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-  //                       <Input
-  //                         id={field.name}
-  //                         name={field.name}
-  //                         type="text"
-  //                         placeholder="John Doe"
-  //                         value={field.state.value}
-  //                         onBlur={field.handleBlur}
-  //                         onChange={(e) => field.handleChange(e.target.value)}
-  //                         disabled={form.state.isSubmitting}
-  //                       />
-  //                       <FieldError
-  //                         errors={field.state.meta.errors.map((e) => ({
-  //                           message: e,
-  //                         }))}
-  //                       />
-  //                     </Field>
-  //                   )}
-  //                 </form.Field>
-
-  //                 <form.Field
-  //                   name="email"
-  //                   validators={{
-  //                     onBlur: ({ value }) => {
-  //                       if (!value) return "Email is required";
-  //                       if (!value.includes("@"))
-  //                         return "Invalid email address";
-  //                       return undefined;
-  //                     },
-  //                   }}
-  //                 >
-  //                   {(field) => (
-  //                     <Field>
-  //                       <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-  //                       <Input
-  //                         id={field.name}
-  //                         name={field.name}
-  //                         type="email"
-  //                         placeholder="m@example.com"
-  //                         value={field.state.value}
-  //                         onBlur={field.handleBlur}
-  //                         onChange={(e) => field.handleChange(e.target.value)}
-  //                         disabled={form.state.isSubmitting}
-  //                       />
-  //                       <FieldError
-  //                         errors={field.state.meta.errors.map((e) => ({
-  //                           message: e,
-  //                         }))}
-  //                       />
-  //                     </Field>
-  //                   )}
-  //                 </form.Field>
-
-  //                 <form.Field
-  //                   name="password"
-  //                   validators={{
-  //                     onBlur: ({ value }) => {
-  //                       if (!value) return "Password is required";
-  //                       if (value.length < 8)
-  //                         return "Password must be at least 8 characters";
-  //                       return undefined;
-  //                     },
-  //                   }}
-  //                 >
-  //                   {(field) => (
-  //                     <Field>
-  //                       <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-  //                       <Input
-  //                         id={field.name}
-  //                         name={field.name}
-  //                         type="password"
-  //                         value={field.state.value}
-  //                         onBlur={field.handleBlur}
-  //                         onChange={(e) => field.handleChange(e.target.value)}
-  //                         disabled={form.state.isSubmitting}
-  //                       />
-  //                       <FieldDescription>
-  //                         Must be at least 8 characters
-  //                       </FieldDescription>
-  //                       <FieldError
-  //                         errors={field.state.meta.errors.map((e) => ({
-  //                           message: e,
-  //                         }))}
-  //                       />
-  //                     </Field>
-  //                   )}
-  //                 </form.Field>
-
-  //                 {globalError && (
-  //                   <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-  //                     {globalError}
-  //                   </div>
-  //                 )}
-
-  //                 <Button
-  //                   type="submit"
-  //                   className="w-full"
-  //                   disabled={form.state.isSubmitting}
-  //                 >
-  //                   {form.state.isSubmitting
-  //                     ? "Creating account..."
-  //                     : "Create account and join"}
-  //                 </Button>
-  //               </div>
-  //             </div>
-  //           </form>
-  //         </CardContent>
-  //       </Card>
-  //       <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
-  //         By continuing, you agree to our <a href="#">Terms of Service</a> and{" "}
-  //         <a href="#">Privacy Policy</a>.
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
+            <div className="text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <button
+                onClick={handleLogin}
+                className="text-primary underline underline-offset-4 hover:text-primary/80"
+              >
+                Log in
+              </button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

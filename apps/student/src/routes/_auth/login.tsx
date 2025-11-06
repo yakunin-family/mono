@@ -20,6 +20,7 @@ import {
 import { useState } from "react";
 
 import { signIn } from "@/lib/auth-client";
+import { getPendingInvite } from "@/lib/invite-storage";
 
 export const Route = createFileRoute("/_auth/login")({
   beforeLoad: ({ context }) => {
@@ -52,7 +53,13 @@ function LoginPage() {
             setGlobalError(ctx.error.message || "Invalid email or password");
           },
           onSuccess: () => {
-            navigate({ to: "/" });
+            // Check for pending invite
+            const pendingInvite = getPendingInvite();
+            if (pendingInvite) {
+              navigate({ to: `/join/${pendingInvite}` });
+            } else {
+              navigate({ to: "/" });
+            }
           },
         },
       );

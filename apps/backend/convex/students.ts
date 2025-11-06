@@ -156,3 +156,140 @@ export const createStudentInviteLinkToken = mutation({
 //     return studentRecords;
 //   },
 // });
+
+// Join a teacher immediately (no approval needed)
+export const joinTeacher = mutation({
+  args: {
+    teacherUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const userId = user._id;
+
+    // Check if teacher exists
+    const teacher = await ctx.db
+      .query("teacher")
+      .withIndex("by_userId", (q) => q.eq("userId", args.teacherUserId))
+      .first();
+
+    if (!teacher) {
+      throw new Error("Teacher not found");
+    }
+
+    // Check if already enrolled
+    const existing = await ctx.db
+      .query("teacherStudents")
+      .withIndex("by_teacher_and_student", (q) =>
+        q.eq("teacherId", args.teacherUserId).eq("studentId", userId)
+      )
+      .first();
+
+    if (existing) {
+      return { success: true, alreadyEnrolled: true };
+    }
+
+    // Create enrollment
+    await ctx.db.insert("teacherStudents", {
+      teacherId: args.teacherUserId,
+      studentId: userId,
+      joinedAt: Date.now(),
+    });
+
+    // Ensure student record exists
+    const studentRecord = await ctx.db
+      .query("student")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .first();
+
+    if (!studentRecord) {
+      await ctx.db.insert("student", {
+        userId,
+        createdAt: Date.now(),
+      });
+    }
+
+    // Ensure user has student role
+    const userProfile = await ctx.db
+      .query("userProfile")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+
+    if (userProfile && !userProfile.roles.includes("student")) {
+      await ctx.db.patch(userProfile._id, {
+        roles: [...userProfile.roles, "student"],
+      });
+    }
+
+    return { success: true, alreadyEnrolled: false };
+  },
+});
+
+// Get all teachers the current user is enrolled with
+export const getMyTeachers = query({
+  handler: async (ctx) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) {
+      return [];
+    }
+
+    const userId = user._id;
+
+    // Get all enrollments
+    const enrollments = await ctx.db
+      .query("teacherStudents")
+      .withIndex("by_studentId", (q) => q.eq("studentId", userId))
+      .collect();
+
+    // Get teacher profiles
+    const teachersWithProfiles = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const teacher = await ctx.db
+          .query("teacher")
+          .withIndex("by_userId", (q) => q.eq("userId", enrollment.teacherId))
+          .first();
+
+        const userProfile = await ctx.db
+          .query("userProfile")
+          .withIndex("by_userId", (q) => q.eq("userId", enrollment.teacherId))
+          .first();
+
+        return {
+          teacherId: enrollment.teacherId,
+          displayName: userProfile?.userId || enrollment.teacherId,
+          joinedAt: enrollment.joinedAt,
+          teacher,
+        };
+      })
+    );
+
+    return teachersWithProfiles;
+  },
+});
+
+// Check if the current user is enrolled with a specific teacher
+export const isEnrolledWithTeacher = query({
+  args: {
+    teacherUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) {
+      return false;
+    }
+
+    const userId = user._id;
+
+    const enrollment = await ctx.db
+      .query("teacherStudents")
+      .withIndex("by_teacher_and_student", (q) =>
+        q.eq("teacherId", args.teacherUserId).eq("studentId", userId)
+      )
+      .first();
+
+    return !!enrollment;
+  },
+});

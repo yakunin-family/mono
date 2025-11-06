@@ -1,7 +1,4 @@
-import { useConvex } from "@convex-dev/react-query";
-import { api } from "@mono/backend";
 import { Button } from "@mono/ui";
-import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -11,23 +8,20 @@ export const Route = createFileRoute("/_protected/")({
   component: DashboardPage,
 });
 
-const createLink = (token: string) => {
+const createLink = (userId: string) => {
   if (process.env.NODE_ENV === "development") {
-    return `http://localhost:3001/join/${token}`;
+    return `http://localhost:3001/join/${userId}`;
   }
 
-  return `https://student.untitled.nikita-yakunin.dev/join/${token}`;
+  return `https://student.untitled.nikita-yakunin.dev/join/${userId}`;
 };
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const convex = useConvex();
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const { userId } = Route.useRouteContext();
+  const [copySuccess, setCopySuccess] = useState(false);
 
-  const createStudentMutation = useMutation({
-    mutationFn: async () => convex.mutation(api.invite.getToken, {}),
-    onSuccess: (token) => setInviteLink(createLink(token)),
-  });
+  const inviteLink = createLink(userId);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -53,32 +47,36 @@ function DashboardPage() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 bg-muted">
-        <Button onClick={() => createStudentMutation.mutate()}>
-          Invite Student {createStudentMutation.isPending && "..."}
-        </Button>
-        {inviteLink && (
-          <div className="mt-4">
-            <p className="mb-2">Invite Link:</p>
+      <main className="flex-1 bg-muted p-6">
+        <div className="mx-auto max-w-4xl space-y-6">
+          <div className="rounded-lg border bg-background p-6">
+            <h2 className="mb-4 text-lg font-semibold">
+              Invite Students to Join Your Classes
+            </h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Share this permanent link with your students. They can use it
+              anytime to join your classes.
+            </p>
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 readOnly
                 value={inviteLink}
-                className="w-full rounded border px-3 py-2"
+                className="flex-1 rounded border bg-muted px-3 py-2 text-sm"
               />
               <Button
                 variant="outline"
                 onClick={() => {
                   navigator.clipboard.writeText(inviteLink);
-                  alert("Invite link copied to clipboard!");
+                  setCopySuccess(true);
+                  setTimeout(() => setCopySuccess(false), 2000);
                 }}
               >
-                Copy
+                {copySuccess ? "Copied!" : "Copy"}
               </Button>
             </div>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
