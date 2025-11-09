@@ -16,7 +16,7 @@ This is a **pnpm monorepo** managed by **Turborepo** with the following workspac
 
 ### Packages
 
-- **`packages/lesson-editor`** - Shared Tiptap-based collaborative lesson editor
+- **`packages/editor`** - Shared Tiptap-based collaborative document editor
 - **`packages/ui`** - Shared React component library (using shadcn/ui)
 - **`packages/eslint`** - Shared ESLint configurations
 - **`packages/typescript-config`** - Shared TypeScript configurations
@@ -97,17 +97,17 @@ pnpm test
 
 - **Framework**: TanStack Start (React SSR with file-based routing)
 - **Port**: 3000 (localhost:3000)
-- **Purpose**: Teacher dashboard, lesson creation, student management
+- **Purpose**: Teacher dashboard, document creation, student management
 - **Features**:
-  - Create and manage lessons
+  - Create and manage documents
   - Add and manage students via invite links
-  - Share lessons with students
-  - Full lesson editing capabilities
+  - Share documents with students
+  - Full document editing capabilities
   - Role switching to student app (if user has both roles)
 
 **Key Routes**:
 - `/` - Teacher dashboard
-- `/lesson/:id` - Lesson editor (full edit access)
+- `/document/:id` - Document editor (full edit access)
 - `/teacher/subscribe` - Teacher activation/subscription
 - `/login`, `/signup` - Authentication
 
@@ -117,14 +117,14 @@ pnpm test
 - **Port**: 3001 (localhost:3001)
 - **Purpose**: Student learning interface
 - **Features**:
-  - View assigned lessons
-  - Collaborative lesson viewing/editing (limited)
+  - View assigned documents
+  - Collaborative document viewing/editing (limited)
   - Student onboarding via invite links
   - Role switching to teacher app (if user has both roles)
 
 **Key Routes**:
 - `/` - Student dashboard
-- `/lesson/:id` - Lesson viewer (limited edit access)
+- `/document/:id` - Document viewer (limited edit access)
 - `/join/:token` - Student onboarding via teacher invite
 - `/login` - Authentication
 
@@ -135,7 +135,7 @@ pnpm test
 - **Authentication**: Better Auth via Convex (shared session across apps)
 - **Styling**: Tailwind CSS v4
 - **Forms**: TanStack Form
-- **Editor**: `@mono/lesson-editor` package (shared collaborative editor)
+- **Editor**: `@mono/editor` package (shared collaborative editor)
 - **Environment Variables**: Type-safe env vars using `@t3-oss/env-core`
 - **Path Aliases**: `@/` references `src/`
 
@@ -164,7 +164,7 @@ defineTable({
 }).index("userId", ["userId"])
 ```
 
-### Lesson Editor Package (`packages/lesson-editor`)
+### Document Editor Package (`packages/editor`)
 
 - **Purpose**: Shared collaborative rich-text editor used by both teacher and student apps
 - **Built with**:
@@ -172,10 +172,10 @@ defineTable({
   - Hocuspocus (WebSocket-based collaboration provider)
   - Yjs (CRDT for real-time collaboration)
 - **Exports**:
-  - `LessonEditor` - Main editor component with toolbar
-  - `LessonEditorToolbar` - Standalone toolbar component
+  - `DocumentEditor` - Main editor component with toolbar
+  - `DocumentEditorToolbar` - Standalone toolbar component
 - **Props**:
-  - `lessonId` - Unique lesson identifier for collaboration
+  - `documentId` - Unique document identifier for collaboration
   - `canEdit` - Boolean to control edit permissions
   - `websocketUrl` - Optional WebSocket server URL (default: ws://127.0.0.1:1234)
   - `onStatusChange` - Callback for connection status changes
@@ -365,7 +365,7 @@ Each Vercel app has a `vercel.json` file configuring monorepo builds:
    - Route tree is auto-generated; restart dev server after adding routes
 
 3. **Shared Editor**:
-   - Both apps use `@mono/lesson-editor` package for lesson viewing/editing
+   - Both apps use `@mono/editor` package for document viewing/editing
    - Same editor component, different permissions (canEdit prop)
    - Real-time collaboration works across both apps via Hocuspocus WebSocket server
 
@@ -376,7 +376,7 @@ Each Vercel app has a `vercel.json` file configuring monorepo builds:
 
 5. **Workspace References**:
    - Apps reference packages via `workspace:*` protocol
-   - Changes to `@mono/lesson-editor` or `@mono/ui` require rebuilding affected apps
+   - Changes to `@mono/editor` or `@mono/ui` require rebuilding affected apps
 
 6. **Turborepo Caching**: Build outputs are cached. Use `turbo build --force` to bypass cache.
 

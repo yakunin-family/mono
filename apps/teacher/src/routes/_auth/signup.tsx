@@ -98,7 +98,7 @@ function SignupPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Create a Teacher Account</CardTitle>
             <CardDescription>
-              Start creating lessons and inviting students
+              Start creating documents and inviting students
             </CardDescription>
           </CardHeader>
           <CardContent>

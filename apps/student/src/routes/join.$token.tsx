@@ -152,7 +152,7 @@ function JoinPage() {
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
                 You've successfully joined <strong>{teacherName}</strong>'s
-                classes. You can now access their lessons.
+                classes. You can now access their documents.
               </p>
               <p className="text-sm text-muted-foreground">
                 Redirecting to dashboard...
@@ -177,12 +177,12 @@ function JoinPage() {
             <div className="rounded-md border bg-muted p-4">
               <h3 className="mb-2 font-medium">What happens next?</h3>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• You'll get access to lessons from {teacherName}</li>
+                <li>• You'll get access to documents from {teacherName}</li>
                 <li>
                   • You can collaborate in real-time on language learning
                   exercises
                 </li>
-                <li>• View and complete assigned lessons</li>
+                <li>• View and complete assigned documents</li>
               </ul>
             </div>
 
@@ -221,7 +221,7 @@ function JoinPage() {
           <div className="rounded-md border bg-muted p-4">
             <h3 className="mb-2 font-medium">What you'll get:</h3>
             <ul className="space-y-1 text-sm text-muted-foreground">
-              <li>• Access to interactive language lessons</li>
+              <li>• Access to interactive language documents</li>
               <li>• Real-time collaboration with your teacher</li>
               <li>• Track your learning progress</li>
             </ul>
