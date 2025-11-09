@@ -18,8 +18,6 @@ export const getTeacherByUserId = query({
       return null;
     }
 
-    console.log("Found teacher record:", teacher);
-
     const teacherUser = await authComponent.getAnyUserById(ctx, args.userId);
 
     if (!teacherUser) {

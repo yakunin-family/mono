@@ -1,0 +1,5 @@
+.div[data-type="exerciseTaskDefinition"] p:first-of-type::before {
+  content: "Exercise Task";
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
