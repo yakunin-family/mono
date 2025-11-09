@@ -17,6 +17,7 @@ import { Route as ProtectedCollabRouteImport } from './routes/_protected/collab'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ProtectedDocumentIdRouteImport } from './routes/_protected/document.$id'
 
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
@@ -56,6 +57,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedDocumentIdRoute = ProtectedDocumentIdRouteImport.update({
+  id: '/document/$id',
+  path: '/document/$id',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/collab': typeof ProtectedCollabRoute
   '/editor': typeof ProtectedEditorRoute
   '/': typeof ProtectedIndexRoute
+  '/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/collab': typeof ProtectedCollabRoute
   '/editor': typeof ProtectedEditorRoute
   '/': typeof ProtectedIndexRoute
+  '/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -82,13 +90,28 @@ export interface FileRoutesById {
   '/_protected/collab': typeof ProtectedCollabRoute
   '/_protected/editor': typeof ProtectedEditorRoute
   '/_protected/': typeof ProtectedIndexRoute
+  '/_protected/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/signup' | '/collab' | '/editor' | '/' | '/api/auth/$'
+  fullPaths:
+    | '/login'
+    | '/signup'
+    | '/collab'
+    | '/editor'
+    | '/'
+    | '/document/$id'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/signup' | '/collab' | '/editor' | '/' | '/api/auth/$'
+  to:
+    | '/login'
+    | '/signup'
+    | '/collab'
+    | '/editor'
+    | '/'
+    | '/document/$id'
+    | '/api/auth/$'
   id:
     | '__root__'
     | '/_auth'
@@ -98,6 +121,7 @@ export interface FileRouteTypes {
     | '/_protected/collab'
     | '/_protected/editor'
     | '/_protected/'
+    | '/_protected/document/$id'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -165,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_protected/document/$id': {
+      id: '/_protected/document/$id'
+      path: '/document/$id'
+      fullPath: '/document/$id'
+      preLoaderRoute: typeof ProtectedDocumentIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
   }
 }
 
@@ -184,12 +215,14 @@ interface ProtectedRouteChildren {
   ProtectedCollabRoute: typeof ProtectedCollabRoute
   ProtectedEditorRoute: typeof ProtectedEditorRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
+  ProtectedDocumentIdRoute: typeof ProtectedDocumentIdRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedCollabRoute: ProtectedCollabRoute,
   ProtectedEditorRoute: ProtectedEditorRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
+  ProtectedDocumentIdRoute: ProtectedDocumentIdRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

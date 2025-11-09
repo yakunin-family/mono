@@ -46,6 +46,7 @@ export type TeacherStudent = Infer<typeof schemas.tables.teacherStudents.validat
 const document = defineTable({
   owner: v.string(), // Better Auth user ID
   title: v.string(),
+  content: v.optional(v.bytes()), // Serialized Yjs document state
   createdAt: v.number(),
   updatedAt: v.number(),
 }).index("by_owner", ["owner"]);

@@ -13,6 +13,7 @@
     "@convex-dev/react-query": "0.0.0-alpha.11",
     "@hocuspocus/provider": "^3.4.0",
     "@mono/backend": "workspace:*",
+    "@mono/editor": "workspace:*",
     "@mono/ui": "workspace:*",
     "@t3-oss/env-core": "^0.13.8",
     "@tailwindcss/vite": "^4.0.6",

@@ -29,6 +29,7 @@ interface MyRouterContext {
   queryClient: QueryClient;
   convexQueryClient: ConvexQueryClient;
   user?: UserProfile;
+  token?: string;
 }
 
 // Get auth information for SSR using available cookies

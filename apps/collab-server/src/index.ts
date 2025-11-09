@@ -1,43 +1,64 @@
+import { api } from "@mono/backend";
 import { Server } from "@hocuspocus/server";
+import { ConvexHttpClient } from "convex/browser";
+import dotenv from "dotenv";
+import * as Y from "yjs";
+
+// Load environment variables
+dotenv.config({ path: ".env.local" });
+
+// Initialize Convex client
+const convexUrl = process.env.CONVEX_URL;
+if (!convexUrl) {
+  console.error("CONVEX_URL environment variable is not set");
+  process.exit(1);
+}
+
+// Store authentication tokens per connection
+const connectionTokens = new Map<string, string>();
 
 const server = Server.configure({
   port: 1234,
 
   // Authentication hook
   async onAuthenticate(data) {
-    const { token } = data;
+    const { token, documentName, socketId } = data;
 
-    // TODO: Integrate with Convex to verify lesson access
-    // For now, we'll allow all connections for development
-    //
-    // Production implementation should:
-    // 1. Verify the auth token with Better Auth/Convex
-    // 2. Get the user ID from the token
-    // 3. Extract lesson ID from data.documentName
-    // 4. Query Convex to check if user can access the lesson:
-    //    - Check if user is the teacher who owns the lesson
-    //    - OR check if user is a student with lessonAccess record
-    // 5. Reject connection if access denied
-    //
-    // Example:
-    // const userId = await verifyAuthToken(token);
-    // const lessonId = data.documentName;
-    // const hasAccess = await checkLessonAccess(userId, lessonId);
-    // if (!hasAccess) {
-    //   throw new Error("Access denied to this lesson");
-    // }
+    if (!token) {
+      console.error("Authentication failed: No token provided");
+      throw new Error("Authentication token required");
+    }
 
-    console.log("Authentication request:", {
-      token: token ? "present" : "none",
-      document: data.documentName,
-    });
+    try {
+      // Create a temporary authenticated client to verify access
+      const authClient = new ConvexHttpClient(convexUrl);
+      authClient.setAuth(token);
 
-    return {
-      user: {
-        id: token || "anonymous",
-        name: token || "Anonymous User",
-      },
-    };
+      // Verify the user can access this document
+      // This will throw if auth is invalid or user lacks access
+      const document = await authClient.query(api.documents.getDocument, {
+        documentId: documentName,
+      });
+
+      // Store token for this connection
+      connectionTokens.set(socketId, token);
+
+      console.log("Authentication successful:", {
+        document: documentName,
+        socketId: socketId,
+        owner: document.owner,
+      });
+
+      return {
+        user: {
+          id: document.owner,
+          name: document.owner,
+        },
+      };
+    } catch (error) {
+      console.error("Authentication failed:", error);
+      throw new Error("Access denied to this document");
+    }
   },
 
   // Handle document creation
@@ -70,33 +91,90 @@ const server = Server.configure({
       document: data.documentName,
       socketId: data.socketId,
     });
+
+    // Clean up stored token
+    connectionTokens.delete(data.socketId);
   },
 
-  // Optional: Persist documents to database
-  // Uncomment and implement when ready to add persistence
-  /*
+  // Persist documents to database
   async onStoreDocument(data) {
-    // Store the document in your database
-    // data.document contains the Y.Doc
-    // data.documentName is the document identifier (lesson ID)
-    const update = Y.encodeStateAsUpdate(data.document);
-    // await convex.mutation(api.lessons.saveLessonContent, {
-    //   lessonId: data.documentName,
-    //   content: Array.from(update),
-    // });
+    try {
+      // Get the auth token for this connection
+      const token = connectionTokens.get(data.socketId);
+
+      if (!token) {
+        console.error("No auth token for connection:", data.socketId);
+        return;
+      }
+
+      // Store the document in Convex
+      const update = Y.encodeStateAsUpdate(data.document);
+
+      console.log("Storing document:", {
+        documentName: data.documentName,
+        size: update.length,
+        socketId: data.socketId,
+      });
+
+      // Create authenticated client for this request
+      const authClient = new ConvexHttpClient(convexUrl);
+      authClient.setAuth(token);
+
+      // Convert Uint8Array to ArrayBuffer
+      const arrayBuffer = update.buffer.slice(
+        update.byteOffset,
+        update.byteOffset + update.byteLength,
+      ) as ArrayBuffer;
+
+      await authClient.mutation(api.documents.saveDocumentContent, {
+        documentId: data.documentName,
+        content: arrayBuffer,
+      });
+
+      console.log("Document stored successfully:", data.documentName);
+    } catch (error) {
+      console.error("Error storing document:", error);
+      // Don't throw - we don't want to crash the server
+    }
   },
 
   async onLoadDocument(data) {
-    // Load the document from your database
-    // const stored = await convex.query(api.lessons.getLessonContent, {
-    //   lessonId: data.documentName,
-    // });
-    // if (stored?.content) {
-    //   Y.applyUpdate(data.document, new Uint8Array(stored.content));
-    // }
+    try {
+      console.log("Loading document:", data.documentName);
+
+      // Get the auth token for this connection
+      const token = connectionTokens.get(data.socketId);
+
+      if (!token) {
+        console.warn("No auth token for connection, loading empty document");
+        return data.document;
+      }
+
+      // Create authenticated client for this request
+      const authClient = new ConvexHttpClient(convexUrl);
+      authClient.setAuth(token);
+
+      // Load the document from Convex
+      const content = await authClient.query(api.documents.loadDocumentContent, {
+        documentId: data.documentName,
+      });
+
+      if (content) {
+        console.log("Document loaded from database:", {
+          documentName: data.documentName,
+          size: content.byteLength,
+        });
+        Y.applyUpdate(data.document, new Uint8Array(content));
+      } else {
+        console.log("No stored content for document:", data.documentName);
+      }
+    } catch (error) {
+      console.error("Error loading document:", error);
+      // Don't throw - return empty document if load fails
+    }
+
     return data.document;
   },
-  */
 });
 
 server.listen();

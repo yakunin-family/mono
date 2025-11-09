@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@hocuspocus/server": "^2.13.6",
+    "@mono/backend": "workspace:*",
+    "convex": "^1.27.3",
+    "dotenv": "^16.0.0",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.21"
   },
