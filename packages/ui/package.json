@@ -11,14 +11,13 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./dist/styles.css"
   },
   "files": [
-    "dist",
-    "src/styles.css"
+    "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
     "dev": "tsup --watch",
     "check-types": "tsc --project tsconfig.json --noEmit"
   },
@@ -44,6 +43,7 @@
   "devDependencies": {
     "@mono/eslint": "workspace:*",
     "@mono/typescript-config": "workspace:*",
+    "@tailwindcss/cli": "^4.0.6",
     "@types/react": "^19.2.0",
     "eslint": "^9.34.0",
     "react": "^19.2.0",

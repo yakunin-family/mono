@@ -5,6 +5,7 @@ import {
 } from "@tiptap/react";
 import { TrashIcon } from "lucide-react";
 import { useMemo } from "react";
+import { Button } from "@mono/ui";
 
 export function ExerciseView({ getPos, editor }: NodeViewProps) {
   // Calculate exercise number based on position in document
@@ -25,25 +26,43 @@ export function ExerciseView({ getPos, editor }: NodeViewProps) {
     return count + 1;
   }, [editor.state.doc, getPos]);
 
+  const handleDelete = () => {
+    if (typeof getPos !== "function") return;
+    const pos = getPos();
+    if (pos === undefined) return;
+
+    editor.commands.deleteRange({
+      from: pos,
+      to: pos + editor.state.doc.nodeAt(pos)!.nodeSize,
+    });
+  };
+
   return (
-    <NodeViewWrapper className="block group outline">
-      <div className="">
-        <div className="flex gap-2 items-center justify-between">
-          <span className="font-semibold" contentEditable={false}>
+    <NodeViewWrapper className="my-4 block group">
+      <div className="rounded-lg border border-border/50 bg-accent/5 p-4 transition-all hover:border-border hover:bg-accent/10 hover:shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <span
+            className="text-sm font-semibold text-foreground"
+            contentEditable={false}
+          >
             Exercise {exerciseNumber}
           </span>
-          <div className="group-hover:opacity-100 opacity-0 transition-opacity flex gap-2">
-            <button
-              className="p-1 hover:bg-gray-100 rounded"
+          <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="h-6 w-6 text-muted-foreground hover:text-destructive"
               contentEditable={false}
+              onClick={handleDelete}
+              title="Delete exercise"
             >
-              <TrashIcon className="w-4 h-4" />
-            </button>
+              <TrashIcon className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
 
-        <div className="">
-          <NodeViewContent className="outline-none" />
+        <div className="text-sm">
+          <NodeViewContent className="outline-none [&_.tiptap]:outline-none" />
         </div>
       </div>
     </NodeViewWrapper>

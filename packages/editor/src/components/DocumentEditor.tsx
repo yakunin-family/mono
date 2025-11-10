@@ -41,7 +41,9 @@ export function DocumentEditor({
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure(),
+      StarterKit.configure({
+        codeBlock: false, // Disable code blocks as they're not needed
+      }),
       Collaboration.configure({
         document: new Y.Doc(),
       }),
@@ -113,18 +115,20 @@ export function DocumentEditor({
 
   if (!editor) {
     return (
-      <div className="p-4 text-center text-gray-500">Loading editor...</div>
+      <div className="p-8 text-center text-sm text-muted-foreground">
+        Loading editor...
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {canEdit && <DocumentEditorToolbar editor={editor} />}
 
-      <div className="rounded-lg border bg-card">
+      <div className="group rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md">
         <EditorContent
           editor={editor}
-          className="prose prose-sm max-w-none p-4 dark:prose-invert [&_.tiptap]:min-h-[400px] [&_.tiptap]:outline-none"
+          className="p-6 [&_.tiptap]:min-h-[400px] [&_.tiptap]:outline-none"
         />
       </div>
 
@@ -139,12 +143,12 @@ function StatusIndicator({
   status: "connecting" | "connected" | "disconnected";
 }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-gray-600">
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
       <div
-        className={cn("size-2 rounded-full bg-gray-500", {
-          "bg-green-500": status === "connected",
-          "bg-yellow-500": status === "connecting",
-          "bg-red-500": status === "disconnected",
+        className={cn("size-2 rounded-full transition-colors", {
+          "bg-emerald-500 dark:bg-emerald-400": status === "connected",
+          "bg-amber-500 dark:bg-amber-400": status === "connecting",
+          "bg-red-500 dark:bg-red-400": status === "disconnected",
         })}
       />
       <span className="capitalize">{status}</span>

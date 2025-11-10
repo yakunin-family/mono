@@ -82,7 +82,7 @@ export const SlashCommandMenu = forwardRef<any, SlashCommandMenuProps>(
     }));
 
     return (
-      <div className="z-50 w-56 rounded-md border bg-popover p-1 shadow-md animate-in fade-in-50 slide-in-from-bottom-2">
+      <div className="z-50 w-64 rounded-lg border bg-popover p-1.5 shadow-lg animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
         <Command>
           <CommandList>
             {props.items.length > 0 ? (
@@ -99,18 +99,18 @@ export const SlashCommandMenu = forwardRef<any, SlashCommandMenuProps>(
                     onSelect={() => selectItem(index)}
                     className={
                       index === selectedIndex
-                        ? "bg-accent text-accent-foreground"
-                        : ""
+                        ? "bg-accent text-accent-foreground cursor-pointer"
+                        : "cursor-pointer"
                     }
                   >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    <span>{item.title}</span>
+                    <item.icon className="mr-2 h-4 w-4 shrink-0 opacity-70" />
+                    <span className="text-sm">{item.title}</span>
                   </CommandItem>
                 </div>
               ))
             ) : (
-              <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                No results
+              <div className="px-3 py-2 text-center text-sm text-muted-foreground">
+                No results found
               </div>
             )}
           </CommandList>

@@ -11,7 +11,9 @@
   "dependencies": {
     "@convex-dev/better-auth": "^0.9.6",
     "@convex-dev/react-query": "0.0.0-alpha.11",
+    "@hocuspocus/provider": "^3.4.0",
     "@mono/backend": "workspace:*",
+    "@mono/editor": "workspace:*",
     "@mono/ui": "workspace:*",
     "@t3-oss/env-core": "^0.13.8",
     "@tailwindcss/vite": "^4.0.6",
@@ -25,7 +27,6 @@
     "@tanstack/react-router-ssr-query": "^1.131.7",
     "@tanstack/react-start": "^1.132.0",
     "@tanstack/router-plugin": "^1.132.0",
-    "@hocuspocus/provider": "^3.4.0",
     "@tiptap/extension-collaboration": "^3.10.2",
     "@tiptap/react": "^3.10.2",
     "@tiptap/starter-kit": "^3.10.2",
@@ -33,6 +34,7 @@
     "convex": "^1.27.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "tailwindcss": "^4.0.6",
     "vite-tsconfig-paths": "^5.1.4",
     "yjs": "^13.6.21",
     "zod": "^4.1.11"

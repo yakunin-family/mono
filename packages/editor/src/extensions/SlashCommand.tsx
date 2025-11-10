@@ -124,18 +124,6 @@ export const SlashCommand = Extension.create({
               },
             },
             {
-              title: "Code Block",
-              icon: Code,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .toggleCodeBlock()
-                  .run();
-              },
-            },
-            {
               title: "Table",
               icon: Table,
               command: ({ editor, range }) => {

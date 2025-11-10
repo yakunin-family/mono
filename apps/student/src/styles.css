@@ -1,2 +1,4 @@
+@import "tailwindcss";
+
 @import '@mono/ui/styles.css';
-@source './**/*.{js,ts,jsx,tsx}';
+@import '@mono/editor/styles.css';

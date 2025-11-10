@@ -11,6 +11,7 @@ import {
   QuoteIcon,
   StrikethroughIcon,
 } from "lucide-react";
+import { Button, Separator } from "@mono/ui";
 
 export interface DocumentEditorToolbarProps {
   editor: Editor;
@@ -18,96 +19,126 @@ export interface DocumentEditorToolbarProps {
 
 export function DocumentEditorToolbar({ editor }: DocumentEditorToolbarProps) {
   return (
-    <div className="flex flex-wrap gap-1 rounded-lg border bg-card p-2">
-      <ToolbarButton
+    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border bg-card p-1.5">
+      <Button
         onClick={() => editor.chain().focus().toggleBold().run()}
-        active={editor.isActive("bold")}
+        variant="ghost"
+        size="icon-sm"
         title="Bold"
+        data-active={editor.isActive("bold")}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <BoldIcon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        active={editor.isActive("italic")}
+        variant="ghost"
+        size="icon-sm"
         title="Italic"
+        data-active={editor.isActive("italic")}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <ItalicIcon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleStrike().run()}
-        active={editor.isActive("strike")}
+        variant="ghost"
+        size="icon-sm"
         title="Strikethrough"
+        data-active={editor.isActive("strike")}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <StrikethroughIcon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleCode().run()}
-        active={editor.isActive("code")}
+        variant="ghost"
+        size="icon-sm"
         title="Code"
+        data-active={editor.isActive("code")}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <CodeIcon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarSeparator />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        active={editor.isActive("heading", { level: 1 })}
+        variant="ghost"
+        size="icon-sm"
         title="Heading 1"
+        data-active={editor.isActive("heading", { level: 1 })}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <Heading1Icon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        active={editor.isActive("heading", { level: 2 })}
+        variant="ghost"
+        size="icon-sm"
         title="Heading 2"
+        data-active={editor.isActive("heading", { level: 2 })}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <Heading2Icon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        active={editor.isActive("heading", { level: 3 })}
+        variant="ghost"
+        size="icon-sm"
         title="Heading 3"
+        data-active={editor.isActive("heading", { level: 3 })}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <Heading3Icon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarSeparator />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        active={editor.isActive("bulletList")}
+        variant="ghost"
+        size="icon-sm"
         title="Bullet List"
+        data-active={editor.isActive("bulletList")}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <ListIcon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        active={editor.isActive("orderedList")}
+        variant="ghost"
+        size="icon-sm"
         title="Ordered List"
+        data-active={editor.isActive("orderedList")}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <ListOrderedIcon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarSeparator />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <ToolbarButton
+      <Button
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        active={editor.isActive("blockquote")}
+        variant="ghost"
+        size="icon-sm"
         title="Quote"
+        data-active={editor.isActive("blockquote")}
+        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
       >
         <QuoteIcon className="size-4" />
-      </ToolbarButton>
+      </Button>
 
-      <ToolbarSeparator />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <ToolbarButton
+      <Button
         onClick={() => {
           const instanceId = `exercise-${Date.now()}`;
           editor
@@ -125,40 +156,12 @@ export function DocumentEditorToolbar({ editor }: DocumentEditorToolbarProps) {
             })
             .run();
         }}
-        active={false}
+        variant="ghost"
+        size="icon-sm"
         title="Add Exercise"
       >
         <span className="text-xs font-semibold">Ex</span>
-      </ToolbarButton>
+      </Button>
     </div>
   );
-}
-
-function ToolbarButton({
-  onClick,
-  active,
-  title,
-  children,
-}: {
-  onClick: () => void;
-  active: boolean;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className={`rounded p-1.5 transition-colors hover:bg-gray-100 ${
-        active ? "bg-gray-200" : ""
-      }`}
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
-function ToolbarSeparator() {
-  return <div className="w-px bg-gray-200" />;
 }
