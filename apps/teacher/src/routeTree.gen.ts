@@ -12,8 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
-import { Route as ProtectedEditorRouteImport } from './routes/_protected/editor'
-import { Route as ProtectedCollabRouteImport } from './routes/_protected/collab'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -30,16 +28,6 @@ const AuthRoute = AuthRouteImport.update({
 const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedEditorRoute = ProtectedEditorRouteImport.update({
-  id: '/editor',
-  path: '/editor',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedCollabRoute = ProtectedCollabRouteImport.update({
-  id: '/collab',
-  path: '/collab',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
@@ -66,8 +54,6 @@ const ProtectedDocumentIdRoute = ProtectedDocumentIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
-  '/collab': typeof ProtectedCollabRoute
-  '/editor': typeof ProtectedEditorRoute
   '/': typeof ProtectedIndexRoute
   '/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -75,8 +61,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
-  '/collab': typeof ProtectedCollabRoute
-  '/editor': typeof ProtectedEditorRoute
   '/': typeof ProtectedIndexRoute
   '/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -87,39 +71,21 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/signup': typeof AuthSignupRoute
-  '/_protected/collab': typeof ProtectedCollabRoute
-  '/_protected/editor': typeof ProtectedEditorRoute
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/login'
-    | '/signup'
-    | '/collab'
-    | '/editor'
-    | '/'
-    | '/document/$id'
-    | '/api/auth/$'
+  fullPaths: '/login' | '/signup' | '/' | '/document/$id' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/login'
-    | '/signup'
-    | '/collab'
-    | '/editor'
-    | '/'
-    | '/document/$id'
-    | '/api/auth/$'
+  to: '/login' | '/signup' | '/' | '/document/$id' | '/api/auth/$'
   id:
     | '__root__'
     | '/_auth'
     | '/_protected'
     | '/_auth/login'
     | '/_auth/signup'
-    | '/_protected/collab'
-    | '/_protected/editor'
     | '/_protected/'
     | '/_protected/document/$id'
     | '/api/auth/$'
@@ -152,20 +118,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof ProtectedIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/editor': {
-      id: '/_protected/editor'
-      path: '/editor'
-      fullPath: '/editor'
-      preLoaderRoute: typeof ProtectedEditorRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/collab': {
-      id: '/_protected/collab'
-      path: '/collab'
-      fullPath: '/collab'
-      preLoaderRoute: typeof ProtectedCollabRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_auth/signup': {
@@ -212,15 +164,11 @@ const AuthRouteChildren: AuthRouteChildren = {
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface ProtectedRouteChildren {
-  ProtectedCollabRoute: typeof ProtectedCollabRoute
-  ProtectedEditorRoute: typeof ProtectedEditorRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
   ProtectedDocumentIdRoute: typeof ProtectedDocumentIdRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
-  ProtectedCollabRoute: ProtectedCollabRoute,
-  ProtectedEditorRoute: ProtectedEditorRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
   ProtectedDocumentIdRoute: ProtectedDocumentIdRoute,
 }
