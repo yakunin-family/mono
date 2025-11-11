@@ -1,3 +1,5 @@
+import "./styles.css";
+
 export { DocumentEditor } from "./components/DocumentEditor";
 export type { DocumentEditorProps } from "./components/DocumentEditor";
 export { DocumentEditorToolbar } from "./components/DocumentEditorToolbar";

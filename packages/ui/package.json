@@ -11,14 +11,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./index.css": "./dist/index.css",
+    "./src/styles.css": "./src/styles.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/styles.css"
   ],
   "scripts": {
-    "build": "tsup && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
-    "dev": "tsup --watch",
+    "build": "vite build",
+    "dev": "vite build --watch",
     "check-types": "tsc --project tsconfig.json --noEmit"
   },
   "peerDependencies": {
@@ -43,11 +45,13 @@
   "devDependencies": {
     "@mono/eslint": "workspace:*",
     "@mono/typescript-config": "workspace:*",
-    "@tailwindcss/cli": "^4.0.6",
+    "@tailwindcss/vite": "^4.0.6",
     "@types/react": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
     "eslint": "^9.34.0",
     "react": "^19.2.0",
-    "tsup": "^8.3.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "vite-plugin-dts": "^4.5.4"
   }
 }
