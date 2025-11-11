@@ -1,1 +1,0 @@
-- [] migrate to vite from tsup. remove tailwindcli for tailwind compilation
