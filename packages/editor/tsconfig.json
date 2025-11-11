@@ -1,6 +1,8 @@
 {
   "extends": "@mono/typescript-config/react-library.json",
   "compilerOptions": {
+    "composite": true,
+    "incremental": true,
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
@@ -13,5 +15,8 @@
       "@/*": ["./src/*"]
     }
   },
+  "references": [
+    { "path": "../ui" }
+  ],
   "include": ["src"]
 }

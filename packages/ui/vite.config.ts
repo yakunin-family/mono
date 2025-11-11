@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), dts({ rollupTypes: true, tsconfigPath: './tsconfig.json' })],
+  plugins: [react(), tailwindcss(), dts()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),

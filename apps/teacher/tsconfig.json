@@ -11,5 +11,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
+  "references": [
+    { "path": "../../packages/ui" },
+    { "path": "../../packages/editor" }
+  ],
   "include": ["**/*.ts", "**/*.tsx"]
 }
