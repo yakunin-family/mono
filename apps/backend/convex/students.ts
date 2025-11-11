@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import invariant from "tiny-invariant";
 
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
@@ -18,9 +19,7 @@ export const createStudentInviteLinkToken = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .first();
 
-    if (!teacher) {
-      throw new Error("Only teachers can create student invite links");
-    }
+    invariant(teacher, "Only teachers can create student invite links");
 
     const token = generateInviteToken();
     await ctx.db.insert("invite", {
@@ -164,9 +163,6 @@ export const joinTeacher = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const userId = user._id;
 
@@ -176,15 +172,13 @@ export const joinTeacher = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", args.teacherUserId))
       .first();
 
-    if (!teacher) {
-      throw new Error("Teacher not found");
-    }
+    invariant(teacher, "Teacher not found");
 
     // Check if already enrolled
     const existing = await ctx.db
       .query("teacherStudents")
       .withIndex("by_teacher_and_student", (q) =>
-        q.eq("teacherId", args.teacherUserId).eq("studentId", userId)
+        q.eq("teacherId", args.teacherUserId).eq("studentId", userId),
       )
       .first();
 
@@ -263,7 +257,7 @@ export const getMyTeachers = query({
           joinedAt: enrollment.joinedAt,
           teacher,
         };
-      })
+      }),
     );
 
     return teachersWithProfiles;
@@ -286,7 +280,7 @@ export const isEnrolledWithTeacher = query({
     const enrollment = await ctx.db
       .query("teacherStudents")
       .withIndex("by_teacher_and_student", (q) =>
-        q.eq("teacherId", args.teacherUserId).eq("studentId", userId)
+        q.eq("teacherId", args.teacherUserId).eq("studentId", userId),
       )
       .first();
 

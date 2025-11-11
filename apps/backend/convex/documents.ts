@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import invariant from "tiny-invariant";
 
 import { Id } from "./_generated/dataModel";
 import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
@@ -75,9 +76,6 @@ export const createDocument = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const now = Date.now();
     const documentId = await ctx.db.insert("document", {
@@ -97,9 +95,6 @@ export const createDocument = mutation({
 export const getMyDocuments = query({
   handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const documents = await ctx.db
       .query("document")
@@ -120,23 +115,16 @@ export const getDocument = query({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const documentId = args.documentId as Id<"document">;
     const document = await ctx.db.get(documentId);
 
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    invariant(document, "Document not found");
 
     // Check if user has access (owner or shared)
     const hasAccess = await hasDocumentAccess(ctx, documentId, user._id);
 
-    if (!hasAccess) {
-      throw new Error("Not authorized to access this document");
-    }
+    invariant(hasAccess, "Not authorized to access this document");
 
     return document;
   },
@@ -152,20 +140,16 @@ export const updateDocumentTitle = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const document = await ctx.db.get(args.documentId as Id<"document">);
 
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    invariant(document, "Document not found");
 
     // Verify ownership
-    if (document.owner !== user._id) {
-      throw new Error("Not authorized to modify this document");
-    }
+    invariant(
+      document.owner === user._id,
+      "Not authorized to modify this document",
+    );
 
     await ctx.db.patch(args.documentId as Id<"document">, {
       title: args.title,
@@ -183,20 +167,16 @@ export const deleteDocument = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const document = await ctx.db.get(args.documentId);
 
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    invariant(document, "Document not found");
 
     // Verify ownership
-    if (document.owner !== user._id) {
-      throw new Error("Not authorized to delete this document");
-    }
+    invariant(
+      document.owner === user._id,
+      "Not authorized to delete this document",
+    );
 
     await ctx.db.delete(args.documentId);
   },
@@ -212,16 +192,11 @@ export const saveDocumentContent = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const documentId = args.documentId as Id<"document">;
     const document = await ctx.db.get(documentId);
 
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    invariant(document, "Document not found");
 
     // Check if user has access (owner or shared)
     const hasAccess = await hasDocumentAccessMutation(
@@ -230,9 +205,7 @@ export const saveDocumentContent = mutation({
       user._id,
     );
 
-    if (!hasAccess) {
-      throw new Error("Not authorized to modify this document");
-    }
+    invariant(hasAccess, "Not authorized to modify this document");
 
     await ctx.db.patch(documentId, {
       content: args.content,
@@ -250,23 +223,16 @@ export const loadDocumentContent = query({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const documentId = args.documentId as Id<"document">;
     const document = await ctx.db.get(documentId);
 
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    invariant(document, "Document not found");
 
     // Check if user has access (owner or shared)
     const hasAccess = await hasDocumentAccess(ctx, documentId, user._id);
 
-    if (!hasAccess) {
-      throw new Error("Not authorized to access this document");
-    }
+    invariant(hasAccess, "Not authorized to access this document");
 
     return document.content || null;
   },
@@ -282,21 +248,17 @@ export const shareWithStudents = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const documentId = args.documentId as Id<"document">;
     const document = await ctx.db.get(documentId);
 
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    invariant(document, "Document not found");
 
     // Verify ownership
-    if (document.owner !== user._id) {
-      throw new Error("Not authorized to share this document");
-    }
+    invariant(
+      document.owner === user._id,
+      "Not authorized to share this document",
+    );
 
     const now = Date.now();
 
@@ -310,9 +272,7 @@ export const shareWithStudents = mutation({
         )
         .first();
 
-      if (!enrollment) {
-        throw new Error(`Student ${studentId} is not enrolled with you`);
-      }
+      invariant(enrollment, `Student ${studentId} is not enrolled with you`);
 
       // Check if already shared
       const existingShare = await ctx.db
@@ -340,9 +300,6 @@ export const shareWithStudents = mutation({
 export const getSharedDocuments = query({
   handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     // Get all shared documents for this student
     const shares = await ctx.db
@@ -387,21 +344,17 @@ export const getStudentsWithAccess = query({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const documentId = args.documentId as Id<"document">;
     const document = await ctx.db.get(documentId);
 
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    invariant(document, "Document not found");
 
     // Verify ownership
-    if (document.owner !== user._id) {
-      throw new Error("Not authorized to view sharing details");
-    }
+    invariant(
+      document.owner === user._id,
+      "Not authorized to view sharing details",
+    );
 
     // Get all shares for this document
     const shares = await ctx.db

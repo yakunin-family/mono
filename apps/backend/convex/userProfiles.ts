@@ -1,3 +1,4 @@
+import invariant from "tiny-invariant";
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
@@ -59,9 +60,7 @@ export const updateActiveRole = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .first();
 
-    if (!profile) {
-      throw new Error("Profile not found");
-    }
+    invariant(profile, "Profile not found");
 
     await ctx.db.patch(profile._id, {
       activeRole: args.role,
@@ -81,13 +80,8 @@ export const activateRole = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .first();
 
-    if (!profile) {
-      throw new Error("Profile not found");
-    }
-
-    if (profile.roles.includes(args.role)) {
-      throw new Error("Role already activated");
-    }
+    invariant(profile, "Profile not found");
+    invariant(!profile.roles.includes(args.role), "Role already activated");
 
     await ctx.db.patch(profile._id, {
       roles: Array.from(new Set([...profile.roles, args.role])),

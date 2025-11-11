@@ -1,3 +1,5 @@
+import invariant from "tiny-invariant";
+
 import { mutation } from "./_generated/server";
 import { authComponent } from "./auth";
 
@@ -16,9 +18,7 @@ export const getToken = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .first();
 
-    if (!teacher) {
-      throw new Error("Only teachers can create student invite links");
-    }
+    invariant(teacher, "Only teachers can create student invite links");
 
     const token = generateInviteToken();
     await ctx.db.insert("invite", {

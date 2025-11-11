@@ -1,8 +1,7 @@
-import { findOne } from "@convex-dev/better-auth/adapter";
 import { v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
-import { authComponent, createAuth } from "./auth";
+import { query } from "./_generated/server";
+import { authComponent } from "./auth";
 
 export const getTeacherByUserId = query({
   args: {
@@ -34,9 +33,6 @@ export const getTeacherByUserId = query({
 export const getMyStudents = query({
   handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
 
     const userId = user._id;
 
