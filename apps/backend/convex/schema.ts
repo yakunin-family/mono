@@ -52,6 +52,17 @@ const document = defineTable({
 }).index("by_owner", ["owner"]);
 export type Document = Infer<typeof schemas.tables.document.validator>;
 
+const sharedDocuments = defineTable({
+  documentId: v.id("document"),
+  teacherId: v.string(), // Document owner (Better Auth user ID)
+  studentId: v.string(), // Student with access (Better Auth user ID)
+  sharedAt: v.number(),
+})
+  .index("by_document", ["documentId"])
+  .index("by_student", ["studentId"])
+  .index("by_document_and_student", ["documentId", "studentId"]);
+export type SharedDocument = Infer<typeof schemas.tables.sharedDocuments.validator>;
+
 const schemas = defineSchema({
   userProfile,
   teacher,
@@ -59,6 +70,7 @@ const schemas = defineSchema({
   teacherStudents,
   invite,
   document,
+  sharedDocuments,
 });
 
 export default schemas;

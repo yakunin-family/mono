@@ -3,9 +3,10 @@ import { Button } from "@mono/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
-import { FileTextIcon, PlusIcon } from "lucide-react";
+import { FileTextIcon, PlusIcon, Share2Icon } from "lucide-react";
 import { useState } from "react";
 
+import { DocumentShareDialog } from "@/components/DocumentShareDialog";
 import { signOut } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/")({
@@ -24,6 +25,11 @@ function DashboardPage() {
   const navigate = useNavigate();
   const { userId } = Route.useRouteContext();
   const [copySuccess, setCopySuccess] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const convex = useConvex();
 
   const inviteLink = createLink(userId);
@@ -100,13 +106,15 @@ function DashboardPage() {
             ) : documentsQuery.data && documentsQuery.data.length > 0 ? (
               <div className="space-y-2">
                 {documentsQuery.data.map((doc) => (
-                  <Link
+                  <div
                     key={doc._id}
-                    to="/document/$id"
-                    params={{ id: doc._id }}
-                    className="block rounded border p-4 transition-colors hover:bg-muted"
+                    className="flex items-center gap-2 rounded border p-4 transition-colors hover:bg-muted"
                   >
-                    <div className="flex items-center gap-3">
+                    <Link
+                      to="/document/$id"
+                      params={{ id: doc._id }}
+                      className="flex flex-1 items-center gap-3"
+                    >
                       <FileTextIcon className="size-5 text-muted-foreground" />
                       <div className="flex-1">
                         <h3 className="font-medium">{doc.title}</h3>
@@ -115,8 +123,19 @@ function DashboardPage() {
                           {new Date(doc.updatedAt).toLocaleDateString()}
                         </p>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedDocument({ id: doc._id, title: doc.title });
+                        setShareDialogOpen(true);
+                      }}
+                    >
+                      <Share2Icon className="mr-2 size-4" />
+                      Share
+                    </Button>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -159,6 +178,16 @@ function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Share Dialog */}
+      {selectedDocument && (
+        <DocumentShareDialog
+          documentId={selectedDocument.id}
+          documentTitle={selectedDocument.title}
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+        />
+      )}
     </div>
   );
 }

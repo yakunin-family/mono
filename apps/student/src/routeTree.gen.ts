@@ -16,6 +16,7 @@ import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ProtectedDocumentIdRouteImport } from './routes/_protected/document.$id'
 
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
@@ -50,12 +51,18 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedDocumentIdRoute = ProtectedDocumentIdRouteImport.update({
+  id: '/document/$id',
+  path: '/document/$id',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof ProtectedIndexRoute
+  '/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -63,6 +70,7 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof ProtectedIndexRoute
+  '/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -73,13 +81,26 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute
   '/join/$token': typeof JoinTokenRoute
   '/_protected/': typeof ProtectedIndexRoute
+  '/_protected/document/$id': typeof ProtectedDocumentIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/signup' | '/join/$token' | '/' | '/api/auth/$'
+  fullPaths:
+    | '/login'
+    | '/signup'
+    | '/join/$token'
+    | '/'
+    | '/document/$id'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/signup' | '/join/$token' | '/' | '/api/auth/$'
+  to:
+    | '/login'
+    | '/signup'
+    | '/join/$token'
+    | '/'
+    | '/document/$id'
+    | '/api/auth/$'
   id:
     | '__root__'
     | '/_auth'
@@ -88,6 +109,7 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/join/$token'
     | '/_protected/'
+    | '/_protected/document/$id'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -149,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_protected/document/$id': {
+      id: '/_protected/document/$id'
+      path: '/document/$id'
+      fullPath: '/document/$id'
+      preLoaderRoute: typeof ProtectedDocumentIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
   }
 }
 
@@ -166,10 +195,12 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface ProtectedRouteChildren {
   ProtectedIndexRoute: typeof ProtectedIndexRoute
+  ProtectedDocumentIdRoute: typeof ProtectedDocumentIdRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedIndexRoute: ProtectedIndexRoute,
+  ProtectedDocumentIdRoute: ProtectedDocumentIdRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
