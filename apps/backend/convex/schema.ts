@@ -17,6 +17,8 @@ export type UserProfile = Infer<typeof schemas.tables.userProfile.validator>;
 const teacher = defineTable({
   userId: v.string(), // Better Auth user ID
   createdAt: v.number(),
+  aiTokensUsed: v.optional(v.number()), // Total AI tokens consumed
+  aiQuotaLimit: v.optional(v.number()), // Monthly quota (not enforced yet)
 }).index("by_userId", ["userId"]);
 export type Teacher = Infer<typeof schemas.tables.teacher.validator>;
 
@@ -63,6 +65,30 @@ const sharedDocuments = defineTable({
   .index("by_document_and_student", ["documentId", "studentId"]);
 export type SharedDocument = Infer<typeof schemas.tables.sharedDocuments.validator>;
 
+const aiGeneration = defineTable({
+  documentId: v.id("document"),
+  userId: v.string(), // Better Auth user ID (who requested)
+  promptText: v.string(), // User's prompt
+  streamId: v.string(), // From persistent-text-streaming component
+  generatedContent: v.string(), // AI response (updated progressively)
+  model: v.string(), // e.g., "openai/gpt-4"
+  tokensUsed: v.optional(v.number()), // Token count for billing
+  status: v.union(
+    v.literal("pending"),
+    v.literal("streaming"),
+    v.literal("completed"),
+    v.literal("failed"),
+  ),
+  errorMessage: v.optional(v.string()),
+  acceptedBy: v.optional(v.string()), // User ID who accepted (prevents duplicates)
+  acceptedAt: v.optional(v.number()), // When accepted
+  createdAt: v.number(),
+})
+  .index("by_document", ["documentId"])
+  .index("by_user_date", ["userId", "createdAt"])
+  .index("by_streamId", ["streamId"]);
+export type AIGeneration = Infer<typeof schemas.tables.aiGeneration.validator>;
+
 const schemas = defineSchema({
   userProfile,
   teacher,
@@ -71,6 +97,7 @@ const schemas = defineSchema({
   invite,
   document,
   sharedDocuments,
+  aiGeneration,
 });
 
 export default schemas;
