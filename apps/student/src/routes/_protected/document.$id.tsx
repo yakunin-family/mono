@@ -1,12 +1,13 @@
 import { api } from "@mono/backend";
-import { DocumentEditor } from "@mono/editor";
+import { DocumentEditor, getRandomUserColor } from "@mono/editor";
 import { Button } from "@mono/ui";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { ArrowLeftIcon } from "lucide-react";
+import { useMemo } from "react";
 
-import { signOut } from "@/lib/auth-client";
+import { signOut, useSession } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/document/$id")({
   component: DocumentViewerPage,
@@ -17,6 +18,13 @@ function DocumentViewerPage() {
   const { id: documentId } = Route.useParams();
   const { token } = Route.useRouteContext();
   const convex = useConvex();
+  const { data: session } = useSession();
+
+  // Generate a stable random color for this user
+  const userColor = useMemo(() => getRandomUserColor(), []);
+
+  // Get user name from session, fallback to email or "Anonymous"
+  const userName = session?.user?.name || session?.user?.email || "Anonymous";
 
   // Fetch document
   const documentQuery = useQuery({
@@ -88,6 +96,8 @@ function DocumentViewerPage() {
             documentId={documentId}
             canEdit={true}
             token={token}
+            userName={userName}
+            userColor={userColor}
             websocketUrl={
               process.env.NODE_ENV === "development"
                 ? "ws://127.0.0.1:1234"

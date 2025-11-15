@@ -6,3 +6,4 @@ export { DocumentEditorToolbar } from "./components/DocumentEditorToolbar";
 export type { DocumentEditorToolbarProps } from "./components/DocumentEditorToolbar";
 export { Exercise } from "./extensions/Exercise";
 export type { ExerciseAttributes } from "./extensions/Exercise";
+export { getRandomUserColor, getUserColorByIndex } from "./utils/user-colors";

@@ -1,0 +1,2 @@
+- https://github.com/toon-format/spec
+- https://jamiemason.github.io/syncpack/
