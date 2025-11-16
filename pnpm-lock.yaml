@@ -463,6 +463,9 @@ importers:
       '@hocuspocus/provider':
         specifier: ^3.4.0
         version: 3.4.0(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
+      '@mono/backend':
+        specifier: workspace:*
+        version: link:../../apps/backend
       '@mono/ui':
         specifier: workspace:*
         version: link:../ui
@@ -508,6 +511,9 @@ importers:
       '@tiptap/y-tiptap':
         specifier: ^3.0.0
         version: 3.0.0(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.3)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
+      convex:
+        specifier: ^1.29.1
+        version: 1.29.1(react@19.2.0)
       lucide-react:
         specifier: ^0.544.0
         version: 0.544.0(react@19.2.0)
@@ -524,6 +530,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.0.6
         version: 4.1.17(vite@7.2.1(@types/node@22.19.0)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.93.3)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.0
       '@types/react':
         specifier: ^19.2.0
         version: 19.2.2
@@ -4053,6 +4062,22 @@ packages:
 
   convex@1.28.2:
     resolution: {integrity: sha512-KzNsLbcVXb1OhpVQ+vHMgu+hjrsQ1ks5BZwJ2lR8O+nfbeJXE6tHbvsg1H17+ooUDvIDBSMT3vXS+AlodDhTnQ==}
+    engines: {node: '>=18.0.0', npm: '>=7.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@auth0/auth0-react': ^2.0.1
+      '@clerk/clerk-react': ^4.12.8 || ^5.0.0
+      react: ^18.0.0 || ^19.0.0-0 || ^19.0.0
+    peerDependenciesMeta:
+      '@auth0/auth0-react':
+        optional: true
+      '@clerk/clerk-react':
+        optional: true
+      react:
+        optional: true
+
+  convex@1.29.1:
+    resolution: {integrity: sha512-0+1/0QjOKJw5pk480HVMfhSKjYOM5dM67Ql5yF6FzrC/09WCXm5UVWd/MU8/OCB0YRgFUhrRsrWFSnW0w7iBSA==}
     engines: {node: '>=18.0.0', npm: '>=7.0.0'}
     hasBin: true
     peerDependencies:
@@ -11078,6 +11103,13 @@ snapshots:
       zod: 4.1.12
 
   convex@1.28.2(react@19.2.0):
+    dependencies:
+      esbuild: 0.25.4
+      prettier: 3.6.2
+    optionalDependencies:
+      react: 19.2.0
+
+  convex@1.29.1(react@19.2.0):
     dependencies:
       esbuild: 0.25.4
       prettier: 3.6.2

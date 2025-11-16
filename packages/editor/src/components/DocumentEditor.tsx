@@ -11,6 +11,7 @@ export interface DocumentEditorProps {
   token?: string;
   userName?: string;
   userColor?: string;
+  convexClient?: any; // ConvexReactClient from consuming app
   onStatusChange?: (
     status: "connecting" | "connected" | "disconnected",
   ) => void;
@@ -35,6 +36,7 @@ export function DocumentEditor({
   token,
   userName = "Anonymous",
   userColor = "#999999",
+  convexClient,
   onStatusChange,
   onConnectedUsersChange,
   onCreateGeneration,
@@ -107,6 +109,7 @@ export function DocumentEditor({
       userColor={userColor}
       canEdit={canEdit}
       status={status}
+      convexClient={convexClient}
       onCreateGeneration={onCreateGeneration}
     />
   );

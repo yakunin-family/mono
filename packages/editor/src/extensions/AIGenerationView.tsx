@@ -1,8 +1,10 @@
 import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
-import { Loader2Icon, SparklesIcon, TrashIcon, XIcon } from "lucide-react";
-import { useState } from "react";
+import { Loader2Icon, SparklesIcon, TrashIcon, XIcon, CheckIcon, RotateCcwIcon, XCircleIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@mono/ui";
+import type { ConvexReactClient } from "convex/react";
+import { api } from "@mono/backend";
 
 const HARDCODED_MODEL = "openai/gpt-4o";
 
@@ -20,6 +22,106 @@ export function AIGenerationView({
 
   const status = node.attrs.status as string;
   const generationId = node.attrs.generationId as string | null;
+
+  // Get Convex client from editor storage
+  const convexClient = (editor.storage as any).aiGeneration?.convexClient as
+    | ConvexReactClient
+    | undefined;
+
+  // Real-time subscription to generation data
+  const [generation, setGeneration] = useState<any>(null);
+
+  useEffect(() => {
+    if (!convexClient || !generationId) return;
+
+    // Set up reactive query subscription
+    const watch = convexClient.watchQuery(api.ai.getGeneration, {
+      generationId: generationId as any,
+    });
+
+    const unsubscribe = watch.onUpdate(() => {
+      setGeneration(watch.localQueryResult());
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [convexClient, generationId]);
+
+  const [isAccepting, setIsAccepting] = useState(false);
+
+  const handleAcceptClick = async () => {
+    if (!convexClient || !generationId || !generation?.generatedContent) return;
+
+    setIsAccepting(true);
+    try {
+      await convexClient.mutation(api.ai.markGenerationAccepted, {
+        generationId: generationId as any,
+      });
+      handleAccept(generation.generatedContent);
+    } catch (error) {
+      console.error("Failed to accept generation:", error);
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
+  const handleAccept = (content: string) => {
+    if (typeof getPos !== "function") return;
+    const pos = getPos();
+    if (pos === undefined) return;
+
+    const nodeSize = editor.state.doc.nodeAt(pos)?.nodeSize ?? 0;
+
+    // Insert generated content at current position
+    editor
+      .chain()
+      .focus()
+      .insertContentAt(pos, content, { updateSelection: false })
+      .deleteRange({
+        from: pos + content.length,
+        to: pos + content.length + nodeSize,
+      })
+      .run();
+  };
+
+  const handleRegenerate = async () => {
+    // Create new generation with same prompt
+    setError(null);
+    setIsGenerating(true);
+
+    try {
+      const createGeneration = (editor.storage as any).aiGeneration
+        ?.createGeneration as
+        | ((
+            promptText: string,
+            model: string,
+          ) => Promise<{ generationId: string; streamId: string }>)
+        | undefined;
+
+      if (!createGeneration) {
+        throw new Error(
+          "No createGeneration callback provided. Please configure the editor with onCreateGeneration prop.",
+        );
+      }
+
+      const result = await createGeneration(promptText, HARDCODED_MODEL);
+
+      // Update node attributes with new generation info
+      updateAttributes({
+        generationId: result.generationId,
+        status: "pending",
+        promptText: promptText,
+      });
+    } catch (err) {
+      console.error("Failed to regenerate:\n", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to regenerate content",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleDelete = () => {
     if (typeof getPos !== "function") return;
@@ -162,21 +264,121 @@ export function AIGenerationView({
           </div>
         )}
 
-        {/* Pending State (will be enhanced in Phase 3) */}
-        {status === "pending" && (
+        {/* Pending State - Initial loading before generation data arrives */}
+        {(status === "pending" || generation?.status === "pending") && !generation?.generatedContent && (
           <div
             className="flex items-center gap-3 py-4 text-sm text-muted-foreground"
             contentEditable={false}
           >
             <Loader2Icon className="h-5 w-5 animate-spin text-purple-600" />
             <div>
-              <p className="font-medium text-foreground">Generating content...</p>
+              <p className="font-medium text-foreground">Initializing generation...</p>
               <p className="text-xs">This may take a few moments</p>
             </div>
           </div>
         )}
 
-        {/* Note: Streaming, Completed, and Failed states will be added in Phase 3 */}
+        {/* Streaming State - Real-time content display */}
+        {generation?.status === "streaming" && (
+          <div className="space-y-2" contentEditable={false}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Loader2Icon className="h-4 w-4 animate-spin text-purple-600" />
+                <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                  Streaming...
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                Model: {generation.model}
+              </span>
+            </div>
+
+            <div className="rounded-md bg-muted p-3 text-sm whitespace-pre-wrap max-h-64 overflow-y-auto">
+              {generation.generatedContent}
+              <span className="inline-block w-0.5 h-4 bg-purple-600 animate-pulse ml-0.5 align-middle">
+                ▊
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Completed State - Show Accept/Regenerate buttons */}
+        {generation?.status === "completed" && (
+          <div className="space-y-3" contentEditable={false}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                Generation Complete
+              </span>
+              {generation.tokensUsed && (
+                <span className="text-xs text-muted-foreground">
+                  {generation.tokensUsed} tokens
+                </span>
+              )}
+            </div>
+
+            <div className="rounded-md bg-muted p-3 text-sm whitespace-pre-wrap max-h-64 overflow-y-auto">
+              {generation.generatedContent}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRegenerate}
+                disabled={isGenerating}
+              >
+                <RotateCcwIcon className="h-4 w-4 mr-2" />
+                Regenerate
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleAcceptClick}
+                disabled={isAccepting || !!generation.acceptedBy}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckIcon className="h-4 w-4 mr-2" />
+                {generation.acceptedBy ? "Accepted" : "Accept"}
+              </Button>
+            </div>
+
+            {generation.acceptedBy && (
+              <p className="text-xs text-muted-foreground text-center">
+                Content accepted and inserted into document
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Failed State - Show error with retry option */}
+        {generation?.status === "failed" && (
+          <div className="space-y-3" contentEditable={false}>
+            <div className="rounded-md bg-destructive/10 p-3">
+              <div className="flex items-start gap-2">
+                <XCircleIcon className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-destructive mb-1">
+                    Generation Failed
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {generation.errorMessage || "Unknown error occurred"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRegenerate}
+                disabled={isGenerating}
+              >
+                <RotateCcwIcon className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </NodeViewWrapper>
   );

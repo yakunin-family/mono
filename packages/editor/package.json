@@ -24,6 +24,7 @@
   "dependencies": {
     "@floating-ui/dom": "^1.7.4",
     "@hocuspocus/provider": "^3.4.0",
+    "@mono/backend": "workspace:*",
     "@mono/ui": "workspace:*",
     "@tiptap/core": "3.10.5",
     "@tiptap/extension-collaboration": "3.10.5",
@@ -39,6 +40,7 @@
     "@tiptap/starter-kit": "3.10.5",
     "@tiptap/suggestion": "3.10.5",
     "@tiptap/y-tiptap": "^3.0.0",
+    "convex": "^1.29.1",
     "lucide-react": "^0.544.0",
     "yjs": "^13.6.21"
   },
@@ -46,6 +48,7 @@
     "@mono/eslint": "workspace:*",
     "@mono/typescript-config": "workspace:*",
     "@tailwindcss/vite": "^4.0.6",
+    "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "eslint": "^9.34.0",

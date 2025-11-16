@@ -166,6 +166,7 @@ function DocumentEditorPage() {
                 ? "ws://127.0.0.1:1234"
                 : "wss://collab.untitled.nikita-yakunin.dev"
             }
+            convexClient={convex}
             onCreateGeneration={handleCreateGeneration}
           />
         </div>

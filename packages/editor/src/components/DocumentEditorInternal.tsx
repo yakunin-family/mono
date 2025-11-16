@@ -27,6 +27,7 @@ interface DocumentEditorInternalProps {
   userColor: string;
   canEdit: boolean;
   status: "connecting" | "connected" | "disconnected";
+  convexClient?: any; // ConvexReactClient from consuming app
   onCreateGeneration?: (
     promptText: string,
     model: string,
@@ -44,6 +45,7 @@ export function DocumentEditorInternal({
   userColor,
   canEdit,
   status,
+  convexClient,
   onCreateGeneration,
 }: DocumentEditorInternalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -93,14 +95,15 @@ export function DocumentEditorInternal({
     }
   }, [editor, canEdit]);
 
-  // Set AI generation callback in editor storage
+  // Set AI generation callback and Convex client in editor storage
   useEffect(() => {
-    if (editor && onCreateGeneration) {
+    if (editor) {
       (editor.storage as any).aiGeneration = {
         createGeneration: onCreateGeneration,
+        convexClient: convexClient,
       };
     }
-  }, [editor, onCreateGeneration]);
+  }, [editor, onCreateGeneration, convexClient]);
 
   if (!editor) {
     return (
