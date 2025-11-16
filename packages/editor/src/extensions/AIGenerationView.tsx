@@ -1,9 +1,17 @@
 import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
-import { Loader2Icon, SparklesIcon, TrashIcon, XIcon, CheckIcon, RotateCcwIcon, XCircleIcon } from "lucide-react";
+import {
+  Loader2Icon,
+  SparklesIcon,
+  TrashIcon,
+  XIcon,
+  CheckIcon,
+  RotateCcwIcon,
+  XCircleIcon,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@mono/ui";
-import type { ConvexReactClient } from "convex/react";
+import { useConvex } from "convex/react";
 import { api } from "@mono/backend";
 
 const HARDCODED_MODEL = "openai/gpt-4o";
@@ -15,18 +23,14 @@ export function AIGenerationView({
   updateAttributes,
 }: NodeViewProps) {
   const [promptText, setPromptText] = useState(
-    node.attrs.promptText as string || ""
+    (node.attrs.promptText as string) || "",
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const status = node.attrs.status as string;
   const generationId = node.attrs.generationId as string | null;
-
-  // Get Convex client from editor storage
-  const convexClient = (editor.storage as any).aiGeneration?.convexClient as
-    | ConvexReactClient
-    | undefined;
+  const convexClient = useConvex();
 
   // Real-time subscription to generation data
   const [generation, setGeneration] = useState<any>(null);
@@ -36,7 +40,7 @@ export function AIGenerationView({
 
     // Set up reactive query subscription
     const watch = convexClient.watchQuery(api.ai.getGeneration, {
-      generationId: generationId as any,
+      generationId,
     });
 
     const unsubscribe = watch.onUpdate(() => {
@@ -265,18 +269,21 @@ export function AIGenerationView({
         )}
 
         {/* Pending State - Initial loading before generation data arrives */}
-        {(status === "pending" || generation?.status === "pending") && !generation?.generatedContent && (
-          <div
-            className="flex items-center gap-3 py-4 text-sm text-muted-foreground"
-            contentEditable={false}
-          >
-            <Loader2Icon className="h-5 w-5 animate-spin text-purple-600" />
-            <div>
-              <p className="font-medium text-foreground">Initializing generation...</p>
-              <p className="text-xs">This may take a few moments</p>
+        {(status === "pending" || generation?.status === "pending") &&
+          !generation?.generatedContent && (
+            <div
+              className="flex items-center gap-3 py-4 text-sm text-muted-foreground"
+              contentEditable={false}
+            >
+              <Loader2Icon className="h-5 w-5 animate-spin text-purple-600" />
+              <div>
+                <p className="font-medium text-foreground">
+                  Initializing generation...
+                </p>
+                <p className="text-xs">This may take a few moments</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Streaming State - Real-time content display */}
         {generation?.status === "streaming" && (

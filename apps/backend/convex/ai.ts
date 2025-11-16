@@ -130,12 +130,12 @@ export const createGeneration = mutation({
  */
 export const streamGeneration = internalAction({
   args: {
-    generationId: v.id("aiGeneration"),
+    generationId: v.string(),
   },
   handler: async (ctx, args) => {
     // Get the generation record
     const generation = await ctx.runQuery(internal.ai.getGenerationForAction, {
-      generationId: args.generationId,
+      generationId: args.generationId as Id<"aiGeneration">,
     });
 
     invariant(generation, "Generation not found");
@@ -143,7 +143,7 @@ export const streamGeneration = internalAction({
     try {
       // Update status to streaming
       await ctx.runMutation(internal.ai.updateGenerationStatus, {
-        generationId: args.generationId,
+        generationId: args.generationId as Id<"aiGeneration">,
         status: "streaming",
       });
 
@@ -163,7 +163,7 @@ export const streamGeneration = internalAction({
         // Update on sentence boundaries (. ! ?) for performance
         if (/[.!?]\s*$/.test(fullContent)) {
           await ctx.runMutation(internal.ai.updateGenerationContent, {
-            generationId: args.generationId,
+            generationId: args.generationId as Id<"aiGeneration">,
             content: fullContent,
           });
         }
@@ -174,14 +174,14 @@ export const streamGeneration = internalAction({
 
       // Final update with complete content
       await ctx.runMutation(internal.ai.completeGeneration, {
-        generationId: args.generationId,
+        generationId: args.generationId as Id<"aiGeneration">,
         content: fullContent,
         tokensUsed: usage.totalTokens,
       });
     } catch (error) {
       // Mark as failed on error
       await ctx.runMutation(internal.ai.updateGenerationStatus, {
-        generationId: args.generationId,
+        generationId: args.generationId as Id<"aiGeneration">,
         status: "failed",
         errorMessage: error instanceof Error ? error.message : "Unknown error",
       });
@@ -195,11 +195,13 @@ export const streamGeneration = internalAction({
  */
 export const getGeneration = query({
   args: {
-    generationId: v.id("aiGeneration"),
+    generationId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    const generation = await ctx.db.get(args.generationId);
+    const generation = await ctx.db.get(
+      args.generationId as Id<"aiGeneration">,
+    );
 
     invariant(generation, "Generation not found");
 
@@ -254,11 +256,11 @@ export const updateGenerationStatus = internalMutation({
  */
 export const updateGenerationContent = internalMutation({
   args: {
-    generationId: v.id("aiGeneration"),
+    generationId: v.string(),
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.generationId, {
+    await ctx.db.patch(args.generationId as Id<"aiGeneration">, {
       generatedContent: args.content,
     });
   },
@@ -269,16 +271,16 @@ export const updateGenerationContent = internalMutation({
  */
 export const completeGeneration = internalMutation({
   args: {
-    generationId: v.id("aiGeneration"),
+    generationId: v.string(),
     content: v.string(),
     tokensUsed: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const generation = await ctx.db.get(args.generationId);
+    const generation = await ctx.db.get(args.generationId as Id<"aiGeneration">);
     invariant(generation, "Generation not found");
 
     // Update generation record
-    await ctx.db.patch(args.generationId, {
+    await ctx.db.patch(args.generationId as Id<"aiGeneration">, {
       generatedContent: args.content,
       tokensUsed: args.tokensUsed,
       status: "completed",
@@ -306,11 +308,13 @@ export const completeGeneration = internalMutation({
  */
 export const markGenerationAccepted = mutation({
   args: {
-    generationId: v.id("aiGeneration"),
+    generationId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
-    const generation = await ctx.db.get(args.generationId);
+    const generation = await ctx.db.get(
+      args.generationId as Id<"aiGeneration">,
+    );
 
     invariant(generation, "Generation not found");
 
@@ -326,7 +330,7 @@ export const markGenerationAccepted = mutation({
     invariant(!generation.acceptedBy, "Generation already accepted");
 
     // Mark as accepted
-    await ctx.db.patch(args.generationId, {
+    await ctx.db.patch(args.generationId as Id<"aiGeneration">, {
       acceptedBy: user._id,
       acceptedAt: Date.now(),
     });

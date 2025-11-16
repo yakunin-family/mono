@@ -19,7 +19,13 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: ["react", "react/jsx-runtime", "lucide-react", "@mono/ui"],
+      external: [
+        "react",
+        "react/jsx-runtime",
+        "lucide-react",
+        "convex",
+        "@tanstack/react-query",
+      ],
     },
     outDir: "dist",
     emptyOutDir: false,

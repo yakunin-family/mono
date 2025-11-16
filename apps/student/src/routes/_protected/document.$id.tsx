@@ -1,7 +1,7 @@
 import { api } from "@mono/backend";
 import { DocumentEditor, getRandomUserColor } from "@mono/editor";
 import { Button } from "@mono/ui";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { ArrowLeftIcon } from "lucide-react";
@@ -19,6 +19,7 @@ function DocumentViewerPage() {
   const { token } = Route.useRouteContext();
   const convex = useConvex();
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
 
   // Generate a stable random color for this user
   const userColor = useMemo(() => getRandomUserColor(), []);
@@ -118,6 +119,7 @@ function DocumentViewerPage() {
                 : "wss://collab.untitled.nikita-yakunin.dev"
             }
             convexClient={convex}
+            queryClient={queryClient}
             onCreateGeneration={handleCreateGeneration}
           />
         </div>

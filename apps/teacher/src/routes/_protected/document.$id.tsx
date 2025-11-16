@@ -1,7 +1,7 @@
 import { api } from "@mono/backend";
 import { DocumentEditor, getRandomUserColor } from "@mono/editor";
 import { Button } from "@mono/ui";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { ArrowLeftIcon } from "lucide-react";
@@ -21,6 +21,7 @@ function DocumentEditorPage() {
   const [title, setTitle] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
 
   // Generate a stable random color for this user
   const userColor = useMemo(() => getRandomUserColor(), []);
@@ -167,6 +168,7 @@ function DocumentEditorPage() {
                 : "wss://collab.untitled.nikita-yakunin.dev"
             }
             convexClient={convex}
+            queryClient={queryClient}
             onCreateGeneration={handleCreateGeneration}
           />
         </div>

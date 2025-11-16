@@ -1,26 +1,67 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, createContext, useContext } from "react";
 import * as Y from "yjs";
 
 import { DocumentEditorInternal } from "./DocumentEditorInternal";
+import { ConnectionStatus } from "@/types";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export interface DocumentEditorProps {
+  convexClient: ConvexReactClient;
+  queryClient: QueryClient;
+
   documentId: string;
   canEdit?: boolean;
   websocketUrl?: string;
   token?: string;
   userName?: string;
   userColor?: string;
-  convexClient?: any; // ConvexReactClient from consuming app
-  onStatusChange?: (
-    status: "connecting" | "connected" | "disconnected",
-  ) => void;
+  onStatusChange?: (status: ConnectionStatus) => void;
   onConnectedUsersChange?: (count: number) => void;
   onCreateGeneration?: (
     promptText: string,
     model: string,
   ) => Promise<{ generationId: string; streamId: string }>;
 }
+
+interface ConnectionContextProps {
+  provider: HocuspocusProvider;
+  ydoc: Y.Doc;
+  status: ConnectionStatus;
+}
+
+const ConnectionContext = createContext<ConnectionContextProps | undefined>(
+  undefined,
+);
+
+export const useConnection = () => {
+  const connection = useContext(ConnectionContext);
+  if (!connection) {
+    throw new Error(
+      "useConnection must be used within a ConnectionContext provider",
+    );
+  }
+
+  return connection;
+};
+
+const Providers = (props: {
+  queryClient: QueryClient;
+  convexClient: ConvexReactClient;
+  connection: ConnectionContextProps;
+  children: React.ReactNode;
+}) => {
+  return (
+    <ConvexProvider client={props.convexClient}>
+      <QueryClientProvider client={props.queryClient}>
+        <ConnectionContext value={props.connection}>
+          {props.children}
+        </ConnectionContext>
+      </QueryClientProvider>
+    </ConvexProvider>
+  );
+};
 
 /**
  * DocumentEditor handles initialization of Y.Doc and HocuspocusProvider,
@@ -29,21 +70,20 @@ export interface DocumentEditorProps {
  * This component maintains the same public API for consumers while hiding
  * the complexity of initialization internally.
  */
-export function DocumentEditor({
-  documentId,
+export const DocumentEditor = ({
+  convexClient,
+  queryClient,
   canEdit = true,
+  documentId,
   websocketUrl = "ws://127.0.0.1:1234",
   token,
   userName = "Anonymous",
   userColor = "#999999",
-  convexClient,
   onStatusChange,
-  onConnectedUsersChange,
   onCreateGeneration,
-}: DocumentEditorProps) {
-  const [status, setStatus] = useState<
-    "connecting" | "connected" | "disconnected"
-  >("connecting");
+  onConnectedUsersChange,
+}: DocumentEditorProps) => {
+  const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
 
   // Create Y.Doc that persists across renders
@@ -102,15 +142,21 @@ export function DocumentEditor({
   }
 
   return (
-    <DocumentEditorInternal
-      provider={provider}
-      ydoc={ydoc}
-      userName={userName}
-      userColor={userColor}
-      canEdit={canEdit}
-      status={status}
+    <Providers
+      queryClient={queryClient}
       convexClient={convexClient}
-      onCreateGeneration={onCreateGeneration}
-    />
+      connection={{ provider, ydoc, status }}
+    >
+      <DocumentEditorInternal
+        provider={provider}
+        ydoc={ydoc}
+        userName={userName}
+        userColor={userColor}
+        canEdit={canEdit}
+        status={status}
+        convexClient={convexClient}
+        onCreateGeneration={onCreateGeneration}
+      />
+    </Providers>
   );
-}
+};
