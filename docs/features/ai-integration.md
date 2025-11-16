@@ -401,7 +401,7 @@ When AI generates exercises, return structured JSON:
 
 ## Implementation Plan
 
-### Phase 1: Backend Setup
+### Phase 1: Backend Setup [DONE]
 - [ ] Install `ai` and `@convex-dev/persistent-text-streaming`
 - [ ] Configure persistent-text-streaming component in convex.config.ts
 - [ ] Add `AI_GATEWAY_API_KEY` environment variable
@@ -411,7 +411,7 @@ When AI generates exercises, return structured JSON:
 - [ ] Create `streamGeneration` action with basic streaming
 - [ ] Test AI Gateway connection end-to-end
 
-### Phase 2: Basic Editor Integration
+### Phase 2: Basic Editor Integration [DONE]
 - [ ] Create `AIGeneration` Tiptap node extension
 - [ ] Build `AIGenerationView` component (input state)
 - [ ] Add `/ai` command to SlashCommand menu

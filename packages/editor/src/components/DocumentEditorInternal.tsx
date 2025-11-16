@@ -13,6 +13,7 @@ import { useEffect, useRef } from "react";
 import * as Y from "yjs";
 
 import { Exercise } from "../extensions/Exercise";
+import { AIGeneration } from "../extensions/AIGeneration";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
 import { MouseTracker } from "./MouseTracker";
@@ -26,6 +27,10 @@ interface DocumentEditorInternalProps {
   userColor: string;
   canEdit: boolean;
   status: "connecting" | "connected" | "disconnected";
+  onCreateGeneration?: (
+    promptText: string,
+    model: string,
+  ) => Promise<{ generationId: string; streamId: string }>;
 }
 
 /**
@@ -39,6 +44,7 @@ export function DocumentEditorInternal({
   userColor,
   canEdit,
   status,
+  onCreateGeneration,
 }: DocumentEditorInternalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +74,7 @@ export function DocumentEditorInternal({
         allowBase64: true,
       }),
       Exercise,
+      AIGeneration,
       SlashCommand.configure({
         canEdit,
       }),
@@ -85,6 +92,15 @@ export function DocumentEditorInternal({
       editor.setEditable(canEdit);
     }
   }, [editor, canEdit]);
+
+  // Set AI generation callback in editor storage
+  useEffect(() => {
+    if (editor && onCreateGeneration) {
+      (editor.storage as any).aiGeneration = {
+        createGeneration: onCreateGeneration,
+      };
+    }
+  }, [editor, onCreateGeneration]);
 
   if (!editor) {
     return (

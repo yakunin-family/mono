@@ -15,6 +15,10 @@ export interface DocumentEditorProps {
     status: "connecting" | "connected" | "disconnected",
   ) => void;
   onConnectedUsersChange?: (count: number) => void;
+  onCreateGeneration?: (
+    promptText: string,
+    model: string,
+  ) => Promise<{ generationId: string; streamId: string }>;
 }
 
 /**
@@ -33,6 +37,7 @@ export function DocumentEditor({
   userColor = "#999999",
   onStatusChange,
   onConnectedUsersChange,
+  onCreateGeneration,
 }: DocumentEditorProps) {
   const [status, setStatus] = useState<
     "connecting" | "connected" | "disconnected"
@@ -102,6 +107,7 @@ export function DocumentEditor({
       userColor={userColor}
       canEdit={canEdit}
       status={status}
+      onCreateGeneration={onCreateGeneration}
     />
   );
 }

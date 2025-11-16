@@ -62,6 +62,20 @@ function DocumentEditorPage() {
     }
   };
 
+  // Handle AI generation creation
+  const handleCreateGeneration = async (
+    promptText: string,
+    model: string,
+  ): Promise<{ generationId: string; streamId: string }> => {
+    const result = await convex.mutation(api.ai.createGeneration, {
+      documentId,
+      promptText,
+      model,
+    });
+
+    return result;
+  };
+
   if (documentQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -152,6 +166,7 @@ function DocumentEditorPage() {
                 ? "ws://127.0.0.1:1234"
                 : "wss://collab.untitled.nikita-yakunin.dev"
             }
+            onCreateGeneration={handleCreateGeneration}
           />
         </div>
       </main>

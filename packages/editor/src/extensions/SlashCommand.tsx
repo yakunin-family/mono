@@ -13,6 +13,7 @@ import {
   Image,
   Code,
   FileText,
+  Sparkles,
 } from "lucide-react";
 import { SlashCommandMenu } from "../components/SlashCommandMenu";
 import type {} from "@tiptap/extension-table";
@@ -159,6 +160,18 @@ export const SlashCommand = Extension.create({
                   .focus()
                   .deleteRange(range)
                   .insertContent({ type: "exercise" })
+                  .run();
+              },
+            },
+            {
+              title: "AI Generation",
+              icon: Sparkles,
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .insertContent({ type: "aiGeneration" })
                   .run();
               },
             },
