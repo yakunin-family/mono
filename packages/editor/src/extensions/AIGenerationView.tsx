@@ -16,6 +16,218 @@ import { api } from "@mono/backend";
 
 const HARDCODED_MODEL = "openai/gpt-4o";
 
+/**
+ * Parse markdown content to Tiptap JSON nodes.
+ * Supports: headings, lists, bold, italic, strikethrough, code, links, and paragraphs.
+ */
+function parseMarkdownToNodes(markdown: string): any[] {
+  const lines = markdown.split("\n");
+  const nodes: any[] = [];
+  let currentParagraph: string[] = [];
+  let currentList: {
+    type: "bulletList" | "orderedList";
+    items: string[];
+  } | null = null;
+
+  const flushParagraph = () => {
+    if (currentParagraph.length > 0) {
+      const text = currentParagraph.join("\n").trim();
+      if (text) {
+        nodes.push({
+          type: "paragraph",
+          content: parseInlineContent(text),
+        });
+      }
+      currentParagraph = [];
+    }
+  };
+
+  const flushList = () => {
+    if (currentList) {
+      nodes.push({
+        type: currentList.type,
+        content: currentList.items.map((item) => ({
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: parseInlineContent(item),
+            },
+          ],
+        })),
+      });
+      currentList = null;
+    }
+  };
+
+  for (const line of lines) {
+    // Detect headings (# Heading)
+    const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
+    if (headingMatch && headingMatch[1] && headingMatch[2]) {
+      flushParagraph();
+      flushList();
+      const level = headingMatch[1].length;
+      nodes.push({
+        type: "heading",
+        attrs: { level },
+        content: parseInlineContent(headingMatch[2]),
+      });
+      continue;
+    }
+
+    // Detect bullet lists (- item or * item)
+    const bulletMatch = line.match(/^[-*]\s+(.+)$/);
+    if (bulletMatch && bulletMatch[1]) {
+      flushParagraph();
+      if (!currentList || currentList.type !== "bulletList") {
+        flushList();
+        currentList = { type: "bulletList", items: [] };
+      }
+      currentList.items.push(bulletMatch[1]);
+      continue;
+    }
+
+    // Detect ordered lists (1. item)
+    const orderedMatch = line.match(/^\d+\.\s+(.+)$/);
+    if (orderedMatch && orderedMatch[1]) {
+      flushParagraph();
+      if (!currentList || currentList.type !== "orderedList") {
+        flushList();
+        currentList = { type: "orderedList", items: [] };
+      }
+      currentList.items.push(orderedMatch[1]);
+      continue;
+    }
+
+    // Empty line = paragraph/list break
+    if (line.trim() === "") {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    // Regular line - add to current paragraph
+    flushList(); // Lists must end before paragraphs
+    currentParagraph.push(line);
+  }
+
+  // Flush remaining content
+  flushParagraph();
+  flushList();
+
+  // If no nodes were created, create a single paragraph with the original text
+  if (nodes.length === 0 && markdown.trim()) {
+    nodes.push({
+      type: "paragraph",
+      content: [{ type: "text", text: markdown.trim() }],
+    });
+  }
+
+  return nodes;
+}
+
+/**
+ * Parse inline markdown formatting (bold, italic, code, strikethrough, links).
+ */
+function parseInlineContent(text: string): any[] {
+  const tokens: any[] = [];
+  let remaining = text;
+  let position = 0;
+
+  // Regex patterns for inline formatting (ordered by priority)
+  const patterns = [
+    // Links [text](url)
+    {
+      regex: /\[([^\]]+)\]\(([^)]+)\)/,
+      handler: (match: RegExpMatchArray) => ({
+        type: "text",
+        marks: [{ type: "link", attrs: { href: match[2] } }],
+        text: match[1],
+      }),
+    },
+    // Bold **text** or __text__
+    {
+      regex: /\*\*([^*]+)\*\*|__([^_]+)__/,
+      handler: (match: RegExpMatchArray) => ({
+        type: "text",
+        marks: [{ type: "bold" }],
+        text: match[1] || match[2],
+      }),
+    },
+    // Italic *text* or _text_
+    {
+      regex: /\*([^*]+)\*|_([^_]+)_/,
+      handler: (match: RegExpMatchArray) => ({
+        type: "text",
+        marks: [{ type: "italic" }],
+        text: match[1] || match[2],
+      }),
+    },
+    // Strikethrough ~~text~~
+    {
+      regex: /~~([^~]+)~~/,
+      handler: (match: RegExpMatchArray) => ({
+        type: "text",
+        marks: [{ type: "strike" }],
+        text: match[1],
+      }),
+    },
+    // Inline code `code`
+    {
+      regex: /`([^`]+)`/,
+      handler: (match: RegExpMatchArray) => ({
+        type: "text",
+        marks: [{ type: "code" }],
+        text: match[1],
+      }),
+    },
+  ];
+
+  while (remaining.length > 0) {
+    let matched = false;
+
+    // Try each pattern
+    for (const pattern of patterns) {
+      const match = remaining.match(pattern.regex);
+      if (match && match.index !== undefined) {
+        // Add text before the match
+        if (match.index > 0) {
+          tokens.push({
+            type: "text",
+            text: remaining.slice(0, match.index),
+          });
+        }
+
+        // Add the formatted text
+        tokens.push(pattern.handler(match));
+
+        // Update remaining text
+        remaining = remaining.slice(match.index + match[0].length);
+        matched = true;
+        break;
+      }
+    }
+
+    // If no pattern matched, add remaining text and break
+    if (!matched) {
+      if (remaining) {
+        tokens.push({
+          type: "text",
+          text: remaining,
+        });
+      }
+      break;
+    }
+  }
+
+  // If no tokens were created, return plain text
+  if (tokens.length === 0 && text) {
+    return [{ type: "text", text }];
+  }
+
+  return tokens;
+}
+
 export function AIGenerationView({
   node,
   getPos,
@@ -77,15 +289,16 @@ export function AIGenerationView({
 
     const nodeSize = editor.state.doc.nodeAt(pos)?.nodeSize ?? 0;
 
-    // Insert generated content at current position
+    // Parse markdown content to Tiptap nodes
+    const parsedNodes = parseMarkdownToNodes(content);
+
+    // Delete AI generation node first, then insert parsed content
+    // This avoids complex position calculations after insertion
     editor
       .chain()
       .focus()
-      .insertContentAt(pos, content, { updateSelection: false })
-      .deleteRange({
-        from: pos + content.length,
-        to: pos + content.length + nodeSize,
-      })
+      .deleteRange({ from: pos, to: pos + nodeSize })
+      .insertContentAt(pos, parsedNodes, { updateSelection: false })
       .run();
   };
 

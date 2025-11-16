@@ -7,6 +7,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { Image } from "@tiptap/extension-image";
+import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef } from "react";
@@ -55,6 +56,7 @@ export function DocumentEditorInternal({
       StarterKit.configure({
         codeBlock: false, // Disable code blocks as they're not needed
       }),
+      Markdown,
       Collaboration.configure({
         document: ydoc,
       }),

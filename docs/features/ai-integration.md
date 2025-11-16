@@ -418,14 +418,14 @@ When AI generates exercises, return structured JSON:
 - [ ] Implement generation trigger (calls mutation + action)
 - [ ] Test: basic generation with client connected
 
-### Phase 3: Real-Time Streaming
+### Phase 3: Real-Time Streaming [DONE]
 - [ ] Implement `useQuery` subscription in AIGenerationView
 - [ ] Add streaming state UI (progressive content display)
 - [ ] Update database on sentence boundaries in action
 - [ ] Test: see content stream in real-time
 - [ ] Test: multiple clients see same stream
 
-### Phase 4: Accept/Reject Flow
+### Phase 4: Accept/Reject Flow [DONE]
 - [ ] Add `acceptedBy` and `acceptedAt` fields to schema
 - [ ] Create `markGenerationAccepted` mutation
 - [ ] Implement Accept/Regenerate buttons UI
@@ -434,7 +434,7 @@ When AI generates exercises, return structured JSON:
 - [ ] Test: manual accept flow
 - [ ] Test: database lock prevents duplicate accepts
 
-### Phase 5: Auto-Accept Toggle
+### Phase 5: Auto-Accept Toggle [SKIP]
 - [ ] Add auto-accept toggle button to AIGenerationView
 - [ ] Implement localStorage persistence
 - [ ] Add auto-insert logic when autoAccept=true
@@ -443,7 +443,7 @@ When AI generates exercises, return structured JSON:
 - [ ] Test: preference persists across page refreshes
 - [ ] Polish: visual distinction when auto-accept enabled
 
-### Phase 6: Disconnect-Proof Testing
+### Phase 6: Disconnect-Proof Testing [DONE]
 - [ ] Test: start generation, close browser mid-stream, reopen
 - [ ] Test: start generation, lose network, reconnect
 - [ ] Test: browser refresh during streaming
@@ -451,12 +451,32 @@ When AI generates exercises, return structured JSON:
 - [ ] Test: requester disconnects, other user accepts
 - [ ] Verify server-side streaming continues independently
 
-### Phase 7: Content Insertion & Parsing
-- [ ] Implement `parseAndInsertContent` function
-- [ ] Handle plain text insertion
-- [ ] Handle markdown conversion (if needed)
-- [ ] Test: content appears in correct position
-- [ ] Test: AIGeneration node removed after insertion
+### Phase 7: Content Insertion & Parsing [DONE]
+- [x] Implement markdown parsing function (`parseMarkdownToNodes`)
+- [x] Install and configure `@tiptap/markdown` extension
+- [x] Handle markdown to Tiptap JSON conversion
+- [x] Support headings (# ## ###), lists (bullet/ordered), inline formatting (bold, italic, strikethrough, code, links)
+- [x] Update `handleAccept` to use markdown parser
+- [x] Test: TypeScript compilation and builds pass
+- [x] Test: AIGeneration node removed after insertion
+
+**Implementation Details:**
+- Installed `@tiptap/markdown` package (version compatible with Tiptap v3.10.7)
+- Added Markdown extension to editor configuration in `DocumentEditorInternal.tsx`
+- Created custom markdown parser in `AIGenerationView.tsx`:
+  - `parseMarkdownToNodes(markdown: string)` - Converts markdown to Tiptap JSON structure
+  - `parseInlineContent(text: string)` - Handles inline formatting (bold, italic, code, links, strikethrough)
+- Supported markdown features:
+  - Headings: `# H1`, `## H2`, `### H3`
+  - Bullet lists: `- item` or `* item`
+  - Ordered lists: `1. item`, `2. item`
+  - Bold: `**text**` or `__text__`
+  - Italic: `*text*` or `_text_`
+  - Strikethrough: `~~text~~`
+  - Inline code: `` `code` ``
+  - Links: `[text](url)`
+  - Paragraphs: Double newline separation
+- Content insertion strategy: Delete AIGeneration node first, then insert parsed markdown nodes at same position
 
 ### Phase 8: Document Context & Exercise Generation
 - [ ] Implement context extraction (headings, exercises, surrounding text)
@@ -564,5 +584,5 @@ When AI generates exercises, return structured JSON:
 
 ---
 
-**Last Updated**: 2025-11-15
-**Next Review**: After Phase 1 completion
+**Last Updated**: 2025-11-16
+**Next Review**: After Phase 8 completion

@@ -1,2 +1,6 @@
 - https://github.com/toon-format/spec
 - https://jamiemason.github.io/syncpack/
+- smooth cursor movement
+- remove collaborative cursor
+- exercise bank
+- make tiptap type safe
