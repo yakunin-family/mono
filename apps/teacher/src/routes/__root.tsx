@@ -1,10 +1,10 @@
+import { api, UserProfile } from "@app/backend";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import {
   fetchSession,
   getCookieName,
 } from "@convex-dev/better-auth/react-start";
 import { ConvexQueryClient } from "@convex-dev/react-query";
-import { api, UserProfile } from "@mono/backend";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {

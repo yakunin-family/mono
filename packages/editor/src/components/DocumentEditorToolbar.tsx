@@ -11,7 +11,7 @@ import {
   QuoteIcon,
   StrikethroughIcon,
 } from "lucide-react";
-import { Button, Separator } from "@mono/ui";
+import { Button, Separator } from "@package/ui";
 
 export interface DocumentEditorToolbarProps {
   editor: Editor;

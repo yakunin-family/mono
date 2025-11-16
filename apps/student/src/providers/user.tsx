@@ -1,4 +1,4 @@
-import { UserProfile } from "@mono/backend";
+import { UserProfile } from "@app/backend";
 import { createContext, ReactNode, useContext } from "react";
 
 interface UserContext {

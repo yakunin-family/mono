@@ -1,5 +1,5 @@
 {
-  "name": "@mono/www",
+  "name": "@app/www",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -12,8 +12,8 @@
     "astro": "^5.14.8"
   },
   "devDependencies": {
-    "@mono/eslint": "workspace:*",
-    "@mono/typescript-config": "workspace:*",
+    "@tooling/eslint": "workspace:*",
+    "@tooling/typescript-config": "workspace:*",
     "eslint": "^9.34.0",
     "globals": "^16.3.0"
   }

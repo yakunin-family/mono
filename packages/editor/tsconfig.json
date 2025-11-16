@@ -1,5 +1,5 @@
 {
-  "extends": "@mono/typescript-config/react-library.json",
+  "extends": "@tooling/typescript-config/react-library.json",
   "compilerOptions": {
     "composite": true,
     "incremental": true,
@@ -15,8 +15,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "references": [
-    { "path": "../ui" }
-  ],
+  "references": [{ "path": "../ui" }],
   "include": ["src"]
 }

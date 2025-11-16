@@ -1,5 +1,5 @@
 {
-  "name": "@mono/collab-server",
+  "name": "@app/collab-server",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,14 +10,14 @@
   },
   "dependencies": {
     "@hocuspocus/server": "^2.13.6",
-    "@mono/backend": "workspace:*",
+    "@app/backend": "workspace:*",
     "convex": "^1.28.0",
     "dotenv": "^16.0.0",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.21"
   },
   "devDependencies": {
-    "@mono/typescript-config": "workspace:*",
+    "@tooling/typescript-config": "workspace:*",
     "@types/node": "^22.10.2",
     "tsx": "^4.0.0",
     "typescript": "^5.7.2"

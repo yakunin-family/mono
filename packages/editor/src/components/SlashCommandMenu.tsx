@@ -6,7 +6,7 @@ import {
   useCallback,
   useRef,
 } from "react";
-import { Command, CommandList, CommandItem } from "@mono/ui";
+import { Command, CommandList, CommandItem } from "@package/ui";
 import { CommandItem as CommandItemType } from "../extensions/SlashCommand";
 
 interface SlashCommandMenuProps {

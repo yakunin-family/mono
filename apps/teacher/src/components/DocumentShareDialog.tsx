@@ -1,4 +1,4 @@
-import { api } from "@mono/backend";
+import { api } from "@app/backend";
 import {
   Button,
   Dialog,
@@ -7,7 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@mono/ui";
+} from "@package/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useConvex } from "convex/react";
 import { useState } from "react";

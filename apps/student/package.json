@@ -1,5 +1,5 @@
 {
-  "name": "@mono/student",
+  "name": "@app/student",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,9 +12,9 @@
     "@convex-dev/better-auth": "^0.9.6",
     "@convex-dev/react-query": "0.0.0-alpha.11",
     "@hocuspocus/provider": "^3.4.0",
-    "@mono/backend": "workspace:*",
-    "@mono/editor": "workspace:*",
-    "@mono/ui": "workspace:*",
+    "@app/backend": "workspace:*",
+    "@package/editor": "workspace:*",
+    "@package/ui": "workspace:*",
     "@t3-oss/env-core": "^0.13.8",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/nitro-v2-vite-plugin": "^1.133.19",
@@ -39,8 +39,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
-    "@mono/eslint": "workspace:*",
-    "@mono/typescript-config": "workspace:*",
+    "@tooling/eslint": "workspace:*",
+    "@tooling/typescript-config": "workspace:*",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
     "@types/node": "^22.10.2",

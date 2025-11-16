@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@mono/typescript-config/astro.json",
+  "extends": "@tooling/typescript-config/astro.json",
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist"]
 }

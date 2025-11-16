@@ -5,7 +5,7 @@ import {
 } from "@tiptap/react";
 import { TrashIcon } from "lucide-react";
 import { useMemo } from "react";
-import { Button } from "@mono/ui";
+import { Button } from "@package/ui";
 
 export function ExerciseView({ getPos, editor }: NodeViewProps) {
   // Calculate exercise number based on position in document

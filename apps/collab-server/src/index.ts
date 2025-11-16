@@ -1,4 +1,4 @@
-import { api } from "@mono/backend";
+import { api } from "@app/backend";
 import { Server } from "@hocuspocus/server";
 import { ConvexHttpClient } from "convex/browser";
 import dotenv from "dotenv";
@@ -155,9 +155,12 @@ const server = Server.configure({
       authClient.setAuth(token);
 
       // Load the document from Convex
-      const content = await authClient.query(api.documents.loadDocumentContent, {
-        documentId: data.documentName,
-      });
+      const content = await authClient.query(
+        api.documents.loadDocumentContent,
+        {
+          documentId: data.documentName,
+        },
+      );
 
       if (content) {
         console.log("Document loaded from database:", {

@@ -1,6 +1,6 @@
-import { api } from "@mono/backend";
-import { DocumentEditor, getRandomUserColor } from "@mono/editor";
-import { Button } from "@mono/ui";
+import { api } from "@app/backend";
+import { DocumentEditor, getRandomUserColor } from "@package/editor";
+import { Button } from "@package/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";

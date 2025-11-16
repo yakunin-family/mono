@@ -1,6 +1,6 @@
+import { api } from "@app/backend";
 import { useConvex } from "@convex-dev/react-query";
-import { api } from "@mono/backend";
-import { Button } from "@mono/ui";
+import { Button } from "@package/ui";
 import { useMutation } from "@tanstack/react-query";
 
 interface RoleSwitcherProps {

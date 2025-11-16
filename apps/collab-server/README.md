@@ -27,7 +27,7 @@ Start the development server:
 
 ```bash
 # From the repository root
-turbo dev --filter=@mono/collab-server
+turbo dev --filter=@app/collab-server
 
 # Or from this directory
 pnpm dev

@@ -1,5 +1,5 @@
+import { api } from "@app/backend";
 import { convexQuery, useConvex } from "@convex-dev/react-query";
-import { api } from "@mono/backend";
 import {
   Button,
   Card,
@@ -7,7 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@mono/ui";
+} from "@package/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,

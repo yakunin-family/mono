@@ -1,5 +1,5 @@
 {
-  "name": "@mono/backend",
+  "name": "@app/backend",
   "private": true,
   "type": "module",
   "main": "./index.ts",
@@ -12,7 +12,7 @@
     "codegen": "convex codegen"
   },
   "devDependencies": {
-    "@mono/eslint": "workspace:*",
+    "@tooling/eslint": "workspace:*",
     "@types/node": "^22.10.2",
     "eslint": "^9.34.0",
     "globals": "^16.3.0",

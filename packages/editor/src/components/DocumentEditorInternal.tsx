@@ -19,7 +19,7 @@ import { SlashCommand } from "../extensions/SlashCommand";
 import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
-import { cn } from "@mono/ui";
+import { cn } from "@package/ui";
 
 interface DocumentEditorInternalProps {
   provider: HocuspocusProvider;

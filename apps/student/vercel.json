@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@mono/student",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@app/student",
   "outputDirectory": ".vinxi/output/public",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null

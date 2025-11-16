@@ -1,4 +1,4 @@
-import { config as baseConfig } from "@mono/eslint/base";
+import { config as baseConfig } from "@tooling/eslint/base";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
 

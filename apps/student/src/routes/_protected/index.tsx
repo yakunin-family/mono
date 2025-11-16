@@ -1,6 +1,6 @@
+import { api } from "@app/backend";
 import { convexQuery } from "@convex-dev/react-query";
-import { api } from "@mono/backend";
-import { Button } from "@mono/ui";
+import { Button } from "@package/ui";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileTextIcon } from "lucide-react";

@@ -9,7 +9,7 @@ import {
   FieldError,
   FieldLabel,
   Input,
-} from "@mono/ui";
+} from "@package/ui";
 import { useForm } from "@tanstack/react-form";
 import {
   createFileRoute,

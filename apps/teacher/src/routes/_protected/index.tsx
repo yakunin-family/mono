@@ -1,5 +1,5 @@
-import { api } from "@mono/backend";
-import { Button } from "@mono/ui";
+import { api } from "@app/backend";
+import { Button } from "@package/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";

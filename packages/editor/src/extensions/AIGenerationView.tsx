@@ -10,9 +10,9 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Button } from "@mono/ui";
+import { Button } from "@package/ui";
 import { useConvex } from "convex/react";
-import { api } from "@mono/backend";
+import { api } from "@app/backend";
 
 const HARDCODED_MODEL = "openai/gpt-4o";
 

@@ -1,4 +1,4 @@
-import { api } from "@mono/backend";
+import { api } from "@app/backend";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useConvex } from "convex/react";

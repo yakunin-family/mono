@@ -1,4 +1,4 @@
-import { api } from "@mono/backend";
+import { api } from "@app/backend";
 import {
   Button,
   Card,
@@ -11,7 +11,7 @@ import {
   FieldError,
   FieldLabel,
   Input,
-} from "@mono/ui";
+} from "@package/ui";
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
