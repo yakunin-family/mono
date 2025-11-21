@@ -1,11 +1,13 @@
+import alias from "@rollup/plugin-alias";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), dts()],
+  plugins: [react(), tailwindcss(), dts(), tsconfigPaths()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
@@ -20,6 +22,11 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       external: ["react", "react/jsx-runtime", "lucide-react"],
+      plugins: [
+        alias({
+          entries: [{ find: "@", replacement: resolve(__dirname, "./src") }],
+        }),
+      ],
     },
     outDir: "dist",
     emptyOutDir: false,

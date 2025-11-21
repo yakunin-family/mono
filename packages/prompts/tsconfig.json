@@ -1,0 +1,17 @@
+{
+  "extends": "@tooling/typescript-config/base.json",
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "noEmit": false,
+    "types": ["vite/client"]
+  },
+  "include": ["src"]
+}

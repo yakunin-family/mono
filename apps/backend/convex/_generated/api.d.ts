@@ -11,6 +11,8 @@
 import type * as ai from "../ai.js";
 import type * as auth from "../auth.js";
 import type * as documents from "../documents.js";
+import type * as exerciseGeneration from "../exerciseGeneration.js";
+import type * as exerciseGeneration_schemas from "../exerciseGeneration/schemas.js";
 import type * as http from "../http.js";
 import type * as invite from "../invite.js";
 import type * as students from "../students.js";
@@ -27,6 +29,8 @@ declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   auth: typeof auth;
   documents: typeof documents;
+  exerciseGeneration: typeof exerciseGeneration;
+  "exerciseGeneration/schemas": typeof exerciseGeneration_schemas;
   http: typeof http;
   invite: typeof invite;
   students: typeof students;

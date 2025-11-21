@@ -3,6 +3,7 @@
   "references": [
     { "path": "./packages/ui" },
     { "path": "./packages/editor" },
+    { "path": "./packages/prompts" },
     { "path": "./apps/teacher" },
     { "path": "./apps/student" }
   ]

@@ -1,0 +1,362 @@
+# Exercise Content Generator
+
+You are generating high-quality language learning exercise content.
+
+## Requirements
+
+```json
+{{requirements}}
+```
+
+## Exercise to Generate
+
+From the approved plan, generate content for this exercise:
+
+```json
+{{exerciseItem}}
+```
+
+## Your Task
+
+Generate the complete exercise content according to the type and parameters specified. The output must match the Zod schema for this exercise type exactly.
+
+---
+
+# Exercise Type Specifications
+
+## 1. Multiple Choice (`multiple-choice`)
+
+Generate multiple choice questions with clear, unambiguous correct answers.
+
+**Output Format:**
+```json
+{
+  "type": "multiple-choice",
+  "title": "Exercise title",
+  "instructions": "Clear instructions in the target language",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Question text in target language",
+      "options": [
+        { "id": "a", "text": "Option A" },
+        { "id": "b", "text": "Option B" },
+        { "id": "c", "text": "Option C" },
+        { "id": "d", "text": "Option D" }
+      ],
+      "correctAnswer": "b",
+      "explanation": "Why this answer is correct (target language)"
+    }
+  ]
+}
+```
+
+**Guidelines:**
+- One clearly correct answer
+- Three plausible distractors (wrong options that seem reasonable)
+- Options should be similar in length
+- Avoid "all of the above" or "none of the above"
+- Explanation should teach, not just confirm
+
+---
+
+## 2. True/False (`true-false`)
+
+Generate statements that test comprehension or knowledge.
+
+**Output Format:**
+```json
+{
+  "type": "true-false",
+  "title": "Exercise title",
+  "instructions": "Instructions in target language",
+  "statements": [
+    {
+      "id": "s1",
+      "statement": "Statement in target language",
+      "correctAnswer": true,
+      "explanation": "Why this is true/false (optional)"
+    }
+  ]
+}
+```
+
+**Guidelines:**
+- Make statements definitively true or false, avoid ambiguity
+- Mix true and false statements (not all true or all false)
+- Base statements on content if dependent on reading/listening
+- Avoid negative phrasing that confuses (e.g., "It is not incorrect that...")
+
+---
+
+## 3. Fill in the Blanks (`fill-blanks`)
+
+Generate sentences with missing words for students to fill in.
+
+**Output Format:**
+```json
+{
+  "type": "fill-blanks",
+  "title": "Exercise title",
+  "instructions": "Instructions in target language",
+  "items": [
+    {
+      "id": "fb1",
+      "sentence": "The cat is {{blank1}} on the sofa.",
+      "blanks": [
+        {
+          "id": "blank1",
+          "correctAnswer": "sleeping",
+          "alternativeAnswers": ["resting", "lying"],
+          "hint": "Present continuous verb (optional)"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Guidelines:**
+- Use `{{blank1}}`, `{{blank2}}` as placeholders
+- Provide alternative correct answers if applicable
+- Context should make the answer clear
+- Focus on target grammar/vocabulary point
+- Don't make sentences too long or complex
+
+---
+
+## 4. Sequencing (`sequencing`)
+
+Generate items that need to be put in correct order.
+
+**Output Format:**
+```json
+{
+  "type": "sequencing",
+  "title": "Exercise title",
+  "instructions": "Instructions in target language",
+  "context": "Background information if needed (optional)",
+  "items": [
+    {
+      "id": "seq1",
+      "content": "First event/step",
+      "correctPosition": 1
+    },
+    {
+      "id": "seq2",
+      "content": "Second event/step",
+      "correctPosition": 2
+    }
+  ]
+}
+```
+
+**Guidelines:**
+- Include 5-10 items to sequence
+- Clear logical ordering (chronological, procedural, etc.)
+- Each item should be distinct and unambiguous
+- Provide context if the sequence isn't obvious
+
+---
+
+## 5. Short Answer (`short-answer`)
+
+Generate open-ended questions requiring brief written responses.
+
+**Output Format:**
+```json
+{
+  "type": "short-answer",
+  "title": "Exercise title",
+  "instructions": "Instructions in target language",
+  "questions": [
+    {
+      "id": "sa1",
+      "question": "Question in target language",
+      "expectedAnswerGuidelines": "What a good answer should include (for teachers)",
+      "rubric": [
+        {
+          "criterion": "Content accuracy",
+          "points": 2
+        },
+        {
+          "criterion": "Language use",
+          "points": 2
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Guidelines:**
+- Questions should elicit 2-5 sentence responses
+- Provide clear rubric for assessment
+- Expected guidelines help teachers evaluate
+- Questions should be open enough to allow personal responses
+
+---
+
+## 6. Reading Passage (`text-passage`)
+
+Generate authentic-style reading material.
+
+**Output Format:**
+```json
+{
+  "type": "text-passage",
+  "title": "Exercise title",
+  "content": "The complete text in target language...",
+  "metadata": {
+    "wordCount": 250,
+    "readingTime": 5,
+    "source": "Original content"
+  }
+}
+```
+
+**Guidelines:**
+- Match the specified word count and difficulty level
+- Use vocabulary appropriate for the CEFR level
+- Include context clues for new vocabulary
+- Make content culturally relevant and interesting
+- Structure with clear paragraphs
+- If specified topic, stay focused on it
+
+**Level-Specific Guidelines:**
+- **A1-A2**: Simple sentences, present tense, everyday topics, high-frequency vocabulary
+- **B1-B2**: Mix of simple and compound sentences, past/future tenses, more abstract topics
+- **C1-C2**: Complex sentences, subjunctive/conditional, sophisticated vocabulary, nuanced ideas
+
+---
+
+## 7. Discussion Prompt (`discussion-prompt`)
+
+Generate thought-provoking questions for discussion.
+
+**Output Format:**
+```json
+{
+  "type": "discussion-prompt",
+  "title": "Exercise title",
+  "prompt": "Main discussion topic/scenario in target language",
+  "guidingQuestions": [
+    "Question 1 to guide discussion",
+    "Question 2 to guide discussion"
+  ],
+  "context": "Background information if needed (optional)"
+}
+```
+
+**Guidelines:**
+- Main prompt should be engaging and relevant
+- Guiding questions should progress from concrete to abstract
+- Encourage personal opinions and experiences
+- Appropriate for the proficiency level
+- No single "right answer"
+
+---
+
+## 8. Writing Exercises
+
+Includes `summary-writing`, `opinion-writing`, `description-writing`, `sentence-completion`.
+
+**Output Format:**
+```json
+{
+  "type": "opinion-writing",
+  "title": "Exercise title",
+  "instructions": "Clear instructions in target language",
+  "prompt": "Writing prompt in target language",
+  "wordCountTarget": {
+    "min": 100,
+    "max": 150
+  },
+  "rubric": [
+    {
+      "criterion": "Content & Ideas",
+      "description": "Addresses prompt with relevant ideas",
+      "maxPoints": 4
+    },
+    {
+      "criterion": "Organization",
+      "description": "Clear structure with intro, body, conclusion",
+      "maxPoints": 3
+    },
+    {
+      "criterion": "Language Use",
+      "description": "Grammar, vocabulary, and mechanics",
+      "maxPoints": 3
+    }
+  ]
+}
+```
+
+**Guidelines:**
+- Prompt should be specific enough to guide, open enough to allow creativity
+- Word count appropriate for level and time available
+- Rubric should have 3-5 criteria
+- Instructions should clarify expectations (format, tone, etc.)
+
+**Type-Specific Notes:**
+- **summary-writing**: Must have source material to summarize (depends on reading/listening)
+- **opinion-writing**: Ask for student's viewpoint on a topic
+- **description-writing**: Ask to describe an image, place, person, or experience
+- **sentence-completion**: Provide sentence starters for students to complete
+
+---
+
+# Quality Standards
+
+## All Exercise Types Must:
+
+1. **Match the Level**: Use vocabulary and grammar appropriate for the CEFR level
+2. **Be Culturally Appropriate**: Avoid stereotypes, sensitive topics, or culturally specific references that may not translate
+3. **Use Target Language**: All student-facing content in the target language (except instructions if explicitly requested otherwise)
+4. **Provide Value**: Each exercise should teach or reinforce specific skills
+5. **Be Achievable**: Students at the specified level should be able to complete the exercise
+6. **Be Clear**: Instructions and questions should be unambiguous
+
+## Language Complexity by Level
+
+### A1 (Beginner)
+- **Vocabulary**: 500-1000 most common words
+- **Grammar**: Present tense, basic pronouns, simple questions
+- **Sentences**: 5-10 words, simple structure
+- **Topics**: Greetings, family, food, daily routines
+
+### A2 (Elementary)
+- **Vocabulary**: 1000-1500 words
+- **Grammar**: Past tense, future with "going to", basic conjunctions
+- **Sentences**: 10-15 words, compound sentences introduced
+- **Topics**: Shopping, travel, hobbies, work
+
+### B1 (Intermediate)
+- **Vocabulary**: 1500-2500 words
+- **Grammar**: All basic tenses, conditionals, passive voice
+- **Sentences**: 15-20 words, complex sentences with subordinate clauses
+- **Topics**: Education, environment, technology, culture
+
+### B2 (Upper-Intermediate)
+- **Vocabulary**: 2500-4000 words, idiomatic expressions
+- **Grammar**: Advanced tenses, subjunctive mood, reported speech
+- **Sentences**: 20-25 words, sophisticated structures
+- **Topics**: Politics, economics, abstract concepts, specialized fields
+
+### C1-C2 (Advanced)
+- **Vocabulary**: 4000+ words, specialized terminology, nuanced expressions
+- **Grammar**: Full range including rare/literary forms
+- **Sentences**: Variable length, stylistically sophisticated
+- **Topics**: Any topic with depth and nuance
+
+---
+
+# Important Notes
+
+- **Dependencies**: If the exercise has dependencies, ensure content references or builds on those previous exercises
+- **Parameters**: Follow any specific parameters provided (questionCount, wordCount, focusArea, etc.)
+- **Consistency**: If generating multiple exercises in one session, ensure thematic consistency
+- **Return Format**: Return ONLY the JSON object for the exercise, no additional text
+- **Schema Compliance**: Output must exactly match the Zod schema for the exercise type
+
+Generate engaging, pedagogically sound content that helps students learn effectively!

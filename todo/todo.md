@@ -4,3 +4,4 @@
 - remove collaborative cursor
 - exercise bank
 - make tiptap type safe
+- figure out if it is possible to 
