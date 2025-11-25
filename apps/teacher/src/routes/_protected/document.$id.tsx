@@ -63,18 +63,21 @@ function DocumentEditorPage() {
     }
   };
 
-  // Handle AI generation creation
-  const handleCreateGeneration = async (
+  // Handle exercise generation creation
+  const handleStartExerciseGeneration = async (
     promptText: string,
     model: string,
-  ): Promise<{ generationId: string; streamId: string }> => {
-    const result = await convex.mutation(api.ai.createGeneration, {
-      documentId,
-      promptText,
-      model,
-    });
+  ): Promise<{ sessionId: string }> => {
+    const result = await convex.mutation(
+      api.exerciseGeneration.startExerciseGeneration,
+      {
+        documentId,
+        promptText,
+        model,
+      }
+    );
 
-    return result;
+    return { sessionId: result.sessionId };
   };
 
   if (documentQuery.isLoading) {
@@ -169,7 +172,7 @@ function DocumentEditorPage() {
             }
             convexClient={convex}
             queryClient={queryClient}
-            onCreateGeneration={handleCreateGeneration}
+            onStartExerciseGeneration={handleStartExerciseGeneration}
           />
         </div>
       </main>

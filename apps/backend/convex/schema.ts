@@ -120,15 +120,19 @@ const exerciseGenerationSession = defineTable({
     v.object({
       exercises: v.array(
         v.object({
+          id: v.string(),
           type: v.string(),
           title: v.string(),
           description: v.string(),
           estimatedDuration: v.optional(v.number()),
           parameters: v.optional(v.any()), // Exercise-specific parameters
+          dependencies: v.optional(v.array(v.string())), // IDs of prerequisite exercises
         }),
       ),
       totalDuration: v.optional(v.number()),
       sequenceRationale: v.optional(v.string()),
+      learningObjectives: v.optional(v.array(v.string())),
+      metadata: v.optional(v.any()), // Additional metadata
     }),
   ),
   tokensUsed: v.optional(v.number()),

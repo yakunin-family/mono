@@ -1,16 +1,17 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { AIGenerationView } from "./AIGenerationView";
+import { ExerciseGenerationView } from "./ExerciseGenerationView";
 
-export interface AIGenerationAttributes {
-  generationId: string | null;
+export interface ExerciseGenerationAttributes {
+  sessionId: string | null;
   status: string;
   promptText: string;
+  model: string;
 }
 
-export const AIGeneration = Node.create({
-  name: "aiGeneration",
+export const ExerciseGeneration = Node.create({
+  name: "exerciseGeneration",
 
   group: "block",
 
@@ -20,19 +21,19 @@ export const AIGeneration = Node.create({
 
   addStorage() {
     return {
-      createGeneration: null,
+      startGeneration: null,
     };
   },
 
   addAttributes() {
     return {
-      generationId: {
+      sessionId: {
         default: null,
-        parseHTML: (element) => element.getAttribute("data-generation-id"),
+        parseHTML: (element) => element.getAttribute("data-session-id"),
         renderHTML: (attributes) => {
-          if (!attributes.generationId) return {};
+          if (!attributes.sessionId) return {};
           return {
-            "data-generation-id": attributes.generationId,
+            "data-session-id": attributes.sessionId,
           };
         },
       },
@@ -55,13 +56,23 @@ export const AIGeneration = Node.create({
           };
         },
       },
+      model: {
+        default: "openai/gpt-4o",
+        parseHTML: (element) =>
+          element.getAttribute("data-model") || "openai/gpt-4o",
+        renderHTML: (attributes) => {
+          return {
+            "data-model": attributes.model,
+          };
+        },
+      },
     };
   },
 
   parseHTML() {
     return [
       {
-        tag: 'div[data-type="ai-generation"]',
+        tag: 'div[data-type="exercise-generation"]',
       },
     ];
   },
@@ -70,13 +81,13 @@ export const AIGeneration = Node.create({
     return [
       "div",
       mergeAttributes(HTMLAttributes, {
-        "data-type": "ai-generation",
-        class: "ai-generation",
+        "data-type": "exercise-generation",
+        class: "exercise-generation",
       }),
     ];
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(AIGenerationView);
+    return ReactNodeViewRenderer(ExerciseGenerationView);
   },
 });

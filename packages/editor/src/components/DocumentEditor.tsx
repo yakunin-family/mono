@@ -19,10 +19,10 @@ export interface DocumentEditorProps {
   userColor?: string;
   onStatusChange?: (status: ConnectionStatus) => void;
   onConnectedUsersChange?: (count: number) => void;
-  onCreateGeneration?: (
+  onStartExerciseGeneration?: (
     promptText: string,
     model: string,
-  ) => Promise<{ generationId: string; streamId: string }>;
+  ) => Promise<{ sessionId: string }>;
 }
 
 interface ConnectionContextProps {
@@ -80,7 +80,7 @@ export const DocumentEditor = ({
   userName = "Anonymous",
   userColor = "#999999",
   onStatusChange,
-  onCreateGeneration,
+  onStartExerciseGeneration,
   onConnectedUsersChange,
 }: DocumentEditorProps) => {
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
@@ -155,7 +155,7 @@ export const DocumentEditor = ({
         canEdit={canEdit}
         status={status}
         convexClient={convexClient}
-        onCreateGeneration={onCreateGeneration}
+        onStartExerciseGeneration={onStartExerciseGeneration}
       />
     </Providers>
   );

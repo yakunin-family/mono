@@ -23,8 +23,7 @@ import {
   generationResponseSchema,
   planningResponseSchema,
   validationResponseSchema,
-} from "./exerciseGeneration/schemas";
-
+} from "./validators/exerciseGeneration";
 
 /**
  * Helper function to check if user has access to a document (for mutations)
@@ -139,7 +138,6 @@ export const runValidation = internalAction({
     sessionId: v.string(),
     previousClarifications: v.optional(v.string()), // JSON string
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
 
@@ -268,7 +266,6 @@ export const runPlanning = internalAction({
   args: {
     sessionId: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
 
@@ -336,7 +333,6 @@ export const approvePlan = mutation({
   args: {
     sessionId: v.string(),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
@@ -372,7 +368,6 @@ export const runGeneration = internalAction({
   args: {
     sessionId: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
 
@@ -465,7 +460,6 @@ export const getGenerationSession = query({
   args: {
     sessionId: v.string(),
   },
-  returns: v.any(),
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
@@ -523,7 +517,6 @@ export const getSessionForAction = internalQuery({
   args: {
     sessionId: v.id("exerciseGenerationSession"),
   },
-  returns: v.any(),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.sessionId);
   },
@@ -563,7 +556,6 @@ export const completeStep = internalMutation({
     output: v.string(),
     tokensUsed: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const stepId = args.stepId as Id<"exerciseGenerationStep">;
     await ctx.db.patch(stepId, {
@@ -584,7 +576,6 @@ export const updateSessionRequirements = internalMutation({
     requirements: v.any(),
     newStep: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     await ctx.db.patch(sessionId, {
@@ -603,7 +594,6 @@ export const updateSessionStep = internalMutation({
     sessionId: v.string(),
     newStep: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     await ctx.db.patch(sessionId, {
@@ -622,7 +612,6 @@ export const updateSessionPlan = internalMutation({
     plan: v.any(),
     newStep: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     await ctx.db.patch(sessionId, {
@@ -641,7 +630,6 @@ export const completeSession = internalMutation({
     sessionId: v.string(),
     tokensUsed: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     const session = await ctx.db.get(sessionId);
@@ -678,7 +666,6 @@ export const failSession = internalMutation({
     sessionId: v.string(),
     errorMessage: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     await ctx.db.patch(sessionId, {
@@ -688,5 +675,3 @@ export const failSession = internalMutation({
     });
   },
 });
-
-// Note: Prompt building functions are now imported from ./exerciseGeneration/prompts

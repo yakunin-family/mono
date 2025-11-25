@@ -14,7 +14,7 @@ import { useEffect, useRef } from "react";
 import * as Y from "yjs";
 
 import { Exercise } from "../extensions/Exercise";
-import { AIGeneration } from "../extensions/AIGeneration";
+import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
 import { MouseTracker } from "./MouseTracker";
@@ -29,10 +29,10 @@ interface DocumentEditorInternalProps {
   canEdit: boolean;
   status: "connecting" | "connected" | "disconnected";
   convexClient?: any; // ConvexReactClient from consuming app
-  onCreateGeneration?: (
+  onStartExerciseGeneration?: (
     promptText: string,
     model: string,
-  ) => Promise<{ generationId: string; streamId: string }>;
+  ) => Promise<{ sessionId: string }>;
 }
 
 /**
@@ -47,7 +47,7 @@ export function DocumentEditorInternal({
   canEdit,
   status,
   convexClient,
-  onCreateGeneration,
+  onStartExerciseGeneration,
 }: DocumentEditorInternalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -78,7 +78,7 @@ export function DocumentEditorInternal({
         allowBase64: true,
       }),
       Exercise,
-      AIGeneration,
+      ExerciseGeneration,
       SlashCommand.configure({
         canEdit,
       }),
@@ -97,15 +97,15 @@ export function DocumentEditorInternal({
     }
   }, [editor, canEdit]);
 
-  // Set AI generation callback and Convex client in editor storage
+  // Set exercise generation callback and Convex client in editor storage
   useEffect(() => {
     if (editor) {
-      (editor.storage as any).aiGeneration = {
-        createGeneration: onCreateGeneration,
+      (editor.storage as any).exerciseGeneration = {
+        startGeneration: onStartExerciseGeneration,
         convexClient: convexClient,
       };
     }
-  }, [editor, onCreateGeneration, convexClient]);
+  }, [editor, onStartExerciseGeneration, convexClient]);
 
   if (!editor) {
     return (

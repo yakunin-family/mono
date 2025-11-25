@@ -164,14 +164,14 @@ export const SlashCommand = Extension.create({
               },
             },
             {
-              title: "AI Generation",
+              title: "Exercise Generation",
               icon: Sparkles,
               command: ({ editor, range }) => {
                 editor
                   .chain()
                   .focus()
                   .deleteRange(range)
-                  .insertContent({ type: "aiGeneration" })
+                  .insertContent({ type: "exerciseGeneration" })
                   .run();
               },
             },
