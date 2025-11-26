@@ -79,10 +79,12 @@ Return a JSON object matching this structure:
    - Use "text" for free-form input (like topic)
 
 4. **Exercise Types**:
-   - Match user's intent to available exercise types
-   - If user says "questions", suggest "multiple-choice", "true-false", "short-answer"
-   - If user says "reading", include "text-passage" plus comprehension exercises
-   - If user says "writing practice", include "summary-writing", "opinion-writing", etc.
+   - Map user's words directly to exercise types
+   - If user says "text" or "reading", infer only "text-passage"
+   - If user says "questions", ask which type (multiple-choice, true-false, short-answer)
+   - If user says "writing", ask which type (summary-writing, opinion-writing, etc.)
+   - Only infer exercise types when the mapping is clear and unambiguous
+   - If user explicitly requests only one type, respect that - don't suggest additional types
 
 5. **Partial Extraction**:
    - Always fill in `extractedRequirements` with whatever you CAN extract

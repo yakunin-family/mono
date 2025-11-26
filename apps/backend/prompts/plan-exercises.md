@@ -14,11 +14,15 @@ You are creating a pedagogically sound plan for language learning exercises.
 
 ## Your Task
 
-Create a detailed plan for exercises that will help students learn effectively. Consider:
+Create a detailed plan for exercises that will help students learn effectively.
 
-1. **Pedagogical Progression**: Order exercises from input (reading/listening) → understanding (comprehension) → production (writing/speaking)
-2. **Cognitive Load**: Start with easier tasks, progress to more challenging
-3. **Variety**: Mix different exercise types to maintain engagement
+**CRITICAL CONSTRAINT**: You MUST ONLY use the exercise types specified in the requirements above. Do not add any exercise types that were not requested.
+
+Consider:
+
+1. **Exercise Type Constraint**: ONLY use exercise types listed in the requirements. If only one type is specified, create a plan using only that type.
+2. **Pedagogical Progression**: Order exercises logically (if using multiple types, go from input → understanding → production)
+3. **Cognitive Load**: Start with easier tasks, progress to more challenging
 4. **Time Management**: Distribute time appropriately across exercises
 5. **Learning Objectives**: Ensure exercises build on each other
 
