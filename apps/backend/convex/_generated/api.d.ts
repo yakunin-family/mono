@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as _generated_prompts from "../_generated_prompts.js";
 import type * as auth from "../auth.js";
 import type * as documents from "../documents.js";
 import type * as exerciseGeneration from "../exerciseGeneration.js";
@@ -25,6 +26,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  _generated_prompts: typeof _generated_prompts;
   auth: typeof auth;
   documents: typeof documents;
   exerciseGeneration: typeof exerciseGeneration;

@@ -1,8 +1,3 @@
-import {
-  buildGenerationPrompt,
-  buildPlanningPrompt,
-  buildValidationPrompt,
-} from "@package/prompts";
 import { generateObject } from "ai";
 import { v } from "convex/values";
 import invariant from "tiny-invariant";
@@ -18,6 +13,11 @@ import {
   query,
   QueryCtx,
 } from "./_generated/server";
+import {
+  buildGenerationPrompt,
+  buildPlanningPrompt,
+  buildValidationPrompt,
+} from "./_generated_prompts";
 import { authComponent } from "./auth";
 import {
   generationResponseSchema,

@@ -120,7 +120,7 @@ export const trueFalseExerciseSchema = z.object({
 // Fill in the Blanks Exercise
 export const fillBlanksItemSchema = z.object({
   id: z.string(),
-  sentence: z.string(), // Contains {{blank}} placeholders
+  sentence: z.string(), // Contains [[blank1]], [[blank2]] etc. placeholders
   blanks: z.array(
     z.object({
       id: z.string(),
@@ -198,14 +198,8 @@ export const discussionPromptExerciseSchema = z.object({
   context: z.string().optional(),
 });
 
-// Writing Exercise (Summary, Opinion, Description)
-export const writingExerciseSchema = z.object({
-  type: z.enum([
-    "summary-writing",
-    "opinion-writing",
-    "description-writing",
-    "sentence-completion",
-  ]),
+// Writing Exercise schemas (split into separate schemas for discriminated union)
+const baseWritingSchema = z.object({
   title: z.string(),
   instructions: z.string(),
   prompt: z.string(),
@@ -226,13 +220,29 @@ export const writingExerciseSchema = z.object({
     .optional(),
 });
 
-// Generic exercise schema for types not yet fully defined
-export const genericExerciseSchema = z.object({
-  type: z.string(),
-  title: z.string(),
-  instructions: z.string(),
-  content: z.any(), // Flexible content for other exercise types
+export const summaryWritingExerciseSchema = baseWritingSchema.extend({
+  type: z.literal("summary-writing"),
 });
+
+export const opinionWritingExerciseSchema = baseWritingSchema.extend({
+  type: z.literal("opinion-writing"),
+});
+
+export const descriptionWritingExerciseSchema = baseWritingSchema.extend({
+  type: z.literal("description-writing"),
+});
+
+export const sentenceCompletionExerciseSchema = baseWritingSchema.extend({
+  type: z.literal("sentence-completion"),
+});
+
+// Union type for all writing exercises
+export const writingExerciseSchema = z.union([
+  summaryWritingExerciseSchema,
+  opinionWritingExerciseSchema,
+  descriptionWritingExerciseSchema,
+  sentenceCompletionExerciseSchema,
+]);
 
 // Union of all exercise types
 export const exerciseContentSchema = z.discriminatedUnion("type", [
@@ -243,8 +253,10 @@ export const exerciseContentSchema = z.discriminatedUnion("type", [
   shortAnswerExerciseSchema,
   readingPassageExerciseSchema,
   discussionPromptExerciseSchema,
-  writingExerciseSchema,
-  genericExerciseSchema,
+  summaryWritingExerciseSchema,
+  opinionWritingExerciseSchema,
+  descriptionWritingExerciseSchema,
+  sentenceCompletionExerciseSchema,
 ]);
 
 export const generatedExerciseSchema = z.object({

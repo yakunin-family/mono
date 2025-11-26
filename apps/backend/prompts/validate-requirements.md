@@ -4,15 +4,9 @@ You are analyzing a user's request to generate language learning exercises.
 
 ## User's Request
 
-{{userPrompt}}
+{userPrompt}
 
-{{#if previousClarifications}}
-## Previous Clarifications
-
-The user has already provided these answers:
-
-{{previousClarifications}}
-{{/if}}
+{previousClarifications}
 
 ## Your Task
 
@@ -33,7 +27,7 @@ Analyze the request and determine if all required information is present to gene
 
 ### Available Exercise Types
 
-{{> exercise-types-description}}
+{>exercise-types-description}
 
 ## Response Format
 
@@ -94,98 +88,6 @@ Return a JSON object matching this structure:
    - Always fill in `extractedRequirements` with whatever you CAN extract
    - Leave optional fields empty if not mentioned
    - Only ask clarification for required fields
-
-## Examples
-
-### Example 1: Complete Request
-
-**User Prompt**: "Create A2 level Spanish exercises about food with multiple choice and fill in the blanks questions"
-
-**Response**:
-```json
-{
-  "status": "ready",
-  "extractedRequirements": {
-    "targetLanguage": "Spanish",
-    "level": "A2",
-    "topic": "food",
-    "exerciseTypes": ["multiple-choice", "fill-blanks"]
-  }
-}
-```
-
-### Example 2: Needs Clarification
-
-**User Prompt**: "I need some French exercises for my students"
-
-**Response**:
-```json
-{
-  "status": "needs_clarification",
-  "extractedRequirements": {
-    "targetLanguage": "French"
-  },
-  "clarificationNeeded": [
-    {
-      "id": "level",
-      "question": "What CEFR level are your students?",
-      "type": "select",
-      "options": ["A1 (Beginner)", "A2 (Elementary)", "B1 (Intermediate)", "B2 (Upper-Intermediate)", "C1 (Advanced)", "C2 (Proficient)"],
-      "required": true
-    },
-    {
-      "id": "exerciseTypes",
-      "question": "What types of exercises would you like?",
-      "type": "multiselect",
-      "options": [
-        "Reading passages",
-        "Multiple choice questions",
-        "Fill in the blanks",
-        "True/False statements",
-        "Short answer questions",
-        "Writing prompts",
-        "Discussion questions"
-      ],
-      "required": true
-    },
-    {
-      "id": "topic",
-      "question": "Is there a specific topic or theme? (Optional)",
-      "type": "text",
-      "required": false
-    }
-  ],
-  "missingFields": ["level", "exerciseTypes"],
-  "reasoning": "Need to know the proficiency level and desired exercise types to create appropriate content"
-}
-```
-
-### Example 3: Ambiguous Level
-
-**User Prompt**: "Make me some intermediate English reading comprehension exercises about technology"
-
-**Response**:
-```json
-{
-  "status": "needs_clarification",
-  "extractedRequirements": {
-    "targetLanguage": "English",
-    "topic": "technology",
-    "exerciseTypes": ["text-passage", "multiple-choice", "short-answer"]
-  },
-  "clarificationNeeded": [
-    {
-      "id": "level",
-      "question": "Which intermediate level? (Intermediate spans B1-B2)",
-      "type": "select",
-      "options": ["B1 (Lower-Intermediate)", "B2 (Upper-Intermediate)"],
-      "required": true
-    }
-  ],
-  "missingFields": ["level"],
-  "reasoning": "Need to clarify which intermediate level (B1 or B2) for appropriate difficulty"
-}
-```
 
 ## Important Notes
 
