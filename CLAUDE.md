@@ -183,6 +183,7 @@ This is a **pnpm monorepo** managed by **Turborepo**. All commands should be run
 - **Schema**: Defined in `convex/schema.ts` using Convex validators (`v` from `convex/values`)
 - **Functions**: Queries, mutations, and actions in `convex/` directory
 - **Authentication**: Better Auth integration via HTTP endpoints (`convex/http.ts`)
+- **Development Logs**: The dev server logs are automatically saved to `convex-dev.log` for debugging purposes
 
 **Important Convex Patterns**:
 

@@ -9,10 +9,24 @@
       "outputs": ["dist/**"],
       "env": ["VITE_CONVEX_URL", "SERVER_URL", "CONVEX_URL"]
     },
-    "build:prompts": {
+    "@app/backend#build:prompts": {
       "cache": true,
       "inputs": ["prompts/**/*.md", "scripts/build-prompts.ts"],
-      "outputs": ["convex/_generated/prompts.ts"]
+      "outputs": ["convex/_generated_prompts.ts"]
+    },
+    "@app/backend#dev": {
+      "dependsOn": ["build:prompts"],
+      "cache": false,
+      "persistent": true
+    },
+    "@app/backend#deploy": {
+      "dependsOn": ["build:prompts"],
+      "cache": false
+    },
+    "@app/backend#codegen": {
+      "dependsOn": ["build:prompts"],
+      "cache": true,
+      "outputs": ["convex/_generated/**"]
     },
     "@app/teacher#build": {
       "dependsOn": ["^build"],

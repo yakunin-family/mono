@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build:prompts": "tsx scripts/build-prompts.ts",
-    "dev": "pnpm build:prompts && convex dev 2>&1 | tee ./convex-dev.log",
+    "dev": "convex dev 2>&1 | tee ./convex-dev.log",
     "deploy": "convex deploy",
     "codegen": "convex codegen"
   },
