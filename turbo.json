@@ -1,11 +1,43 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "globalEnv": ["NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**"],
+      "env": ["VITE_CONVEX_URL", "SERVER_URL", "CONVEX_URL"]
+    },
+    "build:prompts": {
+      "cache": true,
+      "inputs": ["prompts/**/*.md", "scripts/build-prompts.ts"],
+      "outputs": ["convex/_generated/prompts.ts"]
+    },
+    "@app/teacher#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".output/**", "!.output/cache/**", "dist/**"],
+      "env": ["VITE_CONVEX_URL", "SERVER_URL"]
+    },
+    "@app/student#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".output/**", "!.output/cache/**", "dist/**"],
+      "env": ["VITE_CONVEX_URL", "SERVER_URL"]
+    },
+    "@app/www#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", ".astro/**"]
+    },
+    "@app/collab-server#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "env": ["CONVEX_URL"]
+    },
+    "@app/backend#build": {
+      "cache": false
     },
     "lint": {
       "dependsOn": ["^build"]
