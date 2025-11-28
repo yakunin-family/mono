@@ -159,7 +159,7 @@ export const SlashCommand = Extension.create({
                   .chain()
                   .focus()
                   .deleteRange(range)
-                  .insertContent({ type: "exercise" })
+                  .insertExercise()
                   .run();
               },
             },
@@ -171,7 +171,7 @@ export const SlashCommand = Extension.create({
                   .chain()
                   .focus()
                   .deleteRange(range)
-                  .insertContent({ type: "exerciseGeneration" })
+                  .insertExerciseGeneration()
                   .run();
               },
             },

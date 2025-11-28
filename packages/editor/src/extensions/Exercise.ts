@@ -7,6 +7,15 @@ export interface ExerciseAttributes {
   instanceId: string;
 }
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    exercise: {
+      insertExercise: (attributes?: { instanceId?: string }) => ReturnType;
+      updateExercise: (attributes: Partial<ExerciseAttributes>) => ReturnType;
+    };
+  }
+}
+
 export const Exercise = Node.create({
   name: "exercise",
 
@@ -52,5 +61,19 @@ export const Exercise = Node.create({
 
   addNodeView() {
     return ReactNodeViewRenderer(ExerciseView);
+  },
+
+  addCommands() {
+    return {
+      insertExercise: (attributes) => ({ commands }) => {
+        return commands.insertContent({
+          type: this.name,
+          attrs: attributes,
+        });
+      },
+      updateExercise: (attributes) => ({ commands }) => {
+        return commands.updateAttributes(this.name, attributes);
+      },
+    };
   },
 });

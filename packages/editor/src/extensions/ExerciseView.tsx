@@ -6,8 +6,14 @@ import {
 import { TrashIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@package/ui";
+import type { ExerciseAttributes } from "./Exercise";
 
-export function ExerciseView({ getPos, editor }: NodeViewProps) {
+interface ExerciseNodeViewProps extends NodeViewProps {
+  node: NodeViewProps['node'] & { attrs: ExerciseAttributes };
+}
+
+export function ExerciseView(props: NodeViewProps) {
+  const { node, getPos, editor } = props as ExerciseNodeViewProps;
   // Calculate exercise number based on position in document
   const exerciseNumber = useMemo(() => {
     if (typeof getPos !== "function") return 0;

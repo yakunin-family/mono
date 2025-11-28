@@ -2,6 +2,26 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Code Style Guidelines
+
+**CRITICAL RULES - NEVER VIOLATE THESE:**
+
+1. **No `as any` casts** - The use of `as any` type assertions is **strictly forbidden** unless explicitly approved by the user. Always find properly typed solutions.
+   - ❌ `const foo = bar as any`
+   - ✅ `const foo = bar as SpecificType` (with proper type)
+   - ✅ Use proper type narrowing, type guards, or interface design instead
+
+2. **Type Safety First** - Always maintain strong typing throughout the codebase. If a type conflict arises, solve it with proper TypeScript patterns, not by weakening types.
+
+3. **No Meta-Comments** - Do not add comments that are only relevant during code writing. Comments must provide lasting value.
+   - ❌ `// Type-safe props!` - Meta-commentary about what you just did
+   - ❌ `// Now fully typed - no assertions needed!` - Temporary context
+   - ❌ `// Type the NodeView props to ensure...` - Obvious from the code
+   - ✅ `// Note: Using intersection type because ReactNodeViewRenderer requires standard NodeViewProps` - Explains WHY
+   - ✅ `// HACK: Workaround for Tiptap issue #1234` - Documents technical debt
+   - ✅ Complex business logic explanations that clarify non-obvious behavior
+   - **Rule of thumb:** If the comment won't be useful to someone reading the code in 6 months, don't write it.
+
 ## Repository Structure
 
 This is a **pnpm monorepo** managed by **Turborepo** with the following workspace structure:

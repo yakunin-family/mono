@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@package/ui";
 import { useExerciseGeneration } from "../hooks/useExerciseGeneration";
 import { exerciseToTiptap } from "../utils/exerciseToTiptap";
+import type { ExerciseGenerationAttributes } from "./ExerciseGeneration";
 
 // Step components
 import { ValidationStep } from "../components/exercise-generation/ValidationStep";
@@ -21,17 +22,17 @@ import { ErrorStep } from "../components/exercise-generation/ErrorStep";
 
 const DEFAULT_MODEL = "openai/gpt-4o";
 
-export function ExerciseGenerationView({
-  node,
-  getPos,
-  editor,
-  updateAttributes,
-}: NodeViewProps) {
-  // Node attributes
-  const sessionId = node.attrs.sessionId as string | null;
+interface ExerciseGenerationNodeViewProps extends NodeViewProps {
+  node: NodeViewProps['node'] & { attrs: ExerciseGenerationAttributes };
+}
+
+export function ExerciseGenerationView(props: NodeViewProps) {
+  const { node, getPos, editor, updateAttributes } = props as ExerciseGenerationNodeViewProps;
+
+  const sessionId = node.attrs.sessionId;
   const status = node.attrs.status as "input" | "active";
-  const initialPromptText = node.attrs.promptText as string;
-  const initialModel = node.attrs.model as string;
+  const initialPromptText = node.attrs.promptText;
+  const initialModel = node.attrs.model;
 
   // Local state for input
   const [promptText, setPromptText] = useState(initialPromptText || "");
@@ -78,8 +79,7 @@ export function ExerciseGenerationView({
     setIsStarting(true);
 
     try {
-      const startGeneration = (editor.storage as any).exerciseGeneration
-        ?.startGeneration;
+      const startGeneration = editor.storage.exerciseGeneration?.startGeneration;
 
       if (!startGeneration) {
         throw new Error(

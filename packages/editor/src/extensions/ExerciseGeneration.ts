@@ -2,12 +2,44 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { ExerciseGenerationView } from "./ExerciseGenerationView";
+import { ConvexReactClient } from "convex/react";
 
 export interface ExerciseGenerationAttributes {
   sessionId: string | null;
   status: string;
   promptText: string;
   model: string;
+}
+
+export interface ExerciseGenerationStorage {
+  startGeneration:
+    | ((promptText: string, model: string) => Promise<{ sessionId: string }>)
+    | null
+    | undefined;
+  convexClient: ConvexReactClient;
+}
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    exerciseGeneration: {
+      /**
+       * Insert an exercise generation node into the document.
+       */
+      insertExerciseGeneration: (
+        attributes?: Partial<ExerciseGenerationAttributes>,
+      ) => ReturnType;
+      /**
+       * Update attributes of an existing exercise generation node.
+       */
+      updateExerciseGeneration: (
+        attributes: Partial<ExerciseGenerationAttributes>,
+      ) => ReturnType;
+    };
+  }
+
+  interface Storage {
+    exerciseGeneration: ExerciseGenerationStorage;
+  }
 }
 
 export const ExerciseGeneration = Node.create({
@@ -22,6 +54,7 @@ export const ExerciseGeneration = Node.create({
   addStorage() {
     return {
       startGeneration: null,
+      convexClient: null,
     };
   },
 
@@ -48,8 +81,7 @@ export const ExerciseGeneration = Node.create({
       },
       promptText: {
         default: "",
-        parseHTML: (element) =>
-          element.getAttribute("data-prompt-text") || "",
+        parseHTML: (element) => element.getAttribute("data-prompt-text") || "",
         renderHTML: (attributes) => {
           return {
             "data-prompt-text": attributes.promptText,
@@ -89,5 +121,23 @@ export const ExerciseGeneration = Node.create({
 
   addNodeView() {
     return ReactNodeViewRenderer(ExerciseGenerationView);
+  },
+
+  addCommands() {
+    return {
+      insertExerciseGeneration:
+        (attributes) =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: attributes,
+          });
+        },
+      updateExerciseGeneration:
+        (attributes) =>
+        ({ commands }) => {
+          return commands.updateAttributes(this.name, attributes);
+        },
+    };
   },
 });

@@ -100,7 +100,7 @@ export function DocumentEditorInternal({
   // Set exercise generation callback and Convex client in editor storage
   useEffect(() => {
     if (editor) {
-      (editor.storage as any).exerciseGeneration = {
+      editor.storage.exerciseGeneration = {
         startGeneration: onStartExerciseGeneration,
         convexClient: convexClient,
       };

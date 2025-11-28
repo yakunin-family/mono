@@ -7,5 +7,8 @@ export type { DocumentEditorToolbarProps } from "./components/DocumentEditorTool
 export { Exercise } from "./extensions/Exercise";
 export type { ExerciseAttributes } from "./extensions/Exercise";
 export { ExerciseGeneration } from "./extensions/ExerciseGeneration";
-export type { ExerciseGenerationAttributes } from "./extensions/ExerciseGeneration";
+export type {
+  ExerciseGenerationAttributes,
+  ExerciseGenerationStorage,
+} from "./extensions/ExerciseGeneration";
 export { getRandomUserColor, getUserColorByIndex } from "./utils/user-colors";
