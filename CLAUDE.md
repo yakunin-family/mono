@@ -41,6 +41,98 @@ This is a **pnpm monorepo** managed by **Turborepo** with the following workspac
 - **`packages/eslint`** - Shared ESLint configurations
 - **`packages/typescript-config`** - Shared TypeScript configurations
 
+## Project Management: Initiatives Folder
+
+The **`initiatives/`** folder serves as a lightweight project management system similar to Jira, organizing large features and complex work into structured epics with discrete tasks.
+
+### Structure
+
+```
+initiatives/
+├── initiative-name/
+│   ├── README.md                    # Initiative overview (epic)
+│   ├── task-0-description.md        # Individual task
+│   ├── task-1-description.md
+│   ├── task-2-description.md
+│   └── ...
+```
+
+### When to Use Initiatives
+
+Use the initiatives folder when:
+- A feature request requires multiple discrete implementation steps
+- Work involves coordinating changes across multiple apps or packages
+- The scope is large enough to benefit from upfront planning
+- Dependencies between tasks need to be clearly documented
+- You want to track progress incrementally with checkboxes
+
+**Example scenarios:**
+- Adding a new collaborative editor feature with backend, frontend, and UI changes
+- Implementing a new authentication flow across teacher and student apps
+- Building a complex feature like interactive blanks, quizzes, or grading systems
+
+**When NOT to use:**
+- Single-file changes or small bug fixes
+- Straightforward features with obvious implementation
+- Quick updates that don't need task breakdown
+
+### Initiative README.md Format
+
+Each initiative folder contains a `README.md` with:
+
+1. **Title and Overview** - Brief description of the feature/epic
+2. **Problem** - What issue this initiative solves
+3. **Solution** - High-level approach
+4. **Tasks** - Ordered list linking to individual task files
+5. **Dependencies** - Required packages, commands, or prerequisites
+6. **Key Files** - Files to be created or modified
+7. **Technical Approach** - Architecture decisions and patterns
+8. **Success Criteria** - Checkboxes for tracking completion
+9. **Future Enhancements** - Out-of-scope ideas for later
+
+**Example:**
+```markdown
+# Interactive Blanks Initiative
+
+## Overview
+Transform fill-in-the-blank exercises into interactive Tiptap nodes.
+
+## Tasks
+0. **[Update Backend Prompt](./task-0-update-backend-prompt.md)** - ⚠️ START HERE
+1. **[Blank Node Foundation](./task-1-blank-node-foundation.md)** - Core node
+2. **[Parsing Logic](./task-2-parsing-logic.md)** - Text to nodes
+
+## Success Criteria
+- [x] Task 0 complete
+- [ ] Task 1 complete
+- [ ] Task 2 complete
+```
+
+### Task File Format
+
+Individual task files (`task-N-description.md`) should contain:
+- Clear, actionable description of what needs to be done
+- Specific files to create or modify
+- Code examples or implementation guidance
+- Acceptance criteria
+
+**Naming convention:** `task-{number}-{short-description}.md`
+- Numbers start at 0 and indicate execution order
+- Use kebab-case for descriptions
+- Examples: `task-0-schema-updates.md`, `task-3-student-mode.md`
+
+### Working with Initiatives
+
+**When planning large work:**
+1. Create a new folder in `initiatives/` with a descriptive name
+2. Write the `README.md` with overview, tasks, and success criteria
+3. Create individual task files for each discrete step
+4. Reference task files from the README in execution order
+5. Update checkboxes in README as tasks complete
+
+**When Claude suggests breaking down work:**
+If you describe a large feature or complex change, Claude may suggest creating an initiative to properly plan and track the work. This ensures nothing is missed and progress is visible.
+
 ## Development Commands
 
 All commands should be run from the **repository root** unless otherwise specified.
