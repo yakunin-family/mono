@@ -28,18 +28,22 @@ This is a **pnpm monorepo** managed by **Turborepo** with the following workspac
 
 ### Apps
 
-- **`apps/teacher`** - Teacher-facing application (port 3000) using TanStack Start
-- **`apps/student`** - Student-facing application (port 3001) using TanStack Start
+- **`apps/teacher`** - Teacher-facing application using TanStack Start
+- **`apps/student`** - Student-facing application using TanStack Start
 - **`apps/backend`** - Convex backend for real-time database and serverless functions
 - **`apps/www`** - Marketing/landing site built with Astro
-- **`apps/collab-server`** - Hocuspocus WebSocket server for real-time collaboration (port 1234)
+- **`apps/collab-server`** - Hocuspocus WebSocket server for real-time collaboration
 
 ### Packages
 
 - **`packages/editor`** - Shared Tiptap-based collaborative document editor
 - **`packages/ui`** - Shared React component library (using shadcn/ui)
-- **`packages/eslint`** - Shared ESLint configurations
-- **`packages/typescript-config`** - Shared TypeScript configurations
+- **`packages/exercises`** - Exercise type taxonomy (16 types across Material, Assessment, Production categories) - *Note: Package defines types but doesn't export them yet*
+
+### Tooling
+
+- **`tooling/eslint`** - Shared ESLint configurations
+- **`tooling/typescript-config`** - Shared TypeScript configurations
 
 ## Project Management: Initiatives Folder
 
@@ -133,114 +137,32 @@ Individual task files (`task-N-description.md`) should contain:
 **When Claude suggests breaking down work:**
 If you describe a large feature or complex change, Claude may suggest creating an initiative to properly plan and track the work. This ensures nothing is missed and progress is visible.
 
-## Development Commands
+## Development Workflow
 
-All commands should be run from the **repository root** unless otherwise specified.
+This is a **pnpm monorepo** managed by **Turborepo**. All commands should be run from the **repository root** unless otherwise specified.
 
-### Core Commands
+**Running commands**:
+- Run `pnpm run` at root to see all available scripts
+- Common patterns: `pnpm dev`, `pnpm build`, `pnpm check-types`, `pnpm lint`
+- Run specific apps: `pnpm dev:teacher`, `pnpm dev:student`, `pnpm dev:backend`
+- Use Turborepo filters: `turbo run <task> --filter=<package>` for selective execution
+- Check individual `package.json` files in each app/package for specific commands
 
-```bash
-# Install dependencies
-pnpm install
+**Backend note**: The backend requires `pnpm build:prompts` before development, which is automatically run during `pnpm dev`. Generated prompts are built from markdown files in `apps/backend/prompts/`.
 
-# Run all apps in development mode
-pnpm dev
-
-# Run specific apps
-pnpm dev:teacher      # Teacher app on port 3000
-pnpm dev:student      # Student app on port 3001
-pnpm dev:backend      # Convex backend
-turbo dev --filter=www
-
-# Build all apps
-pnpm build
-
-# Build specific apps
-pnpm build:teacher
-pnpm build:student
-turbo build --filter=www
-
-# Type checking
-pnpm check-types
-
-# Linting
-pnpm lint
-
-# Code formatting
-pnpm format
-```
-
-### Backend-Specific Commands
-
-The Convex backend (`apps/backend`) requires separate commands:
-
-```bash
-cd apps/backend
-
-# Start Convex dev server
-pnpm dev  # or: convex dev
-
-# Deploy to production
-pnpm deploy  # or: convex deploy
-
-# Generate TypeScript types from schema
-pnpm codegen  # or: convex codegen
-```
-
-### App-Specific Commands
-
-```bash
-# Teacher app
-cd apps/teacher
-pnpm dev    # Port 3000
-pnpm build
-pnpm test
-
-# Student app
-cd apps/student
-pnpm dev    # Port 3001
-pnpm build
-pnpm test
-```
+**TypeScript Project References**: This monorepo uses TypeScript project references for proper type resolution across packages. Every TypeScript package/app must be referenced in the root `tsconfig.json` references array. When adding a new package or app with TypeScript, ensure it's added to the project references.
 
 ## Architecture Notes
 
 ### Teacher App (`apps/teacher`)
 
 - **Framework**: TanStack Start (React SSR with file-based routing)
-- **Port**: 3000 (localhost:3000)
-- **Purpose**: Teacher dashboard, document creation, student management
-- **Features**:
-  - Create and manage documents
-  - Add and manage students via invite links
-  - Share documents with students
-  - Full document editing capabilities
-  - Role switching to student app (if user has both roles)
-
-**Key Routes**:
-
-- `/` - Teacher dashboard
-- `/document/:id` - Document editor (full edit access)
-- `/teacher/subscribe` - Teacher activation/subscription
-- `/login`, `/signup` - Authentication
+- **Purpose**: Teacher-facing application for creating and managing educational content, organizing students, and sharing collaborative documents with full editing capabilities
 
 ### Student App (`apps/student`)
 
 - **Framework**: TanStack Start (React SSR with file-based routing)
-- **Port**: 3001 (localhost:3001)
-- **Purpose**: Student learning interface
-- **Features**:
-  - View assigned documents
-  - Collaborative document viewing/editing (limited)
-  - Student onboarding via invite links
-  - Role switching to teacher app (if user has both roles)
-
-**Key Routes**:
-
-- `/` - Student dashboard
-- `/document/:id` - Document viewer (limited edit access)
-- `/join/:token` - Student onboarding via teacher invite
-- `/login` - Authentication
+- **Purpose**: Student-facing learning interface for accessing assigned documents and engaging with educational content in a collaborative environment with limited editing permissions
 
 ### Shared Architecture (Both Apps)
 
@@ -303,189 +225,67 @@ defineTable({
 - Add new shadcn components: `pnpx shadcn@latest add <component>`
 - Components are built with `tsup` and consumed by apps via workspace references
 
+### Exercises Package (`packages/exercises`)
+
+- **Purpose**: Centralized repository for exercise type definitions
+- **Status**: In-progress - defines types but doesn't export them yet
+- **Contents**: 16 exercise types across 3 categories:
+  - Material Providers (4 types): text-passage, audio-clip, video-content, image-prompt
+  - Assessment Types (4 types): multiple-choice, true-false, fill-blanks, sequencing
+  - Production Types (8 types): short-answer, summary-writing, opinion-writing, discussion-prompt, description-writing, dictation, role-play, sentence-completion
+- **Current Usage**: Backend references exercise types as strings, not yet using this package
+- **Future**: Will serve as type-safe shared reference once exports are added
+
 ## Git Workflow
 
-- **Pre-commit hooks**: Husky + lint-staged configured
-- **Staged files**: Only `.md` and `.json` files are auto-formatted via Prettier on commit
 - **Package manager**: pnpm (required, enforced via `packageManager` field)
 - **Node version**: >= 18
+- **Pre-commit hooks**: Configured but temporarily disabled before MVP. Will be enabled post-MVP to enforce formatting on `.md` and `.json` files via Prettier.
 
 ## Environment Setup
 
-### Teacher App
+**Web Apps** (teacher, student, www):
+- Environment variables are managed through Vercel
+- Pull environment variables locally using `vercel env pull`
+- See Vercel dashboard for configuration
 
-Required environment variables in `apps/teacher/.env.local`:
+**Backend** (Convex):
+- Local development only requires Convex deployment ID
+- Set up via `npx convex dev` (auto-configures on first run)
+- Code executes on Convex servers - no app-level env vars needed in codebase
 
-- `VITE_CONVEX_URL` - Convex deployment URL
-- `CONVEX_DEPLOYMENT` - Convex deployment name
+**Collab Server**:
+- No environment variables configured yet (not deployed)
 
-### Student App
-
-Required environment variables in `apps/student/.env.local`:
-
-- `VITE_CONVEX_URL` - Convex deployment URL (same as teacher app)
-- `CONVEX_DEPLOYMENT` - Convex deployment name (same as teacher app)
-
-**Note**: Both apps share the same Convex backend and authentication system.
-
-### Backend
-
-Required environment variables in `apps/backend/.env.local`:
-
-- Convex deployment credentials (set via `npx convex init` or `npx convex dev`)
+**Note**: Teacher and student apps share the same Convex backend and authentication system.
 
 ## CI/CD and Deployment
 
-This repository uses **GitHub Actions** with **Turborepo's affected detection** to optimize CI/CD pipelines. Only changed apps are checked, tested, and deployed.
+**Approach**: This repository uses Turborepo's affected detection to optimize CI/CD. Only changed apps are checked, tested, and deployed.
 
-### GitHub Actions Workflows
+**CI Workflow**:
+- Runs lint and type-checking only on affected packages
+- Uses Turborepo remote caching via Vercel for faster builds
+- See `.github/workflows/ci.yml` for implementation
 
-**1. CI Workflow** (`.github/workflows/ci.yml`)
-
-- **Triggers**: Pull requests and pushes to main
-- **Purpose**: Quality checks on affected apps only
-- **Steps**:
-  - Runs `turbo run lint --filter='[HEAD^1]'` (lint only affected)
-  - Runs `turbo run check-types --filter='[HEAD^1]'` (type-check only affected)
-  - Runs `turbo run test --filter='[HEAD^1]'` (test only affected)
-- **Optimization**: Uses Turborepo remote caching via Vercel
-
-**2. Convex Deployment** (`.github/workflows/deploy-convex.yml`)
-
-- **Triggers**: Pushes to main when backend, teacher, or student apps are affected
-- **Purpose**: Deploy Convex backend to production
-- **Steps**:
-  - Checks if backend/teacher/student changed
-  - Deploys via `convex deploy --cmd 'pnpm run codegen'`
+**Deployments**:
+- **Web Apps** (teacher, student, www): Vercel Git Integration (automatic on push)
+  - Configuration in each app's `vercel.json`
+- **Convex Backend**: GitHub Actions deployment when backend/frontend apps change
+  - See `.github/workflows/deploy-convex.yml`
   - Requires `CONVEX_DEPLOY_KEY` secret
+- **Collab Server**: Build workflow exists, deployment platform not yet configured
+  - See `.github/workflows/deploy-collab-server.yml`
 
-**3. Collab Server Deployment** (`.github/workflows/deploy-collab-server.yml`)
+**GitHub Secrets Required**:
+- `TURBO_TOKEN`, `TURBO_TEAM` - Remote caching
+- `CONVEX_DEPLOY_KEY` - Backend deployment
+- Platform-specific secrets when collab server deployment is configured
 
-- **Triggers**: Pushes to main when collab-server is affected
-- **Purpose**: Build and deploy WebSocket collaboration server
-- **Steps**:
-  - Checks if collab-server changed
-  - Builds via `turbo run build --filter=collab-server`
-  - Deployment step (customizable for Railway/Render/Fly.io)
-- **Note**: Deployment step needs to be configured based on chosen platform
-
-### Deployment Strategy
-
-**Vercel Apps** (teacher, student, www):
-
-- **Method**: Vercel Git Integration (automatic)
-- **Build**: Handled by Vercel using `vercel.json` configuration
-- **Environment**: Each app has `vercel.json` with proper build commands
-- **Deploy**: Automatic on every push to main
-- **Preview**: Automatic preview deployments on pull requests
-
-**Convex Backend**:
-
-- **Method**: GitHub Actions with Convex CLI
-- **Trigger**: Deployed when backend, teacher, or student apps change
-- **Reason**: Backend must stay in sync with frontend apps
-- **Deploy**: Via `convex deploy` command in CI
-
-**Collab Server**:
-
-- **Method**: GitHub Actions + chosen hosting platform
-- **Trigger**: Deployed when collab-server code changes
-- **Platforms**: Supports Railway, Render, Fly.io, or custom
-- **Deploy**: Requires platform-specific configuration
-
-### Required GitHub Secrets
-
-Add these secrets in GitHub repository settings (Settings → Secrets and variables → Actions):
-
-**For Turborepo Remote Caching:**
-
-- `TURBO_TOKEN` - Vercel token for remote cache ([get token](https://vercel.com/account/tokens))
-- `TURBO_TEAM` - Vercel team slug (found in Vercel dashboard URL)
-
-**For Convex Deployment:**
-
-- `CONVEX_DEPLOY_KEY` - Convex deploy key ([get from dashboard](https://dashboard.convex.dev))
-
-**For Collab Server Deployment** (choose based on platform):
-
-- Railway: `RAILWAY_TOKEN`
-- Render: `RENDER_DEPLOY_HOOK_URL`
-- Fly.io: `FLY_API_TOKEN`
-- Custom: Platform-specific credentials
-
-### Turborepo Affected Detection
-
-The CI/CD pipelines use Turborepo's `--filter='[HEAD^1]'` flag to run tasks only on affected apps:
-
-```bash
-# Only lint apps that changed since last commit
-turbo run lint --filter='[HEAD^1]'
-
-# Only build affected apps
-turbo run build --filter='[HEAD^1]'
-
-# Check which apps are affected (dry run)
-turbo run build --filter='[HEAD^1]' --dry=json
-```
-
-**Benefits:**
-
-- Faster CI runs (only check what changed)
-- Reduced compute costs
-- Quicker feedback on PRs
-- Remote caching speeds up repeated builds
-
-### Vercel Configuration
-
-Each Vercel app has a `vercel.json` file configuring monorepo builds:
-
-**Teacher & Student** (`apps/teacher/vercel.json`, `apps/student/vercel.json`):
-
-```json
-{
-  "buildCommand": "cd ../.. && pnpm turbo run build --filter=<app>",
-  "outputDirectory": ".vinxi/output/public",
-  "installCommand": "pnpm install --frozen-lockfile"
-}
-```
-
-**Marketing Site** (`apps/www/vercel.json`):
-
-```json
-{
-  "buildCommand": "cd ../.. && pnpm turbo run build --filter=www",
-  "outputDirectory": "dist",
-  "framework": "astro"
-}
-```
-
-### Setting Up Deployments
-
-**1. Vercel Setup:**
-
-- Connect GitHub repository to Vercel
-- Import each app separately (teacher, student, www)
-- Vercel auto-detects monorepo and uses `vercel.json` config
-- Set environment variables in Vercel dashboard for each app
-
-**2. Convex Setup:**
-
-- Get deploy key from [Convex dashboard](https://dashboard.convex.dev)
-- Add `CONVEX_DEPLOY_KEY` to GitHub secrets
-- Backend will auto-deploy on app changes
-
-**3. Turborepo Cache Setup:**
-
-- Get Vercel token from [account settings](https://vercel.com/account/tokens)
-- Add `TURBO_TOKEN` and `TURBO_TEAM` to GitHub secrets
-- Remote caching will work for all CI runs
-
-**4. Collab Server Setup:**
-
-- Choose hosting platform (Railway, Render, Fly.io, etc.)
-- Uncomment appropriate deployment section in `.github/workflows/deploy-collab-server.yml`
-- Add platform-specific secrets to GitHub
-- Configure environment variables on hosting platform
+**Benefits of Affected Detection**:
+- Faster CI (only check what changed)
+- Reduced costs
+- Quicker PR feedback
 
 ## Special Considerations
 
@@ -523,3 +323,9 @@ Each Vercel app has a `vercel.json` file configuring monorepo builds:
    - Better Auth sessions are shared between apps (same domain in development)
    - Logging in to one app logs you into both
    - User profiles track both `isTeacherActive` and `isStudentActive` roles
+
+10. **Backend Prompts**:
+   - AI prompts are stored as markdown files in `apps/backend/prompts/`
+   - The `pnpm build:prompts` script compiles them for use in Convex functions
+   - This runs automatically during `pnpm dev` - no manual build needed
+   - If you modify prompt files, the backend dev server will rebuild them automatically
