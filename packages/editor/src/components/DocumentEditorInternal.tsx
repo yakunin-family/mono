@@ -1,6 +1,5 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
@@ -24,8 +23,6 @@ import { cn } from "@package/ui";
 interface DocumentEditorInternalProps {
   provider: HocuspocusProvider;
   ydoc: Y.Doc;
-  userName: string;
-  userColor: string;
   canEdit: boolean;
   status: "connecting" | "connected" | "disconnected";
   convexClient?: any; // ConvexReactClient from consuming app
@@ -42,8 +39,6 @@ interface DocumentEditorInternalProps {
 export function DocumentEditorInternal({
   provider,
   ydoc,
-  userName,
-  userColor,
   canEdit,
   status,
   convexClient,
@@ -60,13 +55,6 @@ export function DocumentEditorInternal({
       Collaboration.configure({
         document: ydoc,
       }),
-      // CollaborationCursor.configure({
-      //   provider: provider,
-      //   user: {
-      //     name: userName,
-      //     color: userColor,
-      //   },
-      // }),
       Table.configure({
         resizable: true,
       }),

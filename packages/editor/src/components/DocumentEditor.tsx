@@ -150,8 +150,6 @@ export const DocumentEditor = ({
       <DocumentEditorInternal
         provider={provider}
         ydoc={ydoc}
-        userName={userName}
-        userColor={userColor}
         canEdit={canEdit}
         status={status}
         convexClient={convexClient}
