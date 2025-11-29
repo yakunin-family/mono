@@ -1,4 +1,5 @@
 import { cn } from "@package/ui";
+import { HintTooltip } from "./HintTooltip";
 
 interface StudentBlankInputProps {
   value: string;
@@ -14,19 +15,22 @@ export function StudentBlankInput({
   const dynamicWidth = Math.max(100, Math.min(300, value.length * 8 + 20));
 
   return (
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(
-        "inline-block min-w-[100px] max-w-[300px]",
-        "border-0 border-b-2 border-dashed border-gray-400",
-        "bg-transparent px-1",
-        "focus:border-blue-500 focus:bg-blue-50 focus:outline-none",
-        "transition-colors duration-150",
-      )}
-      style={{ width: `${dynamicWidth}px` }}
-      aria-label="Fill in the blank"
-    />
+    <span className="inline-flex items-center gap-1">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(
+          "inline-block min-w-[100px] max-w-[300px]",
+          "border-0 border-b-2 border-dashed border-gray-400",
+          "bg-transparent px-1",
+          "focus:border-blue-500 focus:bg-blue-50 focus:outline-none",
+          "transition-colors duration-150",
+        )}
+        style={{ width: `${dynamicWidth}px` }}
+        aria-label="Fill in the blank"
+      />
+      {hint && <HintTooltip hint={hint} />}
+    </span>
   );
 }

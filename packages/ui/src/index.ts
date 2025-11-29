@@ -12,4 +12,5 @@ export * from "./components/separator";
 export * from "./components/slider";
 export * from "./components/switch";
 export * from "./components/textarea";
+export * from "./components/tooltip";
 export { cn } from "./lib/utils";
