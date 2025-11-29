@@ -100,10 +100,9 @@ Generate the complete exercise content according to the type and parameters spec
   "items": [
     {
       "id": "fb1",
-      "sentence": "The cat is [[blank1]] on the sofa.",
+      "sentence": "The cat is [[blank]] on the sofa.",
       "blanks": [
         {
-          "id": "blank1",
           "correctAnswer": "sleeping",
           "alternativeAnswers": ["resting", "lying"],
           "hint": "Present continuous verb (optional)"
@@ -115,10 +114,36 @@ Generate the complete exercise content according to the type and parameters spec
 ```
 
 **Guidelines:**
-- Use `[[blank1]]`, `[[blank2]]` as placeholders
+- Use only `[[blank]]` as the placeholder (no numbers!)
+- Each `[[blank]]` in the sentence maps to the blanks array by position
+  - First `[[blank]]` → blanks[0]
+  - Second `[[blank]]` → blanks[1]
+  - etc.
 - Provide alternative correct answers if applicable
 - Context should make the answer clear
 - Focus on target grammar/vocabulary point
+
+**Example with multiple blanks:**
+```json
+{
+  "id": "fb2",
+  "sentence": "Yesterday I [[blank]] to the store and [[blank]] some milk.",
+  "blanks": [
+    {
+      "correctAnswer": "went",
+      "alternativeAnswers": ["walked", "drove"],
+      "hint": "Past tense of 'go'"
+    },
+    {
+      "correctAnswer": "bought",
+      "alternativeAnswers": ["purchased", "got"],
+      "hint": "Past tense of 'buy'"
+    }
+  ]
+}
+```
+
+**Important:** The order of blanks in the sentence must match the order in the blanks array!
 
 ---
 

@@ -120,10 +120,9 @@ export const trueFalseExerciseSchema = z.object({
 // Fill in the Blanks Exercise
 export const fillBlanksItemSchema = z.object({
   id: z.string(),
-  sentence: z.string(), // Contains [[blank1]], [[blank2]] etc. placeholders
+  sentence: z.string(), // Contains [[blank]] placeholders (unnumbered)
   blanks: z.array(
     z.object({
-      id: z.string(),
       correctAnswer: z.string(),
       alternativeAnswers: z.array(z.string()).optional(),
       hint: z.string().optional(),

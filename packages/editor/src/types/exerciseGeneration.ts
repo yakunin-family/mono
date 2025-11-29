@@ -122,7 +122,6 @@ export interface TrueFalseExercise {
 
 // Fill in the Blanks
 export interface FillBlanksBlank {
-  id: string;
   correctAnswer: string;
   alternativeAnswers?: string[];
   hint?: string;
