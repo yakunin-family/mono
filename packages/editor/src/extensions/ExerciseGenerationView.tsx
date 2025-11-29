@@ -10,6 +10,7 @@ import { Button } from "@package/ui";
 import { useExerciseGeneration } from "../hooks/useExerciseGeneration";
 import { exerciseToTiptap } from "../utils/exerciseToTiptap";
 import type { ExerciseGenerationAttributes } from "./ExerciseGeneration";
+import type { EditorMode } from "../types";
 
 // Step components
 import { ValidationStep } from "../components/exercise-generation/ValidationStep";
@@ -19,6 +20,12 @@ import { ApprovalStep } from "../components/exercise-generation/ApprovalStep";
 import { GenerationStep } from "../components/exercise-generation/GenerationStep";
 import { CompletedStep } from "../components/exercise-generation/CompletedStep";
 import { ErrorStep } from "../components/exercise-generation/ErrorStep";
+
+declare module "@tiptap/core" {
+  interface Storage {
+    editorMode: EditorMode;
+  }
+}
 
 const DEFAULT_MODEL = "openai/gpt-4o";
 
@@ -161,6 +168,43 @@ export function ExerciseGenerationView(props: NodeViewProps) {
       handleStart();
     }
   };
+
+  // Student mode: Show simplified read-only view
+  const mode = editor.storage.editorMode;
+  if (mode === "student") {
+    return (
+      <NodeViewWrapper className="my-4 block">
+        <div className="rounded-lg border border-purple-500/50 bg-purple-50/50 dark:bg-purple-950/20 p-4 shadow-sm">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-purple-700 dark:text-purple-300">
+            <SparklesIcon className="h-4 w-4" />
+            <span>Exercise Generation</span>
+          </div>
+
+          <div contentEditable={false}>
+            {status === "input" && (
+              <div className="text-sm text-muted-foreground">
+                <p>Waiting for teacher to start generation...</p>
+              </div>
+            )}
+
+            {status === "active" && (
+              <div className="flex items-center gap-3 py-2">
+                <Loader2Icon className="h-5 w-5 animate-spin text-purple-600" />
+                <div>
+                  <p className="font-medium text-foreground">
+                    Teacher is generating exercises...
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Please wait while exercises are being created
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </NodeViewWrapper>
+    );
+  }
 
   return (
     <NodeViewWrapper className="my-4 block group">
