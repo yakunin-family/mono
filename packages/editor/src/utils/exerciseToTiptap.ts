@@ -174,37 +174,61 @@ function fillBlanksToTiptap(ex: FillBlanksExercise): JSONContent[] {
   ];
 
   ex.items.forEach((item, idx) => {
-    // Replace {{blank}} placeholders with underscores
-    const sentenceWithBlanks = item.sentence.replace(/\{\{blank\}\}/g, "______");
+    const parts: JSONContent[] = [];
+    let lastIndex = 0;
+    const regex = /\[\[blank\]\]/g;
+    let match;
+    let blankIndex = 0;
 
+    while ((match = regex.exec(item.sentence)) !== null) {
+      // Add text before blank
+      if (match.index > lastIndex) {
+        parts.push({
+          type: "text",
+          text: item.sentence.slice(lastIndex, match.index)
+        });
+      }
+
+      // Get metadata by position (order in array matches order in sentence)
+      const metadata = item.blanks[blankIndex] || {
+        id: `blank${blankIndex}`,
+        correctAnswer: "",
+        alternativeAnswers: [],
+        hint: null
+      };
+
+      // Add blank node
+      parts.push({
+        type: "blank",
+        attrs: {
+          blankIndex: blankIndex,
+          correctAnswer: metadata.correctAnswer,
+          alternativeAnswers: metadata.alternativeAnswers || [],
+          hint: metadata.hint || null,
+          studentAnswer: ""
+        }
+      });
+
+      blankIndex++;
+      lastIndex = regex.lastIndex;
+    }
+
+    // Add remaining text
+    if (lastIndex < item.sentence.length) {
+      parts.push({
+        type: "text",
+        text: item.sentence.slice(lastIndex)
+      });
+    }
+
+    // Wrap in paragraph with question number
     nodes.push({
       type: "paragraph",
       content: [
-        {
-          type: "text",
-          text: `${idx + 1}. ${sentenceWithBlanks}`,
-        },
-      ],
+        { type: "text", text: `${idx + 1}. ` },
+        ...parts
+      ]
     });
-
-    // Optionally add hints
-    const hints = item.blanks
-      .filter((b) => b.hint)
-      .map((b) => b.hint)
-      .join(", ");
-
-    if (hints) {
-      nodes.push({
-        type: "paragraph",
-        content: [
-          {
-            type: "text",
-            text: `Hints: ${hints}`,
-            marks: [{ type: "italic" }],
-          },
-        ],
-      });
-    }
   });
 
   return nodes;
