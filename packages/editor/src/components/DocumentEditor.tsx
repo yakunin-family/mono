@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo, createContext, useContext } from "react";
 import * as Y from "yjs";
 
 import { DocumentEditorInternal } from "./DocumentEditorInternal";
-import { ConnectionStatus } from "@/types";
+import { ConnectionStatus, EditorMode } from "@/types";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -13,6 +13,7 @@ export interface DocumentEditorProps {
 
   documentId: string;
   canEdit?: boolean;
+  mode?: EditorMode;
   websocketUrl?: string;
   token?: string;
   userName?: string;
@@ -74,6 +75,7 @@ export const DocumentEditor = ({
   convexClient,
   queryClient,
   canEdit = true,
+  mode = "student",
   documentId,
   websocketUrl = "ws://127.0.0.1:1234",
   token,
@@ -151,6 +153,7 @@ export const DocumentEditor = ({
         provider={provider}
         ydoc={ydoc}
         canEdit={canEdit}
+        mode={mode}
         status={status}
         convexClient={convexClient}
         onStartExerciseGeneration={onStartExerciseGeneration}

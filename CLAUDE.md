@@ -216,9 +216,175 @@ defineTable({
 - **Props**:
   - `documentId` - Unique document identifier for collaboration
   - `canEdit` - Boolean to control edit permissions
+  - `mode` - Editor mode: `"student"` | `"teacher-lesson"` | `"teacher-editor"`
   - `websocketUrl` - Optional WebSocket server URL (default: ws://127.0.0.1:1234)
   - `onStatusChange` - Callback for connection status changes
   - `onConnectedUsersChange` - Callback for active users count
+
+#### Tiptap Extension Development
+
+When developing custom Tiptap extensions, follow these type-safe patterns:
+
+**1. Type-Safe Editor Storage**
+
+Never use `as any` to access editor storage. Instead, use module augmentation:
+
+```typescript
+// ❌ WRONG - Violates no `as any` rule
+const mode = (editor.storage as any).editorMode;
+
+// ✅ CORRECT - Use module augmentation
+declare module "@tiptap/core" {
+  interface Storage {
+    editorMode: EditorMode;
+  }
+}
+
+export const MyExtension = Node.create({
+  name: "myExtension",
+
+  addStorage() {
+    return {
+      editorMode: "student" as EditorMode,
+    };
+  },
+
+  // ... rest of extension
+});
+
+// Now TypeScript knows about storage.editorMode
+const mode = editor.storage.editorMode; // ✅ Type-safe!
+```
+
+**2. Custom Node/Mark Pattern**
+
+Follow this structure for custom nodes (see `Blank.ts` and `Exercise.ts` as examples):
+
+```typescript
+import { mergeAttributes, Node } from "@tiptap/core";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { MyNodeView } from "./MyNodeView";
+
+export interface MyNodeAttributes {
+  // Define all node attributes with proper types
+  id: string;
+  value: number;
+}
+
+// Module augmentation for type safety (if using storage)
+declare module "@tiptap/core" {
+  interface Storage {
+    myCustomStorage: string;
+  }
+}
+
+export const MyNode = Node.create({
+  name: "myNode",
+
+  // For inline nodes (appear in text flow)
+  inline: true,
+  atom: true,
+
+  // For block nodes (standalone blocks)
+  // group: "block",
+  // content: "block+",
+
+  addStorage() {
+    return {
+      myCustomStorage: "default",
+    };
+  },
+
+  addAttributes() {
+    return {
+      id: {
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => {
+          if (!attributes.id) return {};
+          return { "data-id": attributes.id };
+        },
+      },
+      value: {
+        default: 0,
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'span[data-type="my-node"]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "span",
+      mergeAttributes(HTMLAttributes, { "data-type": "my-node" }),
+      0, // 0 means "render content here" (for non-atom nodes)
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(MyNodeView);
+  },
+});
+```
+
+**3. React NodeView Pattern**
+
+```typescript
+import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import type { MyNodeAttributes } from "./MyNode";
+
+interface MyNodeViewProps extends NodeViewProps {
+  node: NodeViewProps["node"] & { attrs: MyNodeAttributes };
+}
+
+export function MyNodeView(props: NodeViewProps) {
+  const { node, editor, updateAttributes } = props as MyNodeViewProps;
+
+  // Access storage (type-safe thanks to module augmentation)
+  const customValue = editor.storage.myCustomStorage;
+
+  // Access attributes
+  const { id, value } = node.attrs;
+
+  // Update attributes
+  const handleUpdate = () => {
+    updateAttributes({ value: value + 1 });
+  };
+
+  return (
+    <NodeViewWrapper as="span" className="inline-block">
+      {/* Your component UI */}
+    </NodeViewWrapper>
+  );
+}
+```
+
+**4. Key Patterns**
+
+- **Inline vs Block**:
+  - `inline: true, atom: true` - Inline element, no cursor inside (like Blank nodes)
+  - `group: "block", content: "block+"` - Block element with nested content (like Exercise nodes)
+
+- **Module Augmentation**:
+  - Always augment `Storage` interface when adding storage
+  - Never use `as any` to bypass TypeScript
+
+- **Attribute Serialization**:
+  - Use `parseHTML` and `renderHTML` for attribute persistence
+  - Store data in `data-*` attributes for HTML serialization
+
+- **React NodeViews**:
+  - Use `NodeViewWrapper` with appropriate `as` prop (`"span"` for inline, `"div"` for block)
+  - Type the props interface by extending `NodeViewProps`
+  - Access `updateAttributes()` to modify node data
+
+**5. Reference Examples**
+
+- `packages/editor/src/extensions/Blank.ts` - Inline atomic node with storage
+- `packages/editor/src/extensions/Exercise.ts` - Block node with content
+- `packages/editor/src/extensions/ExerciseGeneration.ts` - Storage pattern with module augmentation
 
 ### UI Package (`packages/ui`)
 

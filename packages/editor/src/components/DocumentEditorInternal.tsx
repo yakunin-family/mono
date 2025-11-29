@@ -12,6 +12,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef } from "react";
 import * as Y from "yjs";
 
+import { Blank } from "../extensions/Blank";
 import { Exercise } from "../extensions/Exercise";
 import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
 import { SlashCommand } from "../extensions/SlashCommand";
@@ -19,11 +20,13 @@ import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
 import { cn } from "@package/ui";
+import type { EditorMode } from "@/types";
 
 interface DocumentEditorInternalProps {
   provider: HocuspocusProvider;
   ydoc: Y.Doc;
   canEdit: boolean;
+  mode: EditorMode;
   status: "connecting" | "connected" | "disconnected";
   convexClient?: any; // ConvexReactClient from consuming app
   onStartExerciseGeneration?: (
@@ -40,6 +43,7 @@ export function DocumentEditorInternal({
   provider,
   ydoc,
   canEdit,
+  mode,
   status,
   convexClient,
   onStartExerciseGeneration,
@@ -65,6 +69,7 @@ export function DocumentEditorInternal({
         inline: true,
         allowBase64: true,
       }),
+      Blank,
       Exercise,
       ExerciseGeneration,
       SlashCommand.configure({
@@ -94,6 +99,13 @@ export function DocumentEditorInternal({
       };
     }
   }, [editor, onStartExerciseGeneration, convexClient]);
+
+  // Store mode in editor storage for NodeViews to access
+  useEffect(() => {
+    if (editor) {
+      editor.storage.editorMode = mode;
+    }
+  }, [editor, mode]);
 
   if (!editor) {
     return (

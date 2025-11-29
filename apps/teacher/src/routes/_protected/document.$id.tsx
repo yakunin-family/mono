@@ -1,5 +1,9 @@
 import { api } from "@app/backend";
-import { DocumentEditor, getRandomUserColor } from "@package/editor";
+import {
+  DocumentEditor,
+  type EditorMode,
+  getRandomUserColor,
+} from "@package/editor";
 import { Button } from "@package/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -20,6 +24,7 @@ function DocumentEditorPage() {
   const convex = useConvex();
   const [title, setTitle] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editorMode, setEditorMode] = useState<EditorMode>("teacher-editor");
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
@@ -74,7 +79,7 @@ function DocumentEditorPage() {
         documentId,
         promptText,
         model,
-      }
+      },
     );
 
     return { sessionId: result.sessionId };
@@ -142,6 +147,34 @@ function DocumentEditorPage() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Editor Mode Switcher */}
+            <div className="flex items-center gap-2 rounded-lg border p-1">
+              <Button
+                variant={editorMode === "student" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setEditorMode("student")}
+                className="h-8"
+              >
+                Student View
+              </Button>
+              <Button
+                variant={editorMode === "teacher-lesson" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setEditorMode("teacher-lesson")}
+                className="h-8"
+              >
+                Lesson View
+              </Button>
+              <Button
+                variant={editorMode === "teacher-editor" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setEditorMode("teacher-editor")}
+                className="h-8"
+              >
+                Editor
+              </Button>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
@@ -162,6 +195,7 @@ function DocumentEditorPage() {
           <DocumentEditor
             documentId={documentId}
             canEdit={true}
+            mode={editorMode}
             token={token}
             userName={userName}
             userColor={userColor}

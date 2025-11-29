@@ -110,6 +110,7 @@ function DocumentViewerPage() {
           <DocumentEditor
             documentId={documentId}
             canEdit={true}
+            mode="student"
             token={token}
             userName={userName}
             userColor={userColor}
