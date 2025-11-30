@@ -100,7 +100,7 @@ Mode stored in `editor.storage.editorMode`:
 - [x] Task 4: Hints
 - [x] Task 5: Teacher lesson
 - [x] Task 6: Teacher editor
-- [ ] Task 7: Polish
+- [x] Task 7: Polish
 
 When all tasks complete:
 - Students can fill blanks with real-time sync

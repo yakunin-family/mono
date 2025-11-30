@@ -14,6 +14,7 @@ import {
   Code,
   FileText,
   Sparkles,
+  FormInput,
 } from "lucide-react";
 import { SlashCommandMenu } from "../components/SlashCommandMenu";
 import type {} from "@tiptap/extension-table";
@@ -176,6 +177,31 @@ export const SlashCommand = Extension.create({
               },
             },
           ];
+
+          const editorMode = this.editor.storage.editorMode;
+          if (editorMode === "teacher-editor") {
+            items.push({
+              title: "Blank",
+              icon: FormInput,
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .insertContent({
+                    type: "blank",
+                    attrs: {
+                      blankIndex: 0,
+                      correctAnswer: "",
+                      alternativeAnswers: [],
+                      hint: null,
+                      studentAnswer: "",
+                    },
+                  })
+                  .run();
+              },
+            });
+          }
 
           return items.filter((item) =>
             item.title.toLowerCase().includes(query.toLowerCase()),

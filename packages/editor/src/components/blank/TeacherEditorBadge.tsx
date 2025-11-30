@@ -68,6 +68,7 @@ export function TeacherEditorBadge({
                 className="cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
                 onClick={() => setIsEditing(true)}
                 contentEditable={false}
+                aria-label="Edit correct answer"
               >
                 {correctAnswer}
               </Badge>
@@ -93,6 +94,7 @@ export function TeacherEditorBadge({
           className="inline-block rounded border-2 border-blue-500 bg-white px-2 py-0.5 text-sm focus:outline-none"
           style={{ width: `${Math.max(60, editValue.length * 8 + 20)}px` }}
           contentEditable={false}
+          aria-label="Edit correct answer"
         />
       )}
 
