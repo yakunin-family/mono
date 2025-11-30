@@ -17,6 +17,7 @@ import { Exercise } from "../extensions/Exercise";
 import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
+import { DebugPanel } from "./DebugPanel";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
 import { cn } from "@package/ui";
@@ -127,6 +128,9 @@ export function DocumentEditorInternal({
       </div>
 
       <StatusIndicator status={status} />
+
+      {/* Debug Panel */}
+      <DebugPanel editor={editor} />
 
       {/* Mouse cursor tracking */}
       <MouseTracker provider={provider} containerRef={containerRef} />

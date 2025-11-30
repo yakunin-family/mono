@@ -21,6 +21,7 @@ declare module "@tiptap/core" {
 export const Blank = Node.create({
   name: "blank",
 
+  group: "inline",
   inline: true,
   atom: true,
 

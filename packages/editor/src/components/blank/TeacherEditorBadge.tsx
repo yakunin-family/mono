@@ -22,7 +22,7 @@ export function TeacherEditorBadge({
   hint,
   onEdit,
 }: TeacherEditorBadgeProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(correctAnswer === "");
   const [editValue, setEditValue] = useState(correctAnswer);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -70,7 +70,7 @@ export function TeacherEditorBadge({
                 contentEditable={false}
                 aria-label="Edit correct answer"
               >
-                {correctAnswer}
+                {correctAnswer || "[blank]"}
               </Badge>
             </TooltipTrigger>
             {hasAlternatives && (
@@ -91,6 +91,7 @@ export function TeacherEditorBadge({
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
+          placeholder="Enter answer..."
           className="inline-block rounded border-2 border-blue-500 bg-white px-2 py-0.5 text-sm focus:outline-none"
           style={{ width: `${Math.max(60, editValue.length * 8 + 20)}px` }}
           contentEditable={false}

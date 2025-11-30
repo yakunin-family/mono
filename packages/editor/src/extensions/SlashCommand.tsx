@@ -51,7 +51,7 @@ export const SlashCommand = Extension.create({
       Suggestion({
         editor: this.editor,
         ...this.options.suggestion,
-        items: ({ query }: { query: string }): CommandItem[] => {
+        items: ({ query, editor }: { query: string; editor: Editor }): CommandItem[] => {
           const items: CommandItem[] = [
             {
               title: "Heading 1",
@@ -178,7 +178,7 @@ export const SlashCommand = Extension.create({
             },
           ];
 
-          const editorMode = this.editor.storage.editorMode;
+          const editorMode = editor.storage.editorMode;
           if (editorMode === "teacher-editor") {
             items.push({
               title: "Blank",
