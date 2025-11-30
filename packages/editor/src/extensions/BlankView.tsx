@@ -3,6 +3,7 @@ import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import type { BlankAttributes } from "./Blank";
 import { StudentBlankInput } from "@/components/blank/StudentBlankInput";
 import { TeacherLessonBlank } from "@/components/blank/TeacherLessonBlank";
+import { TeacherEditorBadge } from "@/components/blank/TeacherEditorBadge";
 import { validateAnswer } from "@/utils/blankValidation";
 
 interface BlankNodeViewProps extends NodeViewProps {
@@ -41,9 +42,12 @@ export function BlankView(props: NodeViewProps) {
       )}
 
       {mode === "teacher-editor" && (
-        <span className="text-muted-foreground">
-          [Teacher Editor - Coming Soon]
-        </span>
+        <TeacherEditorBadge
+          correctAnswer={correctAnswer}
+          alternativeAnswers={alternativeAnswers}
+          hint={hint}
+          onEdit={(newAnswer) => updateAttributes({ correctAnswer: newAnswer })}
+        />
       )}
     </NodeViewWrapper>
   );

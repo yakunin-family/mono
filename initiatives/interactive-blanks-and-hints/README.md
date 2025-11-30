@@ -99,7 +99,7 @@ Mode stored in `editor.storage.editorMode`:
 - [x] Task 3: Student mode
 - [x] Task 4: Hints
 - [x] Task 5: Teacher lesson
-- [ ] Task 6: Teacher editor
+- [x] Task 6: Teacher editor
 - [ ] Task 7: Polish
 
 When all tasks complete:
