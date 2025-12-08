@@ -17,6 +17,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
+    "lint": "eslint .",
     "check-types": "tsc --project tsconfig.json --noEmit"
   },
   "peerDependencies": {

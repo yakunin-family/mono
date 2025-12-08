@@ -88,12 +88,18 @@ importers:
         specifier: ^13.6.21
         version: 13.6.27
     devDependencies:
+      '@tooling/eslint':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
       '@tooling/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
       '@types/node':
         specifier: ^22.10.2
         version: 22.19.1
+      eslint:
+        specifier: ^9.34.0
+        version: 9.39.1(jiti@2.6.1)
       tsx:
         specifier: ^4.0.0
         version: 4.20.6
@@ -548,9 +554,15 @@ importers:
 
   packages/exercises:
     devDependencies:
+      '@tooling/eslint':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
       '@tooling/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
+      eslint:
+        specifier: ^9.34.0
+        version: 9.39.1(jiti@2.6.1)
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

@@ -10,6 +10,7 @@
     "build:prompts": "tsx scripts/build-prompts.ts",
     "dev": "convex dev 2>&1 | tee ./convex-dev.log",
     "deploy": "convex deploy",
+    "lint": "eslint .",
     "codegen": "convex codegen"
   },
   "devDependencies": {
