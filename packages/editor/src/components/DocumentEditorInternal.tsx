@@ -20,6 +20,7 @@ import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
 import { DebugPanel } from "./DebugPanel";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
+import { DragHandle } from "./DragHandle";
 import { cn } from "@package/ui";
 import type { EditorMode } from "@/types";
 
@@ -125,6 +126,7 @@ export function DocumentEditorInternal({
           editor={editor}
           className="p-6 [&_.tiptap]:min-h-[400px] [&_.tiptap]:outline-none"
         />
+        {canEdit && <DragHandle editor={editor} />}
       </div>
 
       <StatusIndicator status={status} />
