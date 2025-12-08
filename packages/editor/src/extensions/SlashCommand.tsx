@@ -14,6 +14,7 @@ import {
   Code,
   FileText,
   Sparkles,
+  FormInput,
 } from "lucide-react";
 import { SlashCommandMenu } from "../components/SlashCommandMenu";
 import type {} from "@tiptap/extension-table";
@@ -50,7 +51,7 @@ export const SlashCommand = Extension.create({
       Suggestion({
         editor: this.editor,
         ...this.options.suggestion,
-        items: ({ query }: { query: string }): CommandItem[] => {
+        items: ({ query, editor }: { query: string; editor: Editor }): CommandItem[] => {
           const items: CommandItem[] = [
             {
               title: "Heading 1",
@@ -176,6 +177,31 @@ export const SlashCommand = Extension.create({
               },
             },
           ];
+
+          const editorMode = editor.storage.editorMode;
+          if (editorMode === "teacher-editor") {
+            items.push({
+              title: "Blank",
+              icon: FormInput,
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .insertContent({
+                    type: "blank",
+                    attrs: {
+                      blankIndex: 0,
+                      correctAnswer: "",
+                      alternativeAnswers: [],
+                      hint: null,
+                      studentAnswer: "",
+                    },
+                  })
+                  .run();
+              },
+            });
+          }
 
           return items.filter((item) =>
             item.title.toLowerCase().includes(query.toLowerCase()),

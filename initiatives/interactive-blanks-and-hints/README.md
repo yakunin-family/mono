@@ -93,14 +93,14 @@ Mode stored in `editor.storage.editorMode`:
 
 ## Success Criteria
 - [x] Plan complete
-- [ ] Task 0: Backend schema & prompt
-- [ ] Task 1: Foundation
-- [ ] Task 2: Parsing
-- [ ] Task 3: Student mode
-- [ ] Task 4: Hints
-- [ ] Task 5: Teacher lesson
-- [ ] Task 6: Teacher editor
-- [ ] Task 7: Polish
+- [x] Task 0: Backend schema & prompt
+- [x] Task 1: Foundation
+- [x] Task 2: Parsing
+- [x] Task 3: Student mode
+- [x] Task 4: Hints
+- [x] Task 5: Teacher lesson
+- [x] Task 6: Teacher editor
+- [x] Task 7: Polish
 
 When all tasks complete:
 - Students can fill blanks with real-time sync

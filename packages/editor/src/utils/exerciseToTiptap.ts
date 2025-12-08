@@ -58,51 +58,60 @@ function multipleChoiceToTiptap(ex: MultipleChoiceExercise): JSONContent[] {
     },
   ];
 
-  ex.questions.forEach((q, idx) => {
-    // Question
-    nodes.push({
-      type: "paragraph",
-      content: [
+  // Create ordered list for all questions
+  nodes.push({
+    type: "orderedList",
+    content: ex.questions.map((q) => {
+      const listItemContent: JSONContent[] = [
         {
-          type: "text",
-          text: `${idx + 1}. ${q.question}`,
-          marks: [{ type: "bold" }],
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: q.question,
+              marks: [{ type: "bold" }],
+            },
+          ],
         },
-      ],
-    });
+        // Options as bullet list
+        {
+          type: "bulletList",
+          content: q.options.map((opt) => ({
+            type: "listItem",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: opt.text }],
+              },
+            ],
+          })),
+        },
+      ];
 
-    // Options as bullet list
-    nodes.push({
-      type: "bulletList",
-      content: q.options.map((opt) => ({
+      // Explanation (if provided)
+      if (q.explanation) {
+        listItemContent.push({
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Explanation: ",
+              marks: [{ type: "italic" }],
+            },
+            {
+              type: "text",
+              text: q.explanation,
+              marks: [{ type: "italic" }],
+            },
+          ],
+        });
+      }
+
+      return {
         type: "listItem",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: opt.text }],
-          },
-        ],
-      })),
-    });
-
-    // Explanation (if provided)
-    if (q.explanation) {
-      nodes.push({
-        type: "paragraph",
-        content: [
-          {
-            type: "text",
-            text: "Explanation: ",
-            marks: [{ type: "italic" }],
-          },
-          {
-            type: "text",
-            text: q.explanation,
-            marks: [{ type: "italic" }],
-          },
-        ],
-      });
-    }
+        content: listItemContent,
+      };
+    }),
   });
 
   return nodes;
@@ -124,34 +133,45 @@ function trueFalseToTiptap(ex: TrueFalseExercise): JSONContent[] {
     },
   ];
 
-  ex.statements.forEach((stmt, idx) => {
-    nodes.push({
-      type: "paragraph",
-      content: [
+  // Create ordered list for all statements
+  nodes.push({
+    type: "orderedList",
+    content: ex.statements.map((stmt) => {
+      const listItemContent: JSONContent[] = [
         {
-          type: "text",
-          text: `${idx + 1}. ${stmt.statement}`,
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: stmt.statement,
+            },
+          ],
         },
-      ],
-    });
+      ];
 
-    if (stmt.explanation) {
-      nodes.push({
-        type: "paragraph",
-        content: [
-          {
-            type: "text",
-            text: "Explanation: ",
-            marks: [{ type: "italic" }],
-          },
-          {
-            type: "text",
-            text: stmt.explanation,
-            marks: [{ type: "italic" }],
-          },
-        ],
-      });
-    }
+      if (stmt.explanation) {
+        listItemContent.push({
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Explanation: ",
+              marks: [{ type: "italic" }],
+            },
+            {
+              type: "text",
+              text: stmt.explanation,
+              marks: [{ type: "italic" }],
+            },
+          ],
+        });
+      }
+
+      return {
+        type: "listItem",
+        content: listItemContent,
+      };
+    }),
   });
 
   return nodes;
@@ -173,62 +193,67 @@ function fillBlanksToTiptap(ex: FillBlanksExercise): JSONContent[] {
     },
   ];
 
-  ex.items.forEach((item, idx) => {
-    const parts: JSONContent[] = [];
-    let lastIndex = 0;
-    const regex = /\[\[blank\]\]/g;
-    let match;
-    let blankIndex = 0;
+  // Create ordered list for all items
+  nodes.push({
+    type: "orderedList",
+    content: ex.items.map((item) => {
+      const parts: JSONContent[] = [];
+      let lastIndex = 0;
+      const regex = /\[\[blank\]\]/g;
+      let match;
+      let blankIndex = 0;
 
-    while ((match = regex.exec(item.sentence)) !== null) {
-      // Add text before blank
-      if (match.index > lastIndex) {
+      while ((match = regex.exec(item.sentence)) !== null) {
+        // Add text before blank
+        if (match.index > lastIndex) {
+          parts.push({
+            type: "text",
+            text: item.sentence.slice(lastIndex, match.index),
+          });
+        }
+
+        // Get metadata by position (order in array matches order in sentence)
+        const metadata = item.blanks[blankIndex] || {
+          id: `blank${blankIndex}`,
+          correctAnswer: "",
+          alternativeAnswers: [],
+          hint: null,
+        };
+
+        // Add blank node
+        parts.push({
+          type: "blank",
+          attrs: {
+            blankIndex: blankIndex,
+            correctAnswer: metadata.correctAnswer,
+            alternativeAnswers: metadata.alternativeAnswers || [],
+            hint: metadata.hint || null,
+            studentAnswer: "",
+          },
+        });
+
+        blankIndex++;
+        lastIndex = regex.lastIndex;
+      }
+
+      // Add remaining text
+      if (lastIndex < item.sentence.length) {
         parts.push({
           type: "text",
-          text: item.sentence.slice(lastIndex, match.index)
+          text: item.sentence.slice(lastIndex),
         });
       }
 
-      // Get metadata by position (order in array matches order in sentence)
-      const metadata = item.blanks[blankIndex] || {
-        id: `blank${blankIndex}`,
-        correctAnswer: "",
-        alternativeAnswers: [],
-        hint: null
+      return {
+        type: "listItem",
+        content: [
+          {
+            type: "paragraph",
+            content: parts,
+          },
+        ],
       };
-
-      // Add blank node
-      parts.push({
-        type: "blank",
-        attrs: {
-          blankIndex: blankIndex,
-          correctAnswer: metadata.correctAnswer,
-          alternativeAnswers: metadata.alternativeAnswers || [],
-          hint: metadata.hint || null,
-          studentAnswer: ""
-        }
-      });
-
-      blankIndex++;
-      lastIndex = regex.lastIndex;
-    }
-
-    // Add remaining text
-    if (lastIndex < item.sentence.length) {
-      parts.push({
-        type: "text",
-        text: item.sentence.slice(lastIndex)
-      });
-    }
-
-    // Wrap in paragraph with question number
-    nodes.push({
-      type: "paragraph",
-      content: [
-        { type: "text", text: `${idx + 1}. ` },
-        ...parts
-      ]
-    });
+    }),
   });
 
   return nodes;
@@ -296,48 +321,56 @@ function shortAnswerToTiptap(ex: ShortAnswerExercise): JSONContent[] {
     },
   ];
 
-  ex.questions.forEach((q, idx) => {
-    nodes.push({
-      type: "paragraph",
-      content: [
+  // Create ordered list for all questions
+  nodes.push({
+    type: "orderedList",
+    content: ex.questions.map((q) => {
+      const listItemContent: JSONContent[] = [
         {
-          type: "text",
-          text: `${idx + 1}. ${q.question}`,
-          marks: [{ type: "bold" }],
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: q.question,
+              marks: [{ type: "bold" }],
+            },
+          ],
         },
-      ],
-    });
+        // Add blank lines for answer
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "" }],
+        },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "" }],
+        },
+      ];
 
-    // Add blank lines for answer
-    nodes.push(
-      {
-        type: "paragraph",
-        content: [{ type: "text", text: "" }],
-      },
-      {
-        type: "paragraph",
-        content: [{ type: "text", text: "" }],
+      // Teacher guidelines (if provided)
+      if (q.expectedAnswerGuidelines) {
+        listItemContent.push({
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Expected answer: ",
+              marks: [{ type: "italic" }],
+            },
+            {
+              type: "text",
+              text: q.expectedAnswerGuidelines,
+              marks: [{ type: "italic" }],
+            },
+          ],
+        });
       }
-    );
 
-    // Teacher guidelines (if provided)
-    if (q.expectedAnswerGuidelines) {
-      nodes.push({
-        type: "paragraph",
-        content: [
-          {
-            type: "text",
-            text: "Expected answer: ",
-            marks: [{ type: "italic" }],
-          },
-          {
-            type: "text",
-            text: q.expectedAnswerGuidelines,
-            marks: [{ type: "italic" }],
-          },
-        ],
-      });
-    }
+      return {
+        type: "listItem",
+        content: listItemContent,
+      };
+    }),
   });
 
   return nodes;

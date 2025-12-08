@@ -10,6 +10,7 @@ import {
   ListOrderedIcon,
   QuoteIcon,
   StrikethroughIcon,
+  FormInput,
 } from "lucide-react";
 import { Button, Separator } from "@package/ui";
 
@@ -18,6 +19,8 @@ export interface DocumentEditorToolbarProps {
 }
 
 export function DocumentEditorToolbar({ editor }: DocumentEditorToolbarProps) {
+  const editorMode = editor.storage.editorMode;
+
   return (
     <div className="flex flex-wrap items-center gap-0.5 rounded-lg border bg-card p-1.5">
       <Button
@@ -162,6 +165,33 @@ export function DocumentEditorToolbar({ editor }: DocumentEditorToolbarProps) {
       >
         <span className="text-xs font-semibold">Ex</span>
       </Button>
+
+      {editorMode === "teacher-editor" && (
+        <Button
+          onClick={() => {
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: "blank",
+                attrs: {
+                  blankIndex: 0,
+                  correctAnswer: "",
+                  alternativeAnswers: [],
+                  hint: null,
+                  studentAnswer: "",
+                },
+              })
+              .run();
+          }}
+          disabled={!editor.can().insertContent({ type: "blank" })}
+          variant="ghost"
+          size="icon-sm"
+          title="Insert Blank"
+        >
+          <FormInput className="size-4" />
+        </Button>
+      )}
     </div>
   );
 }

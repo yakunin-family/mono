@@ -23,9 +23,19 @@ export const requirementsSchema = z.object({
   additionalContext: z.string().optional(),
 });
 
+export const partialRequirementsSchema = z.object({
+  targetLanguage: z.string().optional(),
+  level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).or(z.literal("")).optional(),
+  nativeLanguage: z.string().optional(),
+  topic: z.string().optional(),
+  duration: z.number().optional(),
+  exerciseTypes: z.array(z.string()).optional(),
+  additionalContext: z.string().optional(),
+});
+
 export const validationResponseSchema = z.object({
   status: z.enum(["ready", "needs_clarification"]),
-  extractedRequirements: requirementsSchema.partial(),
+  extractedRequirements: partialRequirementsSchema,
   clarificationNeeded: z.array(clarificationQuestionSchema).optional(),
   missingFields: z.array(z.string()).optional(),
   reasoning: z.string().optional(), // Why clarification is needed
