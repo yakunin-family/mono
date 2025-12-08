@@ -16,6 +16,7 @@ import { Blank } from "../extensions/Blank";
 import { Exercise } from "../extensions/Exercise";
 import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
 import { SlashCommand } from "../extensions/SlashCommand";
+import { WritingArea } from "../extensions/WritingArea";
 import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
 import { DebugPanel } from "./DebugPanel";
 import { MouseTracker } from "./MouseTracker";
@@ -73,6 +74,7 @@ export function DocumentEditorInternal({
       }),
       Blank,
       Exercise,
+      WritingArea,
       ExerciseGeneration,
       SlashCommand.configure({
         canEdit,

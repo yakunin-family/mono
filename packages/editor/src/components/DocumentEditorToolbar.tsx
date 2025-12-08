@@ -11,6 +11,7 @@ import {
   QuoteIcon,
   StrikethroughIcon,
   FormInput,
+  NotebookPenIcon,
 } from "lucide-react";
 import { Button, Separator } from "@package/ui";
 
@@ -167,30 +168,61 @@ export function DocumentEditorToolbar({ editor }: DocumentEditorToolbarProps) {
       </Button>
 
       {editorMode === "teacher-editor" && (
-        <Button
-          onClick={() => {
-            editor
-              .chain()
-              .focus()
-              .insertContent({
-                type: "blank",
-                attrs: {
-                  blankIndex: 0,
-                  correctAnswer: "",
-                  alternativeAnswers: [],
-                  hint: null,
-                  studentAnswer: "",
-                },
-              })
-              .run();
-          }}
-          disabled={!editor.can().insertContent({ type: "blank" })}
-          variant="ghost"
-          size="icon-sm"
-          title="Insert Blank"
-        >
-          <FormInput className="size-4" />
-        </Button>
+        <>
+          <Button
+            onClick={() => {
+              editor
+                .chain()
+                .focus()
+                .insertContent({
+                  type: "blank",
+                  attrs: {
+                    blankIndex: 0,
+                    correctAnswer: "",
+                    alternativeAnswers: [],
+                    hint: null,
+                    studentAnswer: "",
+                  },
+                })
+                .run();
+            }}
+            disabled={!editor.can().insertContent({ type: "blank" })}
+            variant="ghost"
+            size="icon-sm"
+            title="Insert Blank"
+          >
+            <FormInput className="size-4" />
+          </Button>
+
+          <Button
+            onClick={() => {
+              const id = `writing-area-${Date.now()}`;
+              editor
+                .chain()
+                .focus()
+                .insertContent({
+                  type: "writingArea",
+                  attrs: {
+                    id,
+                    lines: 5,
+                    placeholder: "Write your answer here...",
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                    },
+                  ],
+                })
+                .run();
+            }}
+            disabled={!editor.can().insertContent({ type: "writingArea" })}
+            variant="ghost"
+            size="icon-sm"
+            title="Insert Writing Area"
+          >
+            <NotebookPenIcon className="size-4" />
+          </Button>
+        </>
       )}
     </div>
   );

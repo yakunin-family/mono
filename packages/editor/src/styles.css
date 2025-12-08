@@ -130,3 +130,16 @@
     height: 0;
   }
 }
+
+/* Writing Area Styles */
+.writing-area-content {
+  /* Remove paragraph margins inside writing areas for continuous lines */
+  & p {
+    margin-block: 0;
+  }
+}
+
+.writing-area-wrapper [data-empty="true"]::before {
+  content: attr(data-placeholder);
+  @apply text-muted-foreground/50 pointer-events-none absolute;
+}
