@@ -47,17 +47,33 @@ export const useConnection = () => {
   return connection;
 };
 
+const EditorModeContext = createContext<EditorMode | undefined>(undefined);
+
+export const useEditorMode = () => {
+  const mode = useContext(EditorModeContext);
+  if (mode === undefined) {
+    throw new Error(
+      "useEditorMode must be used within an EditorModeContext provider",
+    );
+  }
+
+  return mode;
+};
+
 const Providers = (props: {
   queryClient: QueryClient;
   convexClient: ConvexReactClient;
   connection: ConnectionContextProps;
+  mode: EditorMode;
   children: React.ReactNode;
 }) => {
   return (
     <ConvexProvider client={props.convexClient}>
       <QueryClientProvider client={props.queryClient}>
         <ConnectionContext value={props.connection}>
-          {props.children}
+          <EditorModeContext value={props.mode}>
+            {props.children}
+          </EditorModeContext>
         </ConnectionContext>
       </QueryClientProvider>
     </ConvexProvider>
@@ -148,6 +164,7 @@ export const DocumentEditor = ({
       queryClient={queryClient}
       convexClient={convexClient}
       connection={{ provider, ydoc, status }}
+      mode={mode}
     >
       <DocumentEditorInternal
         provider={provider}

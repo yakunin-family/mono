@@ -102,7 +102,7 @@ export function DocumentEditorInternal({
     }
   }, [editor, onStartExerciseGeneration, convexClient]);
 
-  // Store mode in editor storage for NodeViews to access
+  // Store mode in editor storage for backward compatibility
   useEffect(() => {
     if (editor) {
       editor.storage.editorMode = mode;

@@ -5,15 +5,16 @@ import { StudentBlankInput } from "@/components/blank/StudentBlankInput";
 import { TeacherLessonBlank } from "@/components/blank/TeacherLessonBlank";
 import { TeacherEditorBadge } from "@/components/blank/TeacherEditorBadge";
 import { validateAnswer } from "@/utils/blankValidation";
+import { useEditorMode } from "@/components/DocumentEditor";
 
 interface BlankNodeViewProps extends NodeViewProps {
   node: NodeViewProps["node"] & { attrs: BlankAttributes };
 }
 
 export function BlankView(props: NodeViewProps) {
-  const { node, editor, updateAttributes } = props as BlankNodeViewProps;
+  const { node, updateAttributes } = props as BlankNodeViewProps;
 
-  const mode = editor.storage.editorMode;
+  const mode = useEditorMode();
   const { studentAnswer, hint, correctAnswer, alternativeAnswers } = node.attrs;
 
   const isCorrect = validateAnswer(
