@@ -21,7 +21,7 @@ export const Exercise = Node.create({
 
   group: "block",
 
-  content: "block+",
+  content: "block*",
 
   draggable: true,
 
