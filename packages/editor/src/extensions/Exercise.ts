@@ -1,10 +1,12 @@
 import { mergeAttributes, Node } from "@tiptap/core";
+import { Plugin } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { ExerciseView } from "./ExerciseView";
 
 export interface ExerciseAttributes {
   instanceId: string;
+  index: number;
 }
 
 declare module '@tiptap/core' {
@@ -21,7 +23,7 @@ export const Exercise = Node.create({
 
   group: "block",
 
-  content: "block*",
+  content: "block+",
 
   draggable: true,
 
@@ -36,6 +38,14 @@ export const Exercise = Node.create({
             "data-instance-id": attributes.instanceId,
           };
         },
+      },
+      index: {
+        default: 1,
+        parseHTML: (element) =>
+          parseInt(element.getAttribute("data-index") || "1", 10),
+        renderHTML: (attributes) => ({
+          "data-index": String(attributes.index),
+        }),
       },
     };
   },
@@ -69,11 +79,49 @@ export const Exercise = Node.create({
         return commands.insertContent({
           type: this.name,
           attrs: attributes,
+          content: [{ type: "paragraph" }],
         });
       },
       updateExercise: (attributes) => ({ commands }) => {
         return commands.updateAttributes(this.name, attributes);
       },
     };
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        appendTransaction: (transactions, _oldState, newState) => {
+          if (!transactions.some((tr) => tr.docChanged)) return null;
+
+          const exercises: { pos: number; currentIndex: number }[] = [];
+          newState.doc.descendants((node, pos) => {
+            if (node.type.name === "exercise") {
+              exercises.push({ pos, currentIndex: node.attrs.index });
+            }
+          });
+
+          const needsUpdate = exercises.some(
+            (ex, i) => ex.currentIndex !== i + 1,
+          );
+          if (!needsUpdate) return null;
+
+          const tr = newState.tr;
+          exercises.forEach((ex, i) => {
+            if (ex.currentIndex !== i + 1) {
+              const node = newState.doc.nodeAt(ex.pos);
+              if (node) {
+                tr.setNodeMarkup(ex.pos, undefined, {
+                  ...node.attrs,
+                  index: i + 1,
+                });
+              }
+            }
+          });
+
+          return tr;
+        },
+      }),
+    ];
   },
 });

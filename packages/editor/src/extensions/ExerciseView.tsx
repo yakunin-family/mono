@@ -1,36 +1,20 @@
+import { Button } from "@package/ui";
 import {
   NodeViewContent,
   type NodeViewProps,
   NodeViewWrapper,
 } from "@tiptap/react";
 import { TrashIcon } from "lucide-react";
-import { useMemo } from "react";
-import { Button } from "@package/ui";
+
 import type { ExerciseAttributes } from "./Exercise";
 
 interface ExerciseNodeViewProps extends NodeViewProps {
-  node: NodeViewProps['node'] & { attrs: ExerciseAttributes };
+  node: NodeViewProps["node"] & { attrs: ExerciseAttributes };
 }
 
 export function ExerciseView(props: NodeViewProps) {
   const { node, getPos, editor } = props as ExerciseNodeViewProps;
-  // Calculate exercise number based on position in document
-  const exerciseNumber = useMemo(() => {
-    if (typeof getPos !== "function") return 0;
-
-    const currentPos = getPos();
-    if (currentPos === undefined) return 0;
-
-    let count = 0;
-
-    editor.state.doc.descendants((n, pos) => {
-      if (n.type.name === "exercise" && pos < currentPos) {
-        count++;
-      }
-    });
-
-    return count + 1;
-  }, [editor.state.doc, getPos]);
+  const exerciseNumber = node.attrs.index ?? 1;
 
   const handleDelete = () => {
     if (typeof getPos !== "function") return;
