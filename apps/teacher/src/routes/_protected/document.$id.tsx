@@ -190,7 +190,7 @@ function DocumentEditorPage() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 bg-muted p-6">
+      <main className="flex-1 bg-background p-6 pb-10">
         <div className="mx-auto max-w-4xl">
           <DocumentEditor
             documentId={documentId}

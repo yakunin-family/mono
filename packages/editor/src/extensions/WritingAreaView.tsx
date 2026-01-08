@@ -1,7 +1,12 @@
-import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import {
+  NodeViewContent,
+  type NodeViewProps,
+  NodeViewWrapper,
+} from "@tiptap/react";
+
+import { useEditorMode } from "@/components/DocumentEditor";
 
 import type { WritingAreaAttributes } from "./WritingArea";
-import { useEditorMode } from "@/components/DocumentEditor";
 
 interface WritingAreaViewProps extends NodeViewProps {
   node: NodeViewProps["node"] & { attrs: WritingAreaAttributes };

@@ -1,12 +1,13 @@
+import { Command, CommandItem, CommandList } from "@package/ui";
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
-  useState,
-  useCallback,
   useRef,
+  useState,
 } from "react";
-import { Command, CommandList, CommandItem } from "@package/ui";
+
 import { CommandItem as CommandItemType } from "../extensions/SlashCommand";
 
 interface SlashCommandMenuProps {

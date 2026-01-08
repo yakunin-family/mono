@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { html as beautifyHtml } from "js-beautify";
+import { DialogContent, DialogHeader, DialogTitle } from "@package/ui";
 
-interface DebugPanelProps {
+interface DebugHtmlModalProps {
   editor: Editor | null;
 }
 
-export function DebugPanel({ editor }: DebugPanelProps) {
+export function DebugHtmlModal({ editor }: DebugHtmlModalProps) {
   const [html, setHtml] = useState("");
 
   useEffect(() => {
@@ -23,10 +24,7 @@ export function DebugPanel({ editor }: DebugPanelProps) {
       setHtml(formatted);
     };
 
-    // Update initially
     updateHtml();
-
-    // Update on every change
     editor.on("update", updateHtml);
 
     return () => {
@@ -34,18 +32,16 @@ export function DebugPanel({ editor }: DebugPanelProps) {
     };
   }, [editor]);
 
-  if (!editor) return null;
-
   return (
-    <div className="mt-4 rounded-lg border bg-card shadow-sm">
-      <div className="border-b bg-muted px-4 py-2">
-        <h3 className="text-sm font-semibold">Debug: HTML Output</h3>
-      </div>
-      <div className="p-4">
-        <pre className="overflow-x-auto rounded bg-muted p-3 text-xs">
+    <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogHeader>
+        <DialogTitle>Debug: HTML Output</DialogTitle>
+      </DialogHeader>
+      <div className="overflow-auto max-h-[60vh]">
+        <pre className="rounded bg-muted p-4 text-xs font-mono">
           <code>{html}</code>
         </pre>
       </div>
-    </div>
+    </DialogContent>
   );
 }

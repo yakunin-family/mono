@@ -18,12 +18,10 @@ import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
 import { NoteBlock } from "../extensions/NoteBlock";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { WritingArea } from "../extensions/WritingArea";
-import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
-import { DebugPanel } from "./DebugPanel";
+import { EditorStatusBar } from "./EditorStatusBar";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
 import { DragHandle } from "./DragHandle";
-import { cn } from "@package/ui";
 import type { EditorMode } from "@/types";
 
 interface DocumentEditorInternalProps {
@@ -122,44 +120,19 @@ export function DocumentEditorInternal({
   }
 
   return (
-    <div ref={containerRef} className="relative flex flex-col gap-3">
-      {canEdit && <DocumentEditorToolbar editor={editor} />}
-
-      <div className="group rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md">
+    <div ref={containerRef} className="relative flex flex-col">
+      <div className="group">
         <EditorContent
           editor={editor}
-          className="p-6 [&_.tiptap]:min-h-[400px] [&_.tiptap]:outline-none"
+          className="py-6 [&_.tiptap]:min-h-[400px] [&_.tiptap]:outline-none"
         />
         {canEdit && <DragHandle editor={editor} />}
       </div>
 
-      <StatusIndicator status={status} />
-
-      {/* Debug Panel */}
-      <DebugPanel editor={editor} />
-
-      {/* Mouse cursor tracking */}
       <MouseTracker provider={provider} containerRef={containerRef} />
       <RemoteCursors provider={provider} />
-    </div>
-  );
-}
 
-function StatusIndicator({
-  status,
-}: {
-  status: "connecting" | "connected" | "disconnected";
-}) {
-  return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <div
-        className={cn("size-2 rounded-full transition-colors", {
-          "bg-emerald-500 dark:bg-emerald-400": status === "connected",
-          "bg-amber-500 dark:bg-amber-400": status === "connecting",
-          "bg-red-500 dark:bg-red-400": status === "disconnected",
-        })}
-      />
-      <span className="capitalize">{status}</span>
+      <EditorStatusBar status={status} editor={editor} />
     </div>
   );
 }
