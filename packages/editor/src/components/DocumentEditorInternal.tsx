@@ -15,6 +15,7 @@ import * as Y from "yjs";
 import { Blank } from "../extensions/Blank";
 import { Exercise } from "../extensions/Exercise";
 import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
+import { NoteBlock } from "../extensions/NoteBlock";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { WritingArea } from "../extensions/WritingArea";
 import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
@@ -75,6 +76,7 @@ export function DocumentEditorInternal({
       Blank,
       Exercise,
       WritingArea,
+      NoteBlock,
       ExerciseGeneration,
       SlashCommand.configure({
         canEdit,

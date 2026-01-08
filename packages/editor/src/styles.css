@@ -143,3 +143,8 @@
   content: attr(data-placeholder);
   @apply text-muted-foreground/50 pointer-events-none absolute;
 }
+
+/* Note Block Styles */
+/* Note: Most styling handled via Tailwind classes in NoteBlockView.tsx */
+/* Yellow theme: bg-amber-50 (background), border-amber-400 (left border), text-amber-800 (header text) */
+/* Always editable via contentEditable={true} attribute */

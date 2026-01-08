@@ -1,11 +1,12 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
-import { useEffect, useState, useMemo, createContext, useContext } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 
-import { DocumentEditorInternal } from "./DocumentEditorInternal";
 import { ConnectionStatus, EditorMode } from "@/types";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+import { DocumentEditorInternal } from "./DocumentEditorInternal";
 
 export interface DocumentEditorProps {
   convexClient: ConvexReactClient;

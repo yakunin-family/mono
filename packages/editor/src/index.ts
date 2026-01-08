@@ -13,5 +13,6 @@ export type {
   ExerciseGenerationAttributes,
   ExerciseGenerationStorage,
 } from "./extensions/ExerciseGeneration";
+export { NoteBlock } from "./extensions/NoteBlock";
 export type { EditorMode } from "./types";
 export { getRandomUserColor, getUserColorByIndex } from "./utils/user-colors";

@@ -1,26 +1,28 @@
+import { Button, Separator } from "@package/ui";
 import type { Editor } from "@tiptap/react";
 import {
   BoldIcon,
   CodeIcon,
+  FormInput,
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
   ItalicIcon,
   ListIcon,
   ListOrderedIcon,
+  NotebookPenIcon,
   QuoteIcon,
   StrikethroughIcon,
-  FormInput,
-  NotebookPenIcon,
 } from "lucide-react";
-import { Button, Separator } from "@package/ui";
+
+import { useEditorMode } from "./DocumentEditor";
 
 export interface DocumentEditorToolbarProps {
   editor: Editor;
 }
 
 export function DocumentEditorToolbar({ editor }: DocumentEditorToolbarProps) {
-  const editorMode = editor.storage.editorMode;
+  const editorMode = useEditorMode();
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 rounded-lg border bg-card p-1.5">
@@ -221,6 +223,30 @@ export function DocumentEditorToolbar({ editor }: DocumentEditorToolbarProps) {
             title="Insert Writing Area"
           >
             <NotebookPenIcon className="size-4" />
+          </Button>
+        </>
+      )}
+
+      {editorMode === "teacher-lesson" && (
+        <>
+          <Separator orientation="vertical" className="mx-1 h-5" />
+
+          <Button
+            onClick={() => {
+              editor
+                .chain()
+                .focus()
+                .insertContent({
+                  type: "noteBlock",
+                  content: [{ type: "paragraph" }],
+                })
+                .run();
+            }}
+            variant="ghost"
+            size="icon-sm"
+            title="Add Note"
+          >
+            <span className="text-base">📝</span>
           </Button>
         </>
       )}
