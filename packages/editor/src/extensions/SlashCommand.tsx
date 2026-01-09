@@ -16,6 +16,7 @@ import {
   Sparkles,
   FormInput,
   NotebookPen,
+  Library,
 } from "lucide-react";
 import { SlashCommandMenu } from "../components/SlashCommandMenu";
 import type {} from "@tiptap/extension-table";
@@ -226,6 +227,14 @@ export const SlashCommand = Extension.create({
                       ],
                     })
                     .run();
+                },
+              },
+              {
+                title: "Library",
+                icon: Library,
+                command: ({ editor, range }) => {
+                  editor.chain().focus().deleteRange(range).run();
+                  window.dispatchEvent(new CustomEvent("openLibraryModal"));
                 },
               },
             );

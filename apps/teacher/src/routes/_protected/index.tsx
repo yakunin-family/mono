@@ -3,11 +3,14 @@ import { Button } from "@package/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
-import { FileTextIcon, PlusIcon, Share2Icon } from "lucide-react";
+import { FileTextIcon, LibraryIcon, PlusIcon, Share2Icon } from "lucide-react";
 import { useState } from "react";
 
 import { DocumentShareDialog } from "@/components/DocumentShareDialog";
+import { NewDocumentModal } from "@/components/NewDocumentModal";
 import { signOut } from "@/lib/auth-client";
+
+const TEMPLATE_CONTENT_KEY = "pending-template-content";
 
 export const Route = createFileRoute("/_protected/")({
   component: DashboardPage,
@@ -26,6 +29,7 @@ function DashboardPage() {
   const { userId } = Route.useRouteContext();
   const [copySuccess, setCopySuccess] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<{
     id: string;
     title: string;
@@ -44,16 +48,28 @@ function DashboardPage() {
 
   // Create document mutation
   const createDocumentMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (templateContent?: string) => {
       const documentId = await convex.mutation(api.documents.createDocument, {
         title: "Untitled Document",
       });
-      return documentId;
+      return { documentId, templateContent };
     },
-    onSuccess: (documentId) => {
+    onSuccess: ({ documentId, templateContent }) => {
+      if (templateContent) {
+        sessionStorage.setItem(TEMPLATE_CONTENT_KEY, templateContent);
+      }
+      setNewDocumentModalOpen(false);
       navigate({ to: "/document/$id", params: { id: documentId } });
     },
   });
+
+  const handleCreateBlank = () => {
+    createDocumentMutation.mutate(undefined);
+  };
+
+  const handleCreateFromTemplate = (templateContent: string) => {
+    createDocumentMutation.mutate(templateContent);
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -64,6 +80,12 @@ function DashboardPage() {
             Language Learning Platform - Teacher
           </h1>
           <div className="flex items-center gap-4">
+            <Link to="/library">
+              <Button variant="outline" size="sm">
+                <LibraryIcon className="mr-2 size-4" />
+                Library
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
@@ -86,14 +108,12 @@ function DashboardPage() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Your Documents</h2>
               <Button
-                onClick={() => createDocumentMutation.mutate()}
+                onClick={() => setNewDocumentModalOpen(true)}
                 disabled={createDocumentMutation.isPending}
                 size="sm"
               >
                 <PlusIcon className="mr-2 size-4" />
-                {createDocumentMutation.isPending
-                  ? "Creating..."
-                  : "New Document"}
+                New Document
               </Button>
             </div>
 
@@ -188,6 +208,15 @@ function DashboardPage() {
           onOpenChange={setShareDialogOpen}
         />
       )}
+
+      {/* New Document Modal */}
+      <NewDocumentModal
+        open={newDocumentModalOpen}
+        onOpenChange={setNewDocumentModalOpen}
+        onCreateBlank={handleCreateBlank}
+        onCreateFromTemplate={handleCreateFromTemplate}
+        isCreating={createDocumentMutation.isPending}
+      />
     </div>
   );
 }

@@ -174,6 +174,27 @@ export type ExerciseGenerationStep = Infer<
   typeof schemas.tables.exerciseGenerationStep.validator
 >;
 
+export const libraryItemTypeValidator = v.union(
+  v.literal("exercise"),
+  v.literal("template"),
+  v.literal("group")
+);
+export type LibraryItemType = Infer<typeof libraryItemTypeValidator>;
+
+const library = defineTable({
+  ownerId: v.string(), // Better Auth user ID (teacher)
+  title: v.string(),
+  type: libraryItemTypeValidator,
+  content: v.string(), // JSON-stringified Tiptap content array
+  description: v.optional(v.string()), // Useful for templates
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_owner", ["ownerId"])
+  .index("by_owner_type", ["ownerId", "type"])
+  .index("by_owner_date", ["ownerId", "createdAt"]);
+export type LibraryItem = Infer<typeof schemas.tables.library.validator>;
+
 const schemas = defineSchema({
   userProfile,
   teacher,
@@ -185,6 +206,7 @@ const schemas = defineSchema({
   aiGeneration,
   exerciseGenerationSession,
   exerciseGenerationStep,
+  library,
 });
 
 export default schemas;

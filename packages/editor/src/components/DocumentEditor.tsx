@@ -1,12 +1,28 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
+import type { Editor, JSONContent } from "@tiptap/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import * as Y from "yjs";
 
 import { ConnectionStatus, EditorMode } from "@/types";
 
 import { DocumentEditorInternal } from "./DocumentEditorInternal";
+
+import type { LibraryItem } from "./LibraryModal";
+
+export interface DocumentEditorHandle {
+  getJSON: () => JSONContent | null;
+  getEditor: () => Editor | null;
+}
 
 export interface DocumentEditorProps {
   convexClient: ConvexReactClient;
@@ -25,6 +41,11 @@ export interface DocumentEditorProps {
     promptText: string,
     model: string,
   ) => Promise<{ sessionId: string }>;
+  onSaveExerciseToBank?: (title: string, content: string) => Promise<void>;
+  onSaveGroupToLibrary?: (title: string, content: string) => Promise<void>;
+  libraryItems?: LibraryItem[];
+  isLoadingLibraryItems?: boolean;
+  editorRef?: React.RefObject<DocumentEditorHandle | null>;
 }
 
 interface ConnectionContextProps {
@@ -101,9 +122,29 @@ export const DocumentEditor = ({
   onStatusChange,
   onStartExerciseGeneration,
   onConnectedUsersChange,
+  onSaveExerciseToBank,
+  onSaveGroupToLibrary,
+  libraryItems,
+  isLoadingLibraryItems,
+  editorRef,
 }: DocumentEditorProps) => {
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
+  const [editor, setEditor] = useState<Editor | null>(null);
+
+  // Expose editor methods via ref
+  useImperativeHandle(
+    editorRef,
+    () => ({
+      getJSON: () => editor?.getJSON() ?? null,
+      getEditor: () => editor,
+    }),
+    [editor],
+  );
+
+  const handleEditorReady = useCallback((editorInstance: Editor) => {
+    setEditor(editorInstance);
+  }, []);
 
   // Create Y.Doc that persists across renders
   const ydoc = useMemo(() => new Y.Doc(), []);
@@ -175,6 +216,11 @@ export const DocumentEditor = ({
         status={status}
         convexClient={convexClient}
         onStartExerciseGeneration={onStartExerciseGeneration}
+        onSaveExerciseToBank={onSaveExerciseToBank}
+        onSaveGroupToLibrary={onSaveGroupToLibrary}
+        libraryItems={libraryItems}
+        isLoadingLibraryItems={isLoadingLibraryItems}
+        onEditorReady={handleEditorReady}
       />
     </Providers>
   );

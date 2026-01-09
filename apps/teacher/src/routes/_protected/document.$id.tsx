@@ -1,15 +1,26 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { api } from "@app/backend";
+
+const TEMPLATE_CONTENT_KEY = "pending-template-content";
 import {
   DocumentEditor,
+  type DocumentEditorHandle,
   type EditorMode,
   getRandomUserColor,
+  SaveToLibraryModal,
 } from "@package/editor";
-import { Button } from "@package/ui";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@package/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
-import { ArrowLeftIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeftIcon, ChevronDownIcon, FileTextIcon } from "lucide-react";
 
 import { signOut, useSession } from "@/lib/auth-client";
 
@@ -27,9 +38,49 @@ function DocumentEditorPage() {
   const [editorMode, setEditorMode] = useState<EditorMode>("teacher-editor");
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const editorRef = useRef<DocumentEditorHandle | null>(null);
+  const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
+  const templateInjectedRef = useRef(false);
 
   // Generate a stable random color for this user
   const userColor = useMemo(() => getRandomUserColor(), []);
+
+  // Inject template content if pending (from creating document from template)
+  const injectTemplateContent = useCallback(() => {
+    if (templateInjectedRef.current) return;
+
+    const pendingContent = sessionStorage.getItem(TEMPLATE_CONTENT_KEY);
+    if (pendingContent) {
+      const editor = editorRef.current?.getEditor();
+      if (editor) {
+        try {
+          const content = JSON.parse(pendingContent);
+          editor.commands.setContent(content);
+          sessionStorage.removeItem(TEMPLATE_CONTENT_KEY);
+          templateInjectedRef.current = true;
+        } catch (e) {
+          console.error("Failed to parse template content:", e);
+          sessionStorage.removeItem(TEMPLATE_CONTENT_KEY);
+        }
+      }
+    }
+  }, []);
+
+  // Poll for editor readiness to inject template content
+  useEffect(() => {
+    const pendingContent = sessionStorage.getItem(TEMPLATE_CONTENT_KEY);
+    if (!pendingContent || templateInjectedRef.current) return;
+
+    const checkInterval = setInterval(() => {
+      const editor = editorRef.current?.getEditor();
+      if (editor && !editor.isDestroyed) {
+        injectTemplateContent();
+        clearInterval(checkInterval);
+      }
+    }, 100);
+
+    return () => clearInterval(checkInterval);
+  }, [injectTemplateContent]);
 
   // Get user name from session, fallback to email or "Anonymous"
   const userName = session?.user?.name || session?.user?.email || "Anonymous";
@@ -85,6 +136,93 @@ function DocumentEditorPage() {
     return { sessionId: result.sessionId };
   };
 
+  // Fetch library items (exercises and sections)
+  const libraryQuery = useQuery({
+    queryKey: ["library"],
+    queryFn: async () => {
+      return await convex.query(api.exerciseBank.getMyItems, {});
+    },
+  });
+
+  // Save exercise to bank mutation
+  const saveExerciseMutation = useMutation({
+    mutationFn: async ({
+      title,
+      content,
+    }: {
+      title: string;
+      content: string;
+    }) => {
+      await convex.mutation(api.exerciseBank.saveExercise, { title, content });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+    },
+  });
+
+  const handleSaveExerciseToBank = async (title: string, content: string) => {
+    await saveExerciseMutation.mutateAsync({ title, content });
+  };
+
+  // Save group mutation
+  const saveGroupMutation = useMutation({
+    mutationFn: async ({
+      title,
+      content,
+    }: {
+      title: string;
+      content: string;
+    }) => {
+      await convex.mutation(api.exerciseBank.saveItem, {
+        title,
+        content,
+        type: "group",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+    },
+  });
+
+  const handleSaveGroupToLibrary = async (title: string, content: string) => {
+    await saveGroupMutation.mutateAsync({ title, content });
+  };
+
+  // Save template mutation
+  const saveTemplateMutation = useMutation({
+    mutationFn: async ({
+      title,
+      content,
+      description,
+    }: {
+      title: string;
+      content: string;
+      description?: string;
+    }) => {
+      await convex.mutation(api.exerciseBank.saveItem, {
+        title,
+        content,
+        type: "template",
+        description,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+      setSaveTemplateModalOpen(false);
+    },
+  });
+
+  const handleSaveAsTemplate = (title: string, description?: string) => {
+    const json = editorRef.current?.getJSON();
+    if (json) {
+      saveTemplateMutation.mutate({
+        title,
+        content: JSON.stringify(json),
+        description,
+      });
+    }
+  };
+
   if (documentQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -136,13 +274,26 @@ function DocumentEditorPage() {
                 autoFocus
               />
             ) : (
-              <h1
-                className="text-xl font-bold cursor-pointer hover:text-muted-foreground transition-colors px-2 py-1"
-                onClick={() => setIsEditingTitle(true)}
-                title="Click to edit title"
-              >
-                {documentQuery.data?.title}
-              </h1>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="flex items-center gap-1 text-xl font-bold hover:text-muted-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
+                    title="Document options"
+                  >
+                    {documentQuery.data?.title}
+                    <ChevronDownIcon className="size-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => setIsEditingTitle(true)}>
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSaveTemplateModalOpen(true)}>
+                    <FileTextIcon className="size-4" />
+                    Save as Template
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
 
@@ -190,7 +341,7 @@ function DocumentEditorPage() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 bg-background p-6 pb-10">
+      <main className="flex-1 bg-background">
         <div className="mx-auto max-w-4xl">
           <DocumentEditor
             documentId={documentId}
@@ -207,6 +358,19 @@ function DocumentEditorPage() {
             convexClient={convex}
             queryClient={queryClient}
             onStartExerciseGeneration={handleStartExerciseGeneration}
+            onSaveExerciseToBank={handleSaveExerciseToBank}
+            onSaveGroupToLibrary={handleSaveGroupToLibrary}
+            libraryItems={libraryQuery.data}
+            isLoadingLibraryItems={libraryQuery.isLoading}
+            editorRef={editorRef}
+          />
+
+          <SaveToLibraryModal
+            open={saveTemplateModalOpen}
+            onOpenChange={setSaveTemplateModalOpen}
+            type="template"
+            onSave={handleSaveAsTemplate}
+            isSaving={saveTemplateMutation.isPending}
           />
         </div>
       </main>

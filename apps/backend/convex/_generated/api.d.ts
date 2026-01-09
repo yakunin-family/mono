@@ -11,6 +11,7 @@
 import type * as _generated_prompts from "../_generated_prompts.js";
 import type * as auth from "../auth.js";
 import type * as documents from "../documents.js";
+import type * as exerciseBank from "../exerciseBank.js";
 import type * as exerciseGeneration from "../exerciseGeneration.js";
 import type * as http from "../http.js";
 import type * as invite from "../invite.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   _generated_prompts: typeof _generated_prompts;
   auth: typeof auth;
   documents: typeof documents;
+  exerciseBank: typeof exerciseBank;
   exerciseGeneration: typeof exerciseGeneration;
   http: typeof http;
   invite: typeof invite;

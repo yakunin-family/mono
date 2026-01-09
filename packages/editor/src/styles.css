@@ -148,3 +148,29 @@
 /* Note: Most styling handled via Tailwind classes in NoteBlockView.tsx */
 /* Yellow theme: bg-amber-50 (background), border-amber-400 (left border), text-amber-800 (header text) */
 /* Always editable via contentEditable={true} attribute */
+
+/* Block Hover Buttons */
+.block-hover-buttons {
+  @apply fixed z-50 flex items-center gap-0.5;
+}
+
+.block-hover-buttons.hidden {
+  @apply invisible;
+}
+
+.block-hover-button {
+  @apply flex items-center justify-center w-7 h-7 rounded-md;
+  @apply text-muted-foreground hover:text-foreground;
+  @apply hover:bg-accent transition-colors;
+  @apply cursor-pointer border-none bg-transparent;
+}
+
+/* Group Node Styles - visual distinction for nesting depth */
+.group-wrapper .group-wrapper {
+  @apply border-border/40;
+}
+
+.group-wrapper .group-wrapper .group-wrapper {
+  @apply border-border/30;
+}
+

@@ -16,7 +16,7 @@ export interface ExerciseGenerationStorage {
     | ((promptText: string, model: string) => Promise<{ sessionId: string }>)
     | null
     | undefined;
-  convexClient: ConvexReactClient;
+  convexClient?: ConvexReactClient;
 }
 
 declare module "@tiptap/core" {
@@ -48,8 +48,6 @@ export const ExerciseGeneration = Node.create({
   group: "block",
 
   atom: true,
-
-  draggable: true,
 
   addStorage() {
     return {
