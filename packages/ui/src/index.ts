@@ -6,6 +6,7 @@ export * from "./components/card";
 export * from "./components/command";
 export * from "./components/dialog";
 export * from "./components/dropdown-menu";
+export * from "./components/sheet";
 export * from "./components/field";
 export * from "./components/input";
 export * from "./components/label";

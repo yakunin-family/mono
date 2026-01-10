@@ -120,6 +120,14 @@ const promptFiles: Array<{
       { name: "exerciseItem", optional: false },
     ],
   },
+  {
+    name: "buildAutoTagPrompt",
+    content: readFileSync(
+      join(promptsDir, "auto-tag-library-item.md"),
+      "utf-8",
+    ),
+    vars: [{ name: "content", optional: false }],
+  },
 ];
 
 // Generate output

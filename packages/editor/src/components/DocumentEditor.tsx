@@ -17,7 +17,7 @@ import { ConnectionStatus, EditorMode } from "@/types";
 
 import { DocumentEditorInternal } from "./DocumentEditorInternal";
 
-import type { LibraryItem } from "./LibraryModal";
+import type { LibraryItemWithMetadata } from "./LibraryDrawer";
 
 export interface DocumentEditorHandle {
   getJSON: () => JSONContent | null;
@@ -43,7 +43,7 @@ export interface DocumentEditorProps {
   ) => Promise<{ sessionId: string }>;
   onSaveExerciseToBank?: (title: string, content: string) => Promise<void>;
   onSaveGroupToLibrary?: (title: string, content: string) => Promise<void>;
-  libraryItems?: LibraryItem[];
+  libraryItems?: LibraryItemWithMetadata[];
   isLoadingLibraryItems?: boolean;
   editorRef?: React.RefObject<DocumentEditorHandle | null>;
 }

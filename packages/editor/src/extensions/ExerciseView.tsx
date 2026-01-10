@@ -1,5 +1,6 @@
 import { Button } from "@package/ui";
 import type { JSONContent } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 import {
   NodeViewContent,
   type NodeViewProps,
@@ -26,11 +27,22 @@ interface ExerciseNodeViewProps extends NodeViewProps {
 }
 
 export function ExerciseView(props: NodeViewProps) {
-  const { node, getPos, editor } = props as ExerciseNodeViewProps;
+  const { node, getPos, editor, selected } = props as ExerciseNodeViewProps;
   const exerciseNumber = node.attrs.index ?? 1;
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleSelect = () => {
+    if (typeof getPos !== "function") return;
+    const pos = getPos();
+    if (pos === undefined) return;
+
+    const { tr, doc } = editor.state;
+    const nodeSelection = NodeSelection.create(doc, pos);
+    editor.view.dispatch(tr.setSelection(nodeSelection));
+    editor.view.focus();
+  };
 
   const handleDelete = () => {
     if (typeof getPos !== "function") return;
@@ -73,15 +85,25 @@ export function ExerciseView(props: NodeViewProps) {
 
   return (
     <NodeViewWrapper className="my-4 block group">
-      <div className="rounded-lg border border-border/50 bg-accent/5 p-4 transition-all hover:border-border hover:bg-accent/10 hover:shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <span
-            className="text-sm font-semibold text-foreground"
-            contentEditable={false}
-          >
+      <div
+        className={`rounded-lg border bg-accent/5 p-4 transition-all hover:shadow-sm ${
+          selected
+            ? "border-primary ring-2 ring-primary/20"
+            : "border-border/50 hover:border-border hover:bg-accent/10"
+        }`}
+      >
+        <div
+          className="mb-3 flex cursor-pointer items-center justify-between gap-2"
+          contentEditable={false}
+          onClick={handleSelect}
+        >
+          <span className="text-sm font-semibold text-foreground">
             Exercise {exerciseNumber}
           </span>
-          <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <div
+            className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Button
               variant="ghost"
               size="icon-sm"

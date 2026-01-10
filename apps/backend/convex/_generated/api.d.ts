@@ -19,6 +19,7 @@ import type * as students from "../students.js";
 import type * as teachers from "../teachers.js";
 import type * as userProfiles from "../userProfiles.js";
 import type * as validators_exerciseGeneration from "../validators/exerciseGeneration.js";
+import type * as validators_libraryAutoTag from "../validators/libraryAutoTag.js";
 
 import type {
   ApiFromModules,
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   teachers: typeof teachers;
   userProfiles: typeof userProfiles;
   "validators/exerciseGeneration": typeof validators_exerciseGeneration;
+  "validators/libraryAutoTag": typeof validators_libraryAutoTag;
 }>;
 
 /**

@@ -25,6 +25,10 @@ export const Exercise = Node.create({
 
   content: "block+",
 
+  selectable: true,
+
+  draggable: true,
+
   addAttributes() {
     return {
       instanceId: {

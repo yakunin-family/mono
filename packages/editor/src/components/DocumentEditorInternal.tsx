@@ -36,7 +36,10 @@ import { SelectionSave } from "../extensions/SelectionSave";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { WritingArea } from "../extensions/WritingArea";
 import { EditorStatusBar } from "./EditorStatusBar";
-import { LibraryModal, type LibraryItem } from "./LibraryModal";
+import {
+  LibraryDrawer,
+  type LibraryItemWithMetadata,
+} from "./LibraryDrawer";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
 import { SelectionSaveButton } from "./SelectionSaveButton";
@@ -54,7 +57,7 @@ interface DocumentEditorInternalProps {
   ) => Promise<{ sessionId: string }>;
   onSaveExerciseToBank?: (title: string, content: string) => Promise<void>;
   onSaveGroupToLibrary?: (title: string, content: string) => Promise<void>;
-  libraryItems?: LibraryItem[];
+  libraryItems?: LibraryItemWithMetadata[];
   isLoadingLibraryItems?: boolean;
   onEditorReady?: (editor: Editor) => void;
 }
@@ -241,7 +244,7 @@ export function DocumentEditorInternal({
 
       <EditorStatusBar status={status} editor={editor} />
 
-      <LibraryModal
+      <LibraryDrawer
         open={libraryModalOpen}
         onOpenChange={setLibraryModalOpen}
         items={libraryItems}

@@ -9,6 +9,22 @@ export type { LibraryItem } from "./components/LibraryModal";
 export { LibraryModal } from "./components/LibraryModal";
 export type { LibraryItemType } from "./components/SaveToLibraryModal";
 export { SaveToLibraryModal } from "./components/SaveToLibraryModal";
+export type {
+  LibraryItemWithMetadata,
+  LibraryMetadata,
+} from "./components/LibraryDrawer";
+export { LibraryDrawer } from "./components/LibraryDrawer";
+export type { SaveToLibraryData } from "./components/SaveToLibraryDrawer";
+export { SaveToLibraryDrawer } from "./components/SaveToLibraryDrawer";
+export {
+  parseSearchQuery,
+  matchesSearchQuery,
+  formatLevelsDisplay,
+  suggestFiltersFromText,
+  type ParsedSearchQuery,
+  type SearchFilters,
+  type CEFRLevel,
+} from "./utils/searchQueryParser";
 export type { BlankAttributes } from "./extensions/Blank";
 export { Blank } from "./extensions/Blank";
 export type { ExerciseAttributes } from "./extensions/Exercise";

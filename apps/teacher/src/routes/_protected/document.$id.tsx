@@ -8,7 +8,9 @@ import {
   type DocumentEditorHandle,
   type EditorMode,
   getRandomUserColor,
-  SaveToLibraryModal,
+  SaveToLibraryDrawer,
+  type SaveToLibraryData,
+  type LibraryMetadata,
 } from "@package/editor";
 import {
   Button,
@@ -188,22 +190,33 @@ function DocumentEditorPage() {
     await saveGroupMutation.mutateAsync({ title, content });
   };
 
-  // Save template mutation
+  // Save template mutation with metadata
   const saveTemplateMutation = useMutation({
     mutationFn: async ({
       title,
       content,
       description,
+      metadata,
     }: {
       title: string;
       content: string;
       description?: string;
+      metadata?: SaveToLibraryData["metadata"];
     }) => {
-      await convex.mutation(api.exerciseBank.saveItem, {
+      await convex.mutation(api.exerciseBank.saveItemWithMetadata, {
         title,
         content,
         type: "template",
         description,
+        metadata: metadata
+          ? {
+              language: metadata.language,
+              levels: metadata.levels,
+              topic: metadata.topic,
+              tags: metadata.tags,
+              autoTagged: metadata.autoTagged,
+            }
+          : undefined,
       });
     },
     onSuccess: () => {
@@ -212,13 +225,27 @@ function DocumentEditorPage() {
     },
   });
 
-  const handleSaveAsTemplate = (title: string, description?: string) => {
+  // Auto-tag content action
+  const autoTagMutation = useMutation({
+    mutationFn: async (content: string) => {
+      return await convex.action(api.exerciseBank.autoTagContent, { content });
+    },
+  });
+
+  // Get content for template save
+  const getTemplateContent = useCallback(() => {
     const json = editorRef.current?.getJSON();
-    if (json) {
+    return json ? JSON.stringify(json) : "";
+  }, []);
+
+  const handleSaveAsTemplate = (data: SaveToLibraryData) => {
+    const content = getTemplateContent();
+    if (content) {
       saveTemplateMutation.mutate({
-        title,
-        content: JSON.stringify(json),
-        description,
+        title: data.title,
+        content,
+        description: data.description,
+        metadata: data.metadata,
       });
     }
   };
@@ -365,11 +392,22 @@ function DocumentEditorPage() {
             editorRef={editorRef}
           />
 
-          <SaveToLibraryModal
+          <SaveToLibraryDrawer
             open={saveTemplateModalOpen}
             onOpenChange={setSaveTemplateModalOpen}
             type="template"
+            contentForTagging={getTemplateContent()}
             onSave={handleSaveAsTemplate}
+            onAutoTag={async (content) => {
+              const result = await autoTagMutation.mutateAsync(content);
+              return {
+                language: result.language,
+                levels: result.levels as LibraryMetadata["levels"],
+                topic: result.topic,
+                tags: result.tags,
+                autoTagged: result.autoTagged,
+              };
+            }}
             isSaving={saveTemplateMutation.isPending}
           />
         </div>

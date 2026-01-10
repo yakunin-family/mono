@@ -181,12 +181,34 @@ export const libraryItemTypeValidator = v.union(
 );
 export type LibraryItemType = Infer<typeof libraryItemTypeValidator>;
 
+export const cefrLevelValidator = v.union(
+  v.literal("A1"),
+  v.literal("A2"),
+  v.literal("B1"),
+  v.literal("B2"),
+  v.literal("C1"),
+  v.literal("C2")
+);
+export type CEFRLevel = Infer<typeof cefrLevelValidator>;
+
+export const libraryMetadataValidator = v.object({
+  language: v.optional(v.string()), // e.g., "German", "Spanish"
+  levels: v.optional(v.array(cefrLevelValidator)), // Multiple CEFR levels [A1, A2]
+  exerciseTypes: v.optional(v.array(v.string())), // e.g., ["fill-blanks", "multiple-choice"]
+  topic: v.optional(v.string()), // e.g., "food", "travel"
+  tags: v.optional(v.array(v.string())), // Custom tags (grammar focus, vocab themes, skills)
+  autoTagged: v.optional(v.boolean()), // Whether AI auto-tagging was used
+});
+export type LibraryMetadata = Infer<typeof libraryMetadataValidator>;
+
 const library = defineTable({
   ownerId: v.string(), // Better Auth user ID (teacher)
   title: v.string(),
   type: libraryItemTypeValidator,
   content: v.string(), // JSON-stringified Tiptap content array
   description: v.optional(v.string()), // Useful for templates
+  metadata: v.optional(libraryMetadataValidator), // Rich metadata for search/filter
+  searchText: v.optional(v.string()), // Concatenated searchable text (title + description + tags)
   createdAt: v.number(),
   updatedAt: v.number(),
 })
