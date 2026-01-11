@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@app/backend": "workspace:*",
+    "@convex-dev/react-query": "0.0.0-alpha.11",
     "@floating-ui/dom": "^1.7.4",
     "@hocuspocus/provider": "^3.4.0",
     "@package/ui": "workspace:*",

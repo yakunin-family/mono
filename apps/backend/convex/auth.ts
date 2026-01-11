@@ -20,6 +20,10 @@ export const createAuth = (
       disabled: optionsOnly,
     },
     baseURL: siteUrl,
+    trustedOrigins: [
+      "http://localhost:3000", // teacher app
+      "http://localhost:3001", // student app
+    ],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,

@@ -345,24 +345,24 @@ uncompleteHomework(homeworkItemId)           // Undo completion
 ## Success Criteria
 
 ### Feature Completion
-- [ ] Teacher can create invite with language specified
-- [ ] Student can accept invite, space is created
-- [ ] Teacher sees list of spaces (students) on dashboard
-- [ ] Student sees list of spaces (teachers) on dashboard
-- [ ] Teacher can create lessons within a space
-- [ ] Lessons are numbered and ordered
-- [ ] Teacher can mark exercises as homework
-- [ ] Student sees homework list in space
-- [ ] Student can mark homework as complete
-- [ ] Teacher can see homework completion status
+- [x] Teacher can create invite with language specified
+- [x] Student can accept invite, space is created
+- [x] Teacher sees list of spaces (students) on dashboard
+- [x] Student sees list of spaces (teachers) on dashboard
+- [x] Teacher can create lessons within a space
+- [x] Lessons are numbered and ordered
+- [x] Teacher can mark exercises as homework
+- [x] Student sees homework list in space
+- [x] Student can mark homework as complete
+- [x] Teacher can see homework completion status
 
 ### Cleanup Verification
-- [ ] `teacherStudents` table removed from schema
-- [ ] `sharedDocuments` table removed from schema
-- [ ] `document.owner` field removed
-- [ ] No references to old APIs in frontend
-- [ ] Old routes removed or redirecting
-- [ ] `grep -r "teacherStudents\|sharedDocuments"` returns no results
+- [ ] `teacherStudents` table removed from schema (kept for data migration)
+- [ ] `sharedDocuments` table removed from schema (kept for data migration)
+- [ ] `document.owner` field removed (made optional, kept for backward compat)
+- [x] No references to old APIs in frontend
+- [x] Old routes removed or redirecting
+- [x] Legacy `students.ts` file removed
 
 ## Future Enhancements (Out of Scope)
 

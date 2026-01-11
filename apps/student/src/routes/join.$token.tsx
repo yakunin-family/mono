@@ -1,5 +1,5 @@
 import { api } from "@app/backend";
-import { convexQuery, useConvex } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import {
   Button,
   Card,
@@ -8,98 +8,76 @@ import {
   CardHeader,
   CardTitle,
 } from "@package/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  useNavigate,
-  useParams,
-} from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { clearPendingInvite, storePendingInvite } from "@/lib/invite-storage";
 
 export const Route = createFileRoute("/join/$token")({
   component: JoinPage,
-  loader: async ({ params, context }) => {
-    // $token is actually the teacherUserId
-    const teacherUserId = params.token;
-
-    // Fetch teacher info for SSR
-    const teacherInfo = await context.convexQueryClient.serverHttpClient?.query(
-      api.teachers.getTeacherByUserId,
-      { userId: teacherUserId },
-    );
-
-    return { teacherInfo };
-  },
 });
 
 function JoinPage() {
-  const { token: teacherUserId } = useParams({ from: "/join/$token" });
+  const { token } = useParams({ from: "/join/$token" });
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const convex = useConvex();
   const { userId } = Route.useRouteContext();
-  const loaderData = Route.useLoaderData();
   const [joinSuccess, setJoinSuccess] = useState(false);
 
-  // Check if already enrolled (only if authenticated)
-  const { data: isEnrolled, isLoading: checkingEnrollment } = useQuery({
-    ...convexQuery(api.students.isEnrolledWithTeacher, {
-      teacherUserId,
-    }),
-    enabled: !!userId,
-  });
+  // Fetch invite details (no auth required for this query)
+  const { data: invite, isLoading: inviteLoading } = useQuery(
+    convexQuery(api.spaceInvites.getInviteByToken, { token }),
+  );
 
-  // Join teacher mutation
-  const joinMutation = useMutation({
-    mutationFn: async () => {
-      return convex.mutation(api.students.joinTeacher, {
-        teacherUserId,
-      });
-    },
-    onSuccess: () => {
+  // Accept invite mutation
+  const acceptInviteMutationFn = useConvexMutation(
+    api.spaceInvites.acceptInvite,
+  );
+  const acceptInvite = useMutation({
+    mutationFn: acceptInviteMutationFn,
+    onSuccess: (result) => {
       clearPendingInvite();
       setJoinSuccess(true);
-      queryClient.invalidateQueries({
-        queryKey: ["convex", api.students.getMyTeachers],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["convex", api.students.isEnrolledWithTeacher],
-      });
 
-      // Redirect to dashboard after 2 seconds
       setTimeout(() => {
-        navigate({ to: "/" });
+        navigate({ to: "/spaces/$id", params: { id: result.spaceId } });
       }, 2000);
     },
   });
 
-  // Handle unauthenticated users - store invite and redirect
+  // Handle unauthenticated users
   const handleSignUp = () => {
-    storePendingInvite(teacherUserId);
+    storePendingInvite(token);
     navigate({ to: "/signup" });
   };
 
   const handleLogin = () => {
-    storePendingInvite(teacherUserId);
+    storePendingInvite(token);
     navigate({ to: "/login" });
   };
 
-  // If teacher not found
-  if (!loaderData.teacherInfo) {
+  // Loading state
+  if (inviteLoading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Error state (invalid/used/expired invite)
+  if (invite?.error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-destructive">Invalid Invite</CardTitle>
+          <CardHeader className="text-center">
+            <AlertCircle className="mx-auto mb-4 size-12 text-destructive" />
+            <CardTitle>Invalid Invite</CardTitle>
+            <CardDescription>{invite.error}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-muted-foreground">
-              This teacher invite link is invalid. The teacher may not exist or
-              the link is incorrect.
-            </p>
-            <Button onClick={() => navigate({ to: "/" })} className="w-full">
+          <CardContent className="text-center">
+            <Button variant="outline" onClick={() => navigate({ to: "/" })}>
               Go to Home
             </Button>
           </CardContent>
@@ -108,142 +86,159 @@ function JoinPage() {
     );
   }
 
-  const teacherName = loaderData.teacherInfo.name;
-
-  // User is authenticated
-  if (userId) {
-    if (checkingEnrollment) {
-      return (
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-muted-foreground">Loading...</div>
-        </div>
-      );
-    }
-
-    // Already enrolled
-    if (isEnrolled) {
-      return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Already Enrolled!</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                You're already enrolled with <strong>{teacherName}</strong>.
-              </p>
-              <Button onClick={() => navigate({ to: "/" })} className="w-full">
-                Go to Dashboard
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    // Show success message after joining
-    if (joinSuccess) {
-      return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Successfully Joined!</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                You've successfully joined <strong>{teacherName}</strong>'s
-                classes. You can now access their documents.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Redirecting to dashboard...
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    // Show accept invite UI
+  // Show success after joining
+  if (joinSuccess) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Join Classes</CardTitle>
+          <CardHeader className="text-center">
+            <CheckCircle2 className="mx-auto mb-4 size-12 text-green-600" />
+            <CardTitle>You&apos;re In!</CardTitle>
             <CardDescription>
-              <strong>{teacherName}</strong> invited you to join their classes
+              You&apos;ve joined{" "}
+              {invite && "valid" in invite ? (
+                <>
+                  <strong>{invite.teacherName}</strong>&apos;s{" "}
+                  {invite.language} course.
+                </>
+              ) : (
+                "the course."
+              )}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-md border bg-muted p-4">
-              <h3 className="mb-2 font-medium">What happens next?</h3>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• You'll get access to documents from {teacherName}</li>
-                <li>
-                  • You can collaborate in real-time on language learning
-                  exercises
-                </li>
-                <li>• View and complete assigned documents</li>
-              </ul>
-            </div>
-
-            <Button
-              onClick={() => joinMutation.mutate()}
-              disabled={joinMutation.isPending}
-              className="w-full"
-            >
-              {joinMutation.isPending ? "Joining..." : "Accept Invite"}
-            </Button>
-
-            {joinMutation.isError && (
-              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                {joinMutation.error instanceof Error
-                  ? joinMutation.error.message
-                  : "Failed to accept invite. Please try again."}
-              </div>
-            )}
+          <CardContent className="text-center">
+            <p className="text-sm text-muted-foreground">
+              Redirecting to your course...
+            </p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // User is not authenticated - show landing with signup/login options
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>You're Invited!</CardTitle>
-          <CardDescription>
-            <strong>{teacherName}</strong> invited you to join their classes
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md border bg-muted p-4">
-            <h3 className="mb-2 font-medium">What you'll get:</h3>
-            <ul className="space-y-1 text-sm text-muted-foreground">
-              <li>• Access to interactive language documents</li>
-              <li>• Real-time collaboration with your teacher</li>
-              <li>• Track your learning progress</li>
-            </ul>
-          </div>
+  // Valid invite - show join UI
+  if (invite && "valid" in invite && invite.valid) {
+    const handleJoin = () => {
+      acceptInvite.mutate({ token });
+    };
 
-          <div className="space-y-3">
-            <Button onClick={handleSignUp} className="w-full">
-              Sign Up to Join
-            </Button>
+    // User is authenticated
+    if (userId) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle>Join {invite.language} Course</CardTitle>
+              <CardDescription>
+                <strong>{invite.teacherName}</strong> has invited you to join
+                their {invite.language} course
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Course details */}
+              <div className="rounded-lg bg-muted p-4">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Course</p>
+                  <p className="text-xl font-semibold">{invite.language}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Teacher</p>
+                  <p className="font-medium">{invite.teacherName}</p>
+                </div>
+              </div>
 
-            <div className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <button
-                onClick={handleLogin}
-                className="text-primary underline underline-offset-4 hover:text-primary/80"
+              {/* What you'll get */}
+              <div className="rounded-md border bg-muted/50 p-4">
+                <h3 className="mb-2 font-medium">What happens next?</h3>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  <li>
+                    - You&apos;ll get access to lessons from {invite.teacherName}
+                  </li>
+                  <li>- You can collaborate on exercises in real-time</li>
+                  <li>- Track your homework and progress</li>
+                </ul>
+              </div>
+
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleJoin}
+                disabled={acceptInvite.isPending}
               >
-                Log in
-              </button>
+                {acceptInvite.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Joining...
+                  </>
+                ) : (
+                  "Join Course"
+                )}
+              </Button>
+
+              {acceptInvite.error && (
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {acceptInvite.error instanceof Error
+                    ? acceptInvite.error.message
+                    : "Failed to join course. Please try again."}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // User is not authenticated - show signup/login options
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>You&apos;re Invited!</CardTitle>
+            <CardDescription>
+              <strong>{invite.teacherName}</strong> has invited you to join
+              their {invite.language} course
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Course details */}
+            <div className="rounded-lg bg-muted p-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Course</p>
+                <p className="text-xl font-semibold">{invite.language}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Teacher</p>
+                <p className="font-medium">{invite.teacherName}</p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+
+            {/* What you'll get */}
+            <div className="rounded-md border bg-muted/50 p-4">
+              <h3 className="mb-2 font-medium">What you&apos;ll get:</h3>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>- Access to interactive language lessons</li>
+                <li>- Real-time collaboration with your teacher</li>
+                <li>- Track your learning progress</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <Button onClick={handleSignUp} className="w-full" size="lg">
+                Sign Up to Join
+              </Button>
+
+              <div className="text-center text-sm text-muted-foreground">
+                Already have an account?{" "}
+                <button
+                  onClick={handleLogin}
+                  className="text-primary underline underline-offset-4 hover:text-primary/80"
+                >
+                  Log in
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Fallback
+  return null;
 }

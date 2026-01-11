@@ -7,7 +7,7 @@ import { authComponent } from "./auth";
 
 /**
  * Helper function to check if user has access to a document (for queries)
- * Returns true if user is the owner OR has shared access
+ * Supports space-based access (new model) and owner/shared access (legacy)
  */
 async function hasDocumentAccess(
   ctx: QueryCtx,
@@ -20,12 +20,20 @@ async function hasDocumentAccess(
     return false;
   }
 
-  // Check if user is the owner
+  // New model: space-based access
+  if (document.spaceId) {
+    const space = await ctx.db.get(document.spaceId);
+    if (space && (space.teacherId === userId || space.studentId === userId)) {
+      return true;
+    }
+  }
+
+  // Legacy model: owner check
   if (document.owner === userId) {
     return true;
   }
 
-  // Check if document is shared with the user
+  // Legacy model: shared access check
   const share = await ctx.db
     .query("sharedDocuments")
     .withIndex("by_document_and_student", (q) =>
@@ -38,7 +46,7 @@ async function hasDocumentAccess(
 
 /**
  * Helper function to check if user has access to a document (for mutations)
- * Returns true if user is the owner OR has shared access
+ * Supports space-based access (new model) and owner/shared access (legacy)
  */
 async function hasDocumentAccessMutation(
   ctx: MutationCtx,
@@ -51,12 +59,20 @@ async function hasDocumentAccessMutation(
     return false;
   }
 
-  // Check if user is the owner
+  // New model: space-based access
+  if (document.spaceId) {
+    const space = await ctx.db.get(document.spaceId);
+    if (space && (space.teacherId === userId || space.studentId === userId)) {
+      return true;
+    }
+  }
+
+  // Legacy model: owner check
   if (document.owner === userId) {
     return true;
   }
 
-  // Check if document is shared with the user
+  // Legacy model: shared access check
   const share = await ctx.db
     .query("sharedDocuments")
     .withIndex("by_document_and_student", (q) =>
@@ -67,44 +83,6 @@ async function hasDocumentAccessMutation(
   return share !== null;
 }
 
-/**
- * Create a new document
- */
-export const createDocument = mutation({
-  args: {
-    title: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const now = Date.now();
-    const documentId = await ctx.db.insert("document", {
-      owner: user._id,
-      title: args.title,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    return documentId;
-  },
-});
-
-/**
- * Get all documents owned by the current user, ordered by most recently updated
- */
-export const getMyDocuments = query({
-  handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const documents = await ctx.db
-      .query("document")
-      .withIndex("by_owner", (q) => q.eq("owner", user._id))
-      .collect();
-
-    // Sort by updatedAt descending (most recent first)
-    return documents.sort((a, b) => b.updatedAt - a.updatedAt);
-  },
-});
 
 /**
  * Get a single document by ID
@@ -145,40 +123,24 @@ export const updateDocumentTitle = mutation({
 
     invariant(document, "Document not found");
 
-    // Verify ownership
-    invariant(
-      document.owner === user._id,
-      "Not authorized to modify this document",
-    );
+    // Check access through space membership or legacy owner
+    if (document.spaceId) {
+      const space = await ctx.db.get(document.spaceId);
+      invariant(
+        space && space.teacherId === user._id,
+        "Not authorized to modify this document",
+      );
+    } else {
+      invariant(
+        document.owner === user._id,
+        "Not authorized to modify this document",
+      );
+    }
 
     await ctx.db.patch(args.documentId as Id<"document">, {
       title: args.title,
       updatedAt: Date.now(),
     });
-  },
-});
-
-/**
- * Delete a document
- */
-export const deleteDocument = mutation({
-  args: {
-    documentId: v.id("document"),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const document = await ctx.db.get(args.documentId);
-
-    invariant(document, "Document not found");
-
-    // Verify ownership
-    invariant(
-      document.owner === user._id,
-      "Not authorized to delete this document",
-    );
-
-    await ctx.db.delete(args.documentId);
   },
 });
 
@@ -238,146 +200,441 @@ export const loadDocumentContent = query({
   },
 });
 
+
 /**
- * Share a document with students
+ * Get all lessons (documents) for a specific space
+ * Used on student and teacher space detail pages
  */
-export const shareWithStudents = mutation({
+export const getSpaceLessons = query({
   args: {
-    documentId: v.string(),
-    studentIds: v.array(v.string()),
+    spaceId: v.id("spaces"),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
 
-    const documentId = args.documentId as Id<"document">;
-    const document = await ctx.db.get(documentId);
+    // Check space access
+    const space = await ctx.db.get(args.spaceId);
+    if (!space) {
+      return [];
+    }
 
-    invariant(document, "Document not found");
+    // Verify user is either teacher or student
+    if (space.teacherId !== user._id && space.studentId !== user._id) {
+      return [];
+    }
 
-    // Verify ownership
-    invariant(
-      document.owner === user._id,
-      "Not authorized to share this document",
+    // Get all documents for this space
+    const documents = await ctx.db
+      .query("document")
+      .withIndex("by_space", (q) => q.eq("spaceId", args.spaceId))
+      .collect();
+
+    // Sort by lesson number
+    return documents.sort((a, b) => {
+      const aNum = a.lessonNumber ?? 0;
+      const bNum = b.lessonNumber ?? 0;
+      return aNum - bNum;
+    });
+  },
+});
+
+// ============================================
+// LESSON (Space-based Document) OPERATIONS
+// ============================================
+
+/**
+ * Helper function to check if user has space membership (for queries)
+ */
+async function hasSpaceAccess(
+  ctx: QueryCtx,
+  spaceId: Id<"spaces">,
+  userId: string,
+): Promise<{ hasAccess: boolean; isTeacher: boolean; isStudent: boolean }> {
+  const space = await ctx.db.get(spaceId);
+
+  if (!space) {
+    return { hasAccess: false, isTeacher: false, isStudent: false };
+  }
+
+  const isTeacher = space.teacherId === userId;
+  const isStudent = space.studentId === userId;
+
+  return {
+    hasAccess: isTeacher || isStudent,
+    isTeacher,
+    isStudent,
+  };
+}
+
+/**
+ * Helper function to check if user has space membership (for mutations)
+ */
+async function hasSpaceAccessMutation(
+  ctx: MutationCtx,
+  spaceId: Id<"spaces">,
+  userId: string,
+): Promise<{ hasAccess: boolean; isTeacher: boolean; isStudent: boolean }> {
+  const space = await ctx.db.get(spaceId);
+
+  if (!space) {
+    return { hasAccess: false, isTeacher: false, isStudent: false };
+  }
+
+  const isTeacher = space.teacherId === userId;
+  const isStudent = space.studentId === userId;
+
+  return {
+    hasAccess: isTeacher || isStudent,
+    isTeacher,
+    isStudent,
+  };
+}
+
+/**
+ * Get a single lesson with space context
+ * Supports both new space-based access and old owner-based access for backward compatibility
+ */
+export const getLesson = query({
+  args: {
+    documentId: v.id("document"),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+
+    const document = await ctx.db.get(args.documentId);
+
+    if (!document) {
+      return null;
+    }
+
+    // If document has spaceId, validate through space membership
+    if (document.spaceId) {
+      const space = await ctx.db.get(document.spaceId);
+      if (!space) {
+        return null;
+      }
+
+      const isTeacher = space.teacherId === user._id;
+      const isStudent = space.studentId === user._id;
+
+      if (!isTeacher && !isStudent) {
+        return null;
+      }
+
+      // Return lesson with space info
+      return {
+        ...document,
+        spaceName: space.language,
+        isTeacher,
+        isStudent,
+      };
+    }
+
+    // Fallback: old document model (owned by teacher)
+    // Check if user is owner
+    if (document.owner === user._id) {
+      return {
+        ...document,
+        isTeacher: true,
+        isStudent: false,
+      };
+    }
+
+    // Check shared access (old model)
+    const sharedAccess = await ctx.db
+      .query("sharedDocuments")
+      .withIndex("by_document_and_student", (q) =>
+        q.eq("documentId", args.documentId).eq("studentId", user._id),
+      )
+      .first();
+
+    if (sharedAccess) {
+      return {
+        ...document,
+        isTeacher: false,
+        isStudent: true,
+      };
+    }
+
+    return null;
+  },
+});
+
+/**
+ * Get next available lesson number for a space
+ * Useful for UI to show "This will be Lesson #X"
+ */
+export const getNextLessonNumber = query({
+  args: {
+    spaceId: v.id("spaces"),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+
+    // Verify space access (only teacher should see this)
+    const { isTeacher } = await hasSpaceAccess(ctx, args.spaceId, user._id);
+
+    if (!isTeacher) {
+      return null;
+    }
+
+    const lessons = await ctx.db
+      .query("document")
+      .withIndex("by_space", (q) => q.eq("spaceId", args.spaceId))
+      .collect();
+
+    const maxNumber = lessons.reduce(
+      (max, lesson) => Math.max(max, lesson.lessonNumber ?? 0),
+      0,
+    );
+
+    return maxNumber + 1;
+  },
+});
+
+/**
+ * Create a new lesson within a space
+ * Auto-assigns the next lesson number (1-indexed)
+ */
+export const createLesson = mutation({
+  args: {
+    spaceId: v.id("spaces"),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+
+    // Verify space exists and user is the teacher
+    const { hasAccess, isTeacher } = await hasSpaceAccessMutation(
+      ctx,
+      args.spaceId,
+      user._id,
+    );
+
+    invariant(hasAccess, "Space not found");
+    invariant(isTeacher, "Only the teacher can create lessons in this space");
+
+    // Get the highest lesson number in this space
+    const existingLessons = await ctx.db
+      .query("document")
+      .withIndex("by_space", (q) => q.eq("spaceId", args.spaceId))
+      .collect();
+
+    const maxLessonNumber = existingLessons.reduce(
+      (max, lesson) => Math.max(max, lesson.lessonNumber ?? 0),
+      0,
     );
 
     const now = Date.now();
 
-    // Share with each student
-    for (const studentId of args.studentIds) {
-      // Check if student is enrolled with this teacher
-      const enrollment = await ctx.db
-        .query("teacherStudents")
-        .withIndex("by_teacher_and_student", (q) =>
-          q.eq("teacherId", user._id).eq("studentId", studentId),
-        )
-        .first();
+    // Create the lesson
+    const lessonId = await ctx.db.insert("document", {
+      spaceId: args.spaceId,
+      lessonNumber: maxLessonNumber + 1,
+      title: args.title.trim() || "Untitled Lesson",
+      createdAt: now,
+      updatedAt: now,
+    });
 
-      invariant(enrollment, `Student ${studentId} is not enrolled with you`);
-
-      // Check if already shared
-      const existingShare = await ctx.db
-        .query("sharedDocuments")
-        .withIndex("by_document_and_student", (q) =>
-          q.eq("documentId", documentId).eq("studentId", studentId),
-        )
-        .first();
-
-      if (!existingShare) {
-        await ctx.db.insert("sharedDocuments", {
-          documentId,
-          teacherId: user._id,
-          studentId,
-          sharedAt: now,
-        });
-      }
-    }
+    return {
+      lessonId,
+      lessonNumber: maxLessonNumber + 1,
+    };
   },
 });
 
 /**
- * Get all documents shared with the current student
+ * Update lesson details (title and/or lessonNumber)
  */
-export const getSharedDocuments = query({
-  handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    // Get all shared documents for this student
-    const shares = await ctx.db
-      .query("sharedDocuments")
-      .withIndex("by_student", (q) => q.eq("studentId", user._id))
-      .collect();
-
-    // Get document details and teacher info
-    const documents = await Promise.all(
-      shares.map(async (share) => {
-        const document = await ctx.db.get(share.documentId);
-        if (!document) {
-          return null;
-        }
-
-        const teacherUser = await authComponent.getAnyUserById(
-          ctx,
-          share.teacherId,
-        );
-
-        return {
-          ...document,
-          teacherName: teacherUser?.name || "Unknown Teacher",
-          sharedAt: share.sharedAt,
-        };
-      }),
-    );
-
-    // Filter out null values and sort by sharedAt descending
-    return documents
-      .filter((doc) => doc !== null)
-      .sort((a, b) => b.sharedAt - a.sharedAt);
-  },
-});
-
-/**
- * Get students who have access to a document
- */
-export const getStudentsWithAccess = query({
+export const updateLesson = mutation({
   args: {
-    documentId: v.string(),
+    documentId: v.id("document"),
+    title: v.optional(v.string()),
+    lessonNumber: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.getAuthUser(ctx);
 
-    const documentId = args.documentId as Id<"document">;
-    const document = await ctx.db.get(documentId);
+    const document = await ctx.db.get(args.documentId);
 
-    invariant(document, "Document not found");
+    invariant(document, "Lesson not found");
 
-    // Verify ownership
-    invariant(
-      document.owner === user._id,
-      "Not authorized to view sharing details",
-    );
+    // Verify teacher access
+    if (document.spaceId) {
+      const { isTeacher } = await hasSpaceAccessMutation(
+        ctx,
+        document.spaceId,
+        user._id,
+      );
+      invariant(isTeacher, "Only the teacher can update this lesson");
+    } else {
+      invariant(
+        document.owner === user._id,
+        "Only the owner can update this document",
+      );
+    }
 
-    // Get all shares for this document
-    const shares = await ctx.db
-      .query("sharedDocuments")
-      .withIndex("by_document", (q) => q.eq("documentId", documentId))
+    const updates: {
+      title?: string;
+      lessonNumber?: number;
+      updatedAt: number;
+    } = {
+      updatedAt: Date.now(),
+    };
+
+    if (args.title !== undefined) {
+      updates.title = args.title.trim() || "Untitled Lesson";
+    }
+
+    if (args.lessonNumber !== undefined) {
+      updates.lessonNumber = args.lessonNumber;
+    }
+
+    await ctx.db.patch(args.documentId, updates);
+
+    return await ctx.db.get(args.documentId);
+  },
+});
+
+/**
+ * Delete a lesson and all associated homework items
+ */
+export const deleteLesson = mutation({
+  args: {
+    documentId: v.id("document"),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+
+    const document = await ctx.db.get(args.documentId);
+
+    invariant(document, "Lesson not found");
+
+    // Verify teacher access
+    if (document.spaceId) {
+      const { isTeacher } = await hasSpaceAccessMutation(
+        ctx,
+        document.spaceId,
+        user._id,
+      );
+      invariant(isTeacher, "Only the teacher can delete this lesson");
+    } else {
+      invariant(
+        document.owner === user._id,
+        "Only the owner can delete this document",
+      );
+    }
+
+    // Delete all homework items associated with this document first (cascade delete)
+    const homeworkItems = await ctx.db
+      .query("homeworkItems")
+      .withIndex("by_document", (q) => q.eq("documentId", args.documentId))
       .collect();
 
-    // Get student details
-    const students = await Promise.all(
-      shares.map(async (share) => {
-        const studentUser = await authComponent.getAnyUserById(
-          ctx,
-          share.studentId,
-        );
+    for (const item of homeworkItems) {
+      await ctx.db.delete(item._id);
+    }
 
-        return {
-          studentId: share.studentId,
-          displayName: studentUser?.name || share.studentId,
-          sharedAt: share.sharedAt,
-        };
-      }),
+    // Delete the document
+    await ctx.db.delete(args.documentId);
+
+    return { success: true };
+  },
+});
+
+/**
+ * Reorder lessons in a space
+ * Takes an array of documentIds in desired order and updates lessonNumbers (1-indexed)
+ */
+export const reorderLessons = mutation({
+  args: {
+    spaceId: v.id("spaces"),
+    lessonOrder: v.array(v.id("document")),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+
+    // Verify space and teacher access
+    const { hasAccess, isTeacher } = await hasSpaceAccessMutation(
+      ctx,
+      args.spaceId,
+      user._id,
     );
 
-    return students;
+    invariant(hasAccess, "Space not found");
+    invariant(isTeacher, "Only the teacher can reorder lessons");
+
+    // Update each lesson's lessonNumber based on position in array
+    for (let i = 0; i < args.lessonOrder.length; i++) {
+      const documentId = args.lessonOrder[i]!;
+      const document = await ctx.db.get(documentId);
+
+      invariant(document, `Lesson ${documentId} not found`);
+      invariant(
+        document.spaceId === args.spaceId,
+        `Lesson ${documentId} does not belong to this space`,
+      );
+
+      await ctx.db.patch(documentId, {
+        lessonNumber: i + 1, // 1-indexed
+        updatedAt: Date.now(),
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+/**
+ * Duplicate a lesson (creates a copy in the same space with content)
+ */
+export const duplicateLesson = mutation({
+  args: {
+    documentId: v.id("document"),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+
+    const original = await ctx.db.get(args.documentId);
+
+    invariant(original, "Lesson not found");
+    invariant(original.spaceId, "Can only duplicate space-based lessons");
+
+    // Verify teacher access
+    const { isTeacher } = await hasSpaceAccessMutation(
+      ctx,
+      original.spaceId,
+      user._id,
+    );
+
+    invariant(isTeacher, "Only the teacher can duplicate lessons");
+
+    // Get next lesson number
+    const lessons = await ctx.db
+      .query("document")
+      .withIndex("by_space", (q) => q.eq("spaceId", original.spaceId!))
+      .collect();
+
+    const maxNumber = lessons.reduce(
+      (max, lesson) => Math.max(max, lesson.lessonNumber ?? 0),
+      0,
+    );
+
+    const now = Date.now();
+
+    // Create the duplicate (copy content as binary directly)
+    const newLessonId = await ctx.db.insert("document", {
+      spaceId: original.spaceId,
+      lessonNumber: maxNumber + 1,
+      title: `${original.title} (Copy)`,
+      content: original.content, // Copy the content bytes directly
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return {
+      lessonId: newLessonId,
+      lessonNumber: maxNumber + 1,
+    };
   },
 });

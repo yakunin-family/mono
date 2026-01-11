@@ -28,9 +28,11 @@ declare module "@tiptap/core" {
 
 import { Blank } from "../extensions/Blank";
 import { BlockHover } from "../extensions/BlockHover";
+import { DocumentContext } from "../extensions/DocumentContext";
 import { Exercise } from "../extensions/Exercise";
 import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
 import { Group } from "../extensions/Group";
+import { MarqueeSelection } from "../extensions/MarqueeSelection";
 import { NoteBlock } from "../extensions/NoteBlock";
 import { SelectionSave } from "../extensions/SelectionSave";
 import { SlashCommand } from "../extensions/SlashCommand";
@@ -40,6 +42,7 @@ import {
   LibraryDrawer,
   type LibraryItemWithMetadata,
 } from "./LibraryDrawer";
+import { MarqueeOverlay } from "./MarqueeOverlay";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
 import { SelectionSaveButton } from "./SelectionSaveButton";
@@ -50,6 +53,8 @@ interface DocumentEditorInternalProps {
   canEdit: boolean;
   mode: EditorMode;
   status: "connecting" | "connected" | "disconnected";
+  documentId: string;
+  spaceId?: string;
   convexClient?: ConvexReactClient;
   onStartExerciseGeneration?: (
     promptText: string,
@@ -72,6 +77,8 @@ export function DocumentEditorInternal({
   canEdit,
   mode,
   status,
+  documentId,
+  spaceId,
   convexClient,
   onStartExerciseGeneration,
   onSaveExerciseToBank,
@@ -116,6 +123,11 @@ export function DocumentEditorInternal({
       }),
       BlockHover,
       SelectionSave,
+      MarqueeSelection,
+      DocumentContext.configure({
+        documentId,
+        spaceId,
+      }),
     ],
     editable: canEdit,
     immediatelyRender: false,
@@ -253,6 +265,7 @@ export function DocumentEditorInternal({
       />
 
       <SelectionSaveButton editor={editor} />
+      <MarqueeOverlay editor={editor} />
     </div>
   );
 }

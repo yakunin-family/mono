@@ -27,6 +27,11 @@ export {
 } from "./utils/searchQueryParser";
 export type { BlankAttributes } from "./extensions/Blank";
 export { Blank } from "./extensions/Blank";
+export type {
+  DocumentContextOptions,
+  DocumentContextStorage,
+} from "./extensions/DocumentContext";
+export { DocumentContext } from "./extensions/DocumentContext";
 export type { ExerciseAttributes } from "./extensions/Exercise";
 export { Exercise } from "./extensions/Exercise";
 export type { GroupAttributes } from "./extensions/Group";
@@ -39,5 +44,11 @@ export { ExerciseGeneration } from "./extensions/ExerciseGeneration";
 export { NoteBlock } from "./extensions/NoteBlock";
 export type { SelectionSaveStorage } from "./extensions/SelectionSave";
 export { SelectionSave } from "./extensions/SelectionSave";
+export type { MarqueeSelectionStorage } from "./extensions/MarqueeSelection";
+export {
+  MarqueeSelection,
+  BlockSelection,
+  marqueeSelectionPluginKey,
+} from "./extensions/MarqueeSelection";
 export type { EditorMode } from "./types";
 export { getRandomUserColor, getUserColorByIndex } from "./utils/user-colors";

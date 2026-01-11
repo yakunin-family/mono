@@ -174,3 +174,7 @@
   @apply border-border/30;
 }
 
+/* Block Selection Styles (Marquee Selection) */
+.block-selected {
+  @apply ring-2 ring-primary/50 ring-offset-2 rounded-sm bg-primary/5;
+}

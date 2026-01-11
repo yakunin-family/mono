@@ -27,6 +27,7 @@ import {
 
 /**
  * Helper function to check if user has access to a document (for mutations)
+ * Supports space-based access (new model) and owner/shared access (legacy)
  */
 async function hasDocumentAccessMutation(
   ctx: MutationCtx,
@@ -39,12 +40,20 @@ async function hasDocumentAccessMutation(
     return false;
   }
 
-  // Check if user is the owner
+  // New model: space-based access
+  if (document.spaceId) {
+    const space = await ctx.db.get(document.spaceId);
+    if (space && (space.teacherId === userId || space.studentId === userId)) {
+      return true;
+    }
+  }
+
+  // Legacy model: owner check
   if (document.owner === userId) {
     return true;
   }
 
-  // Check if document is shared with the user
+  // Legacy model: shared access check
   const share = await ctx.db
     .query("sharedDocuments")
     .withIndex("by_document_and_student", (q) =>
@@ -57,6 +66,7 @@ async function hasDocumentAccessMutation(
 
 /**
  * Helper function to check if user has access to a document (for queries)
+ * Supports space-based access (new model) and owner/shared access (legacy)
  */
 async function hasDocumentAccessQuery(
   ctx: QueryCtx,
@@ -69,12 +79,20 @@ async function hasDocumentAccessQuery(
     return false;
   }
 
-  // Check if user is the owner
+  // New model: space-based access
+  if (document.spaceId) {
+    const space = await ctx.db.get(document.spaceId);
+    if (space && (space.teacherId === userId || space.studentId === userId)) {
+      return true;
+    }
+  }
+
+  // Legacy model: owner check
   if (document.owner === userId) {
     return true;
   }
 
-  // Check if document is shared with the user
+  // Legacy model: shared access check
   const share = await ctx.db
     .query("sharedDocuments")
     .withIndex("by_document_and_student", (q) =>

@@ -32,8 +32,48 @@ export type Invite = Infer<typeof schemas.tables.invite.validator>;
 const student = defineTable({
   userId: v.string(), // Better Auth user ID
   createdAt: v.number(),
-});
+}).index("by_userId", ["userId"]);
 export type Student = Infer<typeof schemas.tables.student.validator>;
+
+// Spaces - Core entity representing a 1:1 teaching relationship for a specific language
+const spaces = defineTable({
+  teacherId: v.string(), // Better Auth user ID of the teacher
+  studentId: v.string(), // Better Auth user ID of the student
+  language: v.string(), // Free text language name (e.g., "German", "Business English")
+  createdAt: v.number(),
+})
+  .index("by_teacher", ["teacherId"])
+  .index("by_student", ["studentId"])
+  .index("by_teacher_and_student", ["teacherId", "studentId"]);
+export type Space = Infer<typeof schemas.tables.spaces.validator>;
+
+// Space invites - Invite tokens that create spaces when accepted
+const spaceInvites = defineTable({
+  teacherId: v.string(), // Teacher who created the invite
+  language: v.string(), // Language for the space to be created
+  token: v.string(), // Unique URL-safe invite token
+  createdAt: v.number(),
+  expiresAt: v.optional(v.number()), // Optional expiration timestamp
+  usedAt: v.optional(v.number()), // When the invite was used
+  usedBy: v.optional(v.string()), // Student who used the invite
+  resultingSpaceId: v.optional(v.id("spaces")), // Space that was created
+})
+  .index("by_token", ["token"])
+  .index("by_teacher", ["teacherId"]);
+export type SpaceInvite = Infer<typeof schemas.tables.spaceInvites.validator>;
+
+// Homework items - Exercises marked as homework for a student
+const homeworkItems = defineTable({
+  spaceId: v.id("spaces"), // Which space this belongs to
+  documentId: v.id("document"), // Which lesson contains the exercise
+  exerciseInstanceId: v.string(), // The instanceId of the Exercise node in Tiptap
+  markedAt: v.number(), // When teacher marked it as homework
+  completedAt: v.optional(v.number()), // When student marked it complete
+})
+  .index("by_space", ["spaceId"])
+  .index("by_space_incomplete", ["spaceId", "completedAt"])
+  .index("by_document", ["documentId"]);
+export type HomeworkItem = Infer<typeof schemas.tables.homeworkItems.validator>;
 
 const teacherStudents = defineTable({
   teacherId: v.string(), // Better Auth user ID
@@ -46,12 +86,19 @@ const teacherStudents = defineTable({
 export type TeacherStudent = Infer<typeof schemas.tables.teacherStudents.validator>;
 
 const document = defineTable({
-  owner: v.string(), // Better Auth user ID
+  // Space-related fields (new)
+  spaceId: v.optional(v.id("spaces")), // Which space this lesson belongs to
+  lessonNumber: v.optional(v.number()), // Order within space (1, 2, 3...)
+  // Existing fields (owner becomes optional for backward compatibility)
+  owner: v.optional(v.string()), // Better Auth user ID (deprecated - use spaceId)
   title: v.string(),
   content: v.optional(v.bytes()), // Serialized Yjs document state
   createdAt: v.number(),
   updatedAt: v.number(),
-}).index("by_owner", ["owner"]);
+})
+  .index("by_owner", ["owner"])
+  .index("by_space", ["spaceId"])
+  .index("by_space_lesson", ["spaceId", "lessonNumber"]);
 export type Document = Infer<typeof schemas.tables.document.validator>;
 
 const sharedDocuments = defineTable({
@@ -229,6 +276,10 @@ const schemas = defineSchema({
   exerciseGenerationSession,
   exerciseGenerationStep,
   library,
+  // New tables for spaces and homework
+  spaces,
+  spaceInvites,
+  homeworkItems,
 });
 
 export default schemas;

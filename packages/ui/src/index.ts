@@ -16,4 +16,5 @@ export * from "./components/slider";
 export * from "./components/switch";
 export * from "./components/textarea";
 export * from "./components/tooltip";
+export * from "./components/progress";
 export { cn } from "./lib/utils";

@@ -29,6 +29,7 @@ export interface DocumentEditorProps {
   queryClient: QueryClient;
 
   documentId: string;
+  spaceId?: string;
   canEdit?: boolean;
   mode?: EditorMode;
   websocketUrl?: string;
@@ -115,6 +116,7 @@ export const DocumentEditor = ({
   canEdit = true,
   mode = "student",
   documentId,
+  spaceId,
   websocketUrl = "ws://127.0.0.1:1234",
   token,
   userName = "Anonymous",
@@ -214,6 +216,8 @@ export const DocumentEditor = ({
         canEdit={canEdit}
         mode={mode}
         status={status}
+        documentId={documentId}
+        spaceId={spaceId}
         convexClient={convexClient}
         onStartExerciseGeneration={onStartExerciseGeneration}
         onSaveExerciseToBank={onSaveExerciseToBank}
