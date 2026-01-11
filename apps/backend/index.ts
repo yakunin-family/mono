@@ -5,6 +5,4 @@ export type {
   Invite,
   Student,
   Teacher,
-  UserProfile,
-  UserRole,
 } from "./convex/schema";

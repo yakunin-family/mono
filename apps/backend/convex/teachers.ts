@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 
 import { query } from "./_generated/server";
-import { authComponent } from "./auth";
 
 export const getTeacherByUserId = query({
   args: {
@@ -17,16 +16,9 @@ export const getTeacherByUserId = query({
       return null;
     }
 
-    const teacherUser = await authComponent.getAnyUserById(ctx, args.userId);
-
-    if (!teacherUser) {
-      return null;
-    }
-
     return {
       teacher,
-      name: teacherUser.name,
+      name: null, // User name not available without Better Auth user store
     };
   },
 });
-

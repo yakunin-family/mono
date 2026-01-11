@@ -9,7 +9,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 
-import { signOut, useSession } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute(
   "/_protected/spaces/$id/lesson/$lessonId",
@@ -26,14 +26,17 @@ function StudentLessonPage() {
   const navigate = useNavigate();
   const { id: spaceId, lessonId } = Route.useParams();
   const { scrollToExercise } = Route.useSearch();
-  const { token } = Route.useRouteContext();
+  const { accessToken, user } = Route.useRouteContext();
   const convex = useConvex();
+  const { signOut } = useAuth();
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
   const scrolledRef = useRef(false);
 
   const userColor = useMemo(() => getRandomUserColor(), []);
-  const userName = session?.user?.name || session?.user?.email || "Anonymous";
+  const userName =
+    user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.email || "Anonymous";
 
   const lessonQuery = useQuery({
     ...convexQuery(api.documents.getLesson, {
@@ -163,10 +166,7 @@ function StudentLessonPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                await signOut();
-                navigate({ to: "/login" });
-              }}
+              onClick={() => signOut({ returnTo: "/login" })}
             >
               Logout
             </Button>
@@ -181,7 +181,7 @@ function StudentLessonPage() {
             spaceId={spaceId}
             canEdit={true}
             mode="student"
-            token={token}
+            token={accessToken ?? undefined}
             userName={userName}
             userColor={userColor}
             websocketUrl={

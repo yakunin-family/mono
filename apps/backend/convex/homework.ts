@@ -1,62 +1,8 @@
 import { v } from "convex/values";
+import invariant from "tiny-invariant";
 
-import { Id } from "./_generated/dataModel";
-import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
-import { authComponent } from "./auth";
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-/**
- * Verify that a user has access to a space (for queries)
- * Returns access info including role
- */
-async function verifySpaceAccess(
-  ctx: QueryCtx,
-  spaceId: Id<"spaces">,
-  userId: string,
-): Promise<{ hasAccess: boolean; isTeacher: boolean; isStudent: boolean }> {
-  const space = await ctx.db.get(spaceId);
-
-  if (!space) {
-    return { hasAccess: false, isTeacher: false, isStudent: false };
-  }
-
-  const isTeacher = space.teacherId === userId;
-  const isStudent = space.studentId === userId;
-
-  return {
-    hasAccess: isTeacher || isStudent,
-    isTeacher,
-    isStudent,
-  };
-}
-
-/**
- * Verify that a user has access to a space (for mutations)
- * Returns access info including role
- */
-async function verifySpaceAccessMutation(
-  ctx: MutationCtx,
-  spaceId: Id<"spaces">,
-  userId: string,
-): Promise<{ hasAccess: boolean; isTeacher: boolean; isStudent: boolean }> {
-  const space = await ctx.db.get(spaceId);
-
-  if (!space) {
-    return { hasAccess: false, isTeacher: false, isStudent: false };
-  }
-
-  const isTeacher = space.teacherId === userId;
-  const isStudent = space.studentId === userId;
-
-  return {
-    hasAccess: isTeacher || isStudent,
-    isTeacher,
-    isStudent,
-  };
-}
+import { verifySpaceAccess } from "./accessControl";
+import { authedMutation, authedQuery } from "./functions";
 
 // ============================================
 // HOMEWORK QUERIES
@@ -66,18 +12,17 @@ async function verifySpaceAccessMutation(
  * Get all homework items for a space
  * Returns enriched data with lesson info, sorted incomplete first then by markedAt descending
  */
-export const getSpaceHomework = query({
+export const getSpaceHomework = authedQuery({
   args: {
     spaceId: v.id("spaces"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
     // Verify access to space
-    const { hasAccess } = await verifySpaceAccess(ctx, args.spaceId, user._id);
+    const { hasAccess } = await verifySpaceAccess(
+      ctx,
+      args.spaceId,
+      ctx.user.id,
+    );
     if (!hasAccess) {
       return [];
     }
@@ -116,18 +61,17 @@ export const getSpaceHomework = query({
  * Used for student dashboard and homework counts
  * Sorted by lesson number
  */
-export const getIncompleteHomework = query({
+export const getIncompleteHomework = authedQuery({
   args: {
     spaceId: v.id("spaces"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
     // Verify access to space
-    const { hasAccess } = await verifySpaceAccess(ctx, args.spaceId, user._id);
+    const { hasAccess } = await verifySpaceAccess(
+      ctx,
+      args.spaceId,
+      ctx.user.id,
+    );
     if (!hasAccess) {
       return [];
     }
@@ -160,16 +104,11 @@ export const getIncompleteHomework = query({
  * Get homework items for a specific document/lesson
  * Used when viewing a lesson to highlight homework exercises
  */
-export const getHomeworkForDocument = query({
+export const getHomeworkForDocument = authedQuery({
   args: {
     documentId: v.id("document"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
     // Get document to check access
     const document = await ctx.db.get(args.documentId);
     if (!document) {
@@ -181,17 +120,17 @@ export const getHomeworkForDocument = query({
       const { hasAccess } = await verifySpaceAccess(
         ctx,
         document.spaceId,
-        user._id,
+        ctx.user.id,
       );
       if (!hasAccess) {
         return [];
       }
-    } else if (document.owner !== user._id) {
+    } else if (document.owner !== ctx.user.id) {
       // Legacy document - check shared access
       const shared = await ctx.db
         .query("sharedDocuments")
         .withIndex("by_document_and_student", (q) =>
-          q.eq("documentId", args.documentId).eq("studentId", user._id),
+          q.eq("documentId", args.documentId).eq("studentId", ctx.user.id),
         )
         .first();
       if (!shared) {
@@ -214,17 +153,12 @@ export const getHomeworkForDocument = query({
  * Used for quick checks in the editor
  * Returns status info or null if not homework
  */
-export const isExerciseHomework = query({
+export const isExerciseHomework = authedQuery({
   args: {
     documentId: v.id("document"),
     exerciseInstanceId: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return null;
-    }
-
     const homeworkItem = await ctx.db
       .query("homeworkItems")
       .withIndex("by_document", (q) => q.eq("documentId", args.documentId))
@@ -250,18 +184,17 @@ export const isExerciseHomework = query({
  * Get homework statistics for a space
  * Used for dashboard summaries
  */
-export const getHomeworkStats = query({
+export const getHomeworkStats = authedQuery({
   args: {
     spaceId: v.id("spaces"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return null;
-    }
-
     // Verify access
-    const { hasAccess } = await verifySpaceAccess(ctx, args.spaceId, user._id);
+    const { hasAccess } = await verifySpaceAccess(
+      ctx,
+      args.spaceId,
+      ctx.user.id,
+    );
     if (!hasAccess) {
       return null;
     }
@@ -288,19 +221,18 @@ export const getHomeworkStats = query({
  * Get homework completion history for a space
  * Returns a timeline of completions, limited to specified count
  */
-export const getHomeworkHistory = query({
+export const getHomeworkHistory = authedQuery({
   args: {
     spaceId: v.id("spaces"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
     // Verify access
-    const { hasAccess } = await verifySpaceAccess(ctx, args.spaceId, user._id);
+    const { hasAccess } = await verifySpaceAccess(
+      ctx,
+      args.spaceId,
+      ctx.user.id,
+    );
     if (!hasAccess) {
       return [];
     }
@@ -344,41 +276,27 @@ export const getHomeworkHistory = query({
  * Mark an exercise as homework
  * Only the teacher can do this
  */
-export const markAsHomework = mutation({
+export const markAsHomework = authedMutation({
   args: {
     documentId: v.id("document"),
     exerciseInstanceId: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
-
     // Get document
     const document = await ctx.db.get(args.documentId);
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    invariant(document, "Document not found");
 
     // Verify teacher access
-    if (!document.spaceId) {
-      throw new Error("Document is not in a space");
-    }
+    invariant(document.spaceId, "Document is not in a space");
 
-    const { hasAccess, isTeacher } = await verifySpaceAccessMutation(
+    const { hasAccess, isTeacher } = await verifySpaceAccess(
       ctx,
       document.spaceId,
-      user._id,
+      ctx.user.id,
     );
 
-    if (!hasAccess) {
-      throw new Error("Space not found");
-    }
-
-    if (!isTeacher) {
-      throw new Error("Only the teacher can mark homework");
-    }
+    invariant(hasAccess, "Space not found");
+    invariant(isTeacher, "Only the teacher can mark homework");
 
     // Check if already marked as homework
     const existing = await ctx.db
@@ -389,9 +307,7 @@ export const markAsHomework = mutation({
       )
       .first();
 
-    if (existing) {
-      throw new Error("This exercise is already marked as homework");
-    }
+    invariant(!existing, "This exercise is already marked as homework");
 
     // Create homework item
     const homeworkId = await ctx.db.insert("homeworkItems", {
@@ -409,35 +325,23 @@ export const markAsHomework = mutation({
  * Remove an exercise from homework
  * Only the teacher can do this
  */
-export const removeFromHomework = mutation({
+export const removeFromHomework = authedMutation({
   args: {
     homeworkId: v.id("homeworkItems"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
-
     const homeworkItem = await ctx.db.get(args.homeworkId);
-    if (!homeworkItem) {
-      throw new Error("Homework item not found");
-    }
+    invariant(homeworkItem, "Homework item not found");
 
     // Verify teacher access through space
-    const { hasAccess, isTeacher } = await verifySpaceAccessMutation(
+    const { hasAccess, isTeacher } = await verifySpaceAccess(
       ctx,
       homeworkItem.spaceId,
-      user._id,
+      ctx.user.id,
     );
 
-    if (!hasAccess) {
-      throw new Error("Space not found");
-    }
-
-    if (!isTeacher) {
-      throw new Error("Only the teacher can remove homework");
-    }
+    invariant(hasAccess, "Space not found");
+    invariant(isTeacher, "Only the teacher can remove homework");
 
     await ctx.db.delete(args.homeworkId);
 
@@ -450,37 +354,25 @@ export const removeFromHomework = mutation({
  * Useful for marking several exercises at once
  * Only the teacher can do this
  */
-export const bulkMarkAsHomework = mutation({
+export const bulkMarkAsHomework = authedMutation({
   args: {
     documentId: v.id("document"),
     exerciseInstanceIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
-
     // Get document
     const document = await ctx.db.get(args.documentId);
-    if (!document || !document.spaceId) {
-      throw new Error("Document not found or not in a space");
-    }
+    invariant(document && document.spaceId, "Document not found or not in a space");
 
     // Verify teacher access
-    const { hasAccess, isTeacher } = await verifySpaceAccessMutation(
+    const { hasAccess, isTeacher } = await verifySpaceAccess(
       ctx,
       document.spaceId,
-      user._id,
+      ctx.user.id,
     );
 
-    if (!hasAccess) {
-      throw new Error("Space not found");
-    }
-
-    if (!isTeacher) {
-      throw new Error("Only the teacher can mark homework");
-    }
+    invariant(hasAccess, "Space not found");
+    invariant(isTeacher, "Only the teacher can mark homework");
 
     // Get existing homework for this document
     const existingHomework = await ctx.db
@@ -523,35 +415,23 @@ export const bulkMarkAsHomework = mutation({
  * Mark homework as complete
  * Only the student can do this
  */
-export const completeHomework = mutation({
+export const completeHomework = authedMutation({
   args: {
     homeworkId: v.id("homeworkItems"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
-
     const homeworkItem = await ctx.db.get(args.homeworkId);
-    if (!homeworkItem) {
-      throw new Error("Homework item not found");
-    }
+    invariant(homeworkItem, "Homework item not found");
 
     // Verify student access through space
-    const { hasAccess, isStudent } = await verifySpaceAccessMutation(
+    const { hasAccess, isStudent } = await verifySpaceAccess(
       ctx,
       homeworkItem.spaceId,
-      user._id,
+      ctx.user.id,
     );
 
-    if (!hasAccess) {
-      throw new Error("Space not found");
-    }
-
-    if (!isStudent) {
-      throw new Error("Only the student can mark homework as complete");
-    }
+    invariant(hasAccess, "Space not found");
+    invariant(isStudent, "Only the student can mark homework as complete");
 
     // Already completed?
     if (homeworkItem.completedAt) {
@@ -570,35 +450,23 @@ export const completeHomework = mutation({
  * Undo homework completion
  * Only the student can do this
  */
-export const uncompleteHomework = mutation({
+export const uncompleteHomework = authedMutation({
   args: {
     homeworkId: v.id("homeworkItems"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
-
     const homeworkItem = await ctx.db.get(args.homeworkId);
-    if (!homeworkItem) {
-      throw new Error("Homework item not found");
-    }
+    invariant(homeworkItem, "Homework item not found");
 
     // Verify student access through space
-    const { hasAccess, isStudent } = await verifySpaceAccessMutation(
+    const { hasAccess, isStudent } = await verifySpaceAccess(
       ctx,
       homeworkItem.spaceId,
-      user._id,
+      ctx.user.id,
     );
 
-    if (!hasAccess) {
-      throw new Error("Space not found");
-    }
-
-    if (!isStudent) {
-      throw new Error("Only the student can undo completion");
-    }
+    invariant(hasAccess, "Space not found");
+    invariant(isStudent, "Only the student can undo completion");
 
     await ctx.db.patch(args.homeworkId, {
       completedAt: undefined,

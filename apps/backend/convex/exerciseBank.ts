@@ -2,9 +2,9 @@ import { generateObject } from "ai";
 import { v } from "convex/values";
 import invariant from "tiny-invariant";
 
-import { action, mutation, query } from "./_generated/server";
+import { action } from "./_generated/server";
 import { buildAutoTagPrompt } from "./_generated_prompts";
-import { authComponent } from "./auth";
+import { authedMutation, authedQuery } from "./functions";
 import { libraryItemTypeValidator, libraryMetadataValidator } from "./schema";
 import {
   autoTagResponseSchema,
@@ -15,7 +15,7 @@ import {
 /**
  * Save an item to the library
  */
-export const saveItem = mutation({
+export const saveItem = authedMutation({
   args: {
     title: v.string(),
     type: libraryItemTypeValidator,
@@ -23,11 +23,9 @@ export const saveItem = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const now = Date.now();
     const itemId = await ctx.db.insert("library", {
-      ownerId: user._id,
+      ownerId: ctx.user.id,
       title: args.title,
       type: args.type,
       content: args.content,
@@ -43,17 +41,15 @@ export const saveItem = mutation({
 /**
  * Save an exercise to the library (convenience wrapper)
  */
-export const saveExercise = mutation({
+export const saveExercise = authedMutation({
   args: {
     title: v.string(),
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const now = Date.now();
     const exerciseId = await ctx.db.insert("library", {
-      ownerId: user._id,
+      ownerId: ctx.user.id,
       title: args.title,
       type: "exercise",
       content: args.content,
@@ -68,25 +64,23 @@ export const saveExercise = mutation({
 /**
  * Get all library items owned by the current user, optionally filtered by type
  */
-export const getMyItems = query({
+export const getMyItems = authedQuery({
   args: {
     type: v.optional(libraryItemTypeValidator),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     let items;
     if (args.type) {
       items = await ctx.db
         .query("library")
         .withIndex("by_owner_type", (q) =>
-          q.eq("ownerId", user._id).eq("type", args.type!)
+          q.eq("ownerId", ctx.user.id).eq("type", args.type!)
         )
         .collect();
     } else {
       items = await ctx.db
         .query("library")
-        .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
+        .withIndex("by_owner", (q) => q.eq("ownerId", ctx.user.id))
         .collect();
     }
 
@@ -97,14 +91,13 @@ export const getMyItems = query({
 /**
  * Get all exercises owned by the current user, ordered by most recently created
  */
-export const getMyExercises = query({
+export const getMyExercises = authedQuery({
+  args: {},
   handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const exercises = await ctx.db
       .query("library")
       .withIndex("by_owner_type", (q) =>
-        q.eq("ownerId", user._id).eq("type", "exercise")
+        q.eq("ownerId", ctx.user.id).eq("type", "exercise")
       )
       .collect();
 
@@ -115,19 +108,17 @@ export const getMyExercises = query({
 /**
  * Get a single library item by ID
  */
-export const getItem = query({
+export const getItem = authedQuery({
   args: {
     itemId: v.id("library"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const item = await ctx.db.get(args.itemId);
 
     invariant(item, "Item not found");
     invariant(
-      item.ownerId === user._id,
-      "Not authorized to access this item",
+      item.ownerId === ctx.user.id,
+      "Not authorized to access this item"
     );
 
     return item;
@@ -137,19 +128,17 @@ export const getItem = query({
 /**
  * Get a single exercise by ID (convenience wrapper)
  */
-export const getExercise = query({
+export const getExercise = authedQuery({
   args: {
     exerciseId: v.id("library"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const exercise = await ctx.db.get(args.exerciseId);
 
     invariant(exercise, "Exercise not found");
     invariant(
-      exercise.ownerId === user._id,
-      "Not authorized to access this exercise",
+      exercise.ownerId === ctx.user.id,
+      "Not authorized to access this exercise"
     );
 
     return exercise;
@@ -159,20 +148,18 @@ export const getExercise = query({
 /**
  * Update library item title
  */
-export const updateItemTitle = mutation({
+export const updateItemTitle = authedMutation({
   args: {
     itemId: v.id("library"),
     title: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const item = await ctx.db.get(args.itemId);
 
     invariant(item, "Item not found");
     invariant(
-      item.ownerId === user._id,
-      "Not authorized to modify this item",
+      item.ownerId === ctx.user.id,
+      "Not authorized to modify this item"
     );
 
     await ctx.db.patch(args.itemId, {
@@ -185,20 +172,18 @@ export const updateItemTitle = mutation({
 /**
  * Update exercise title (convenience wrapper)
  */
-export const updateExerciseTitle = mutation({
+export const updateExerciseTitle = authedMutation({
   args: {
     exerciseId: v.id("library"),
     title: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const exercise = await ctx.db.get(args.exerciseId);
 
     invariant(exercise, "Exercise not found");
     invariant(
-      exercise.ownerId === user._id,
-      "Not authorized to modify this exercise",
+      exercise.ownerId === ctx.user.id,
+      "Not authorized to modify this exercise"
     );
 
     await ctx.db.patch(args.exerciseId, {
@@ -211,19 +196,17 @@ export const updateExerciseTitle = mutation({
 /**
  * Delete a library item
  */
-export const deleteItem = mutation({
+export const deleteItem = authedMutation({
   args: {
     itemId: v.id("library"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const item = await ctx.db.get(args.itemId);
 
     invariant(item, "Item not found");
     invariant(
-      item.ownerId === user._id,
-      "Not authorized to delete this item",
+      item.ownerId === ctx.user.id,
+      "Not authorized to delete this item"
     );
 
     await ctx.db.delete(args.itemId);
@@ -233,19 +216,17 @@ export const deleteItem = mutation({
 /**
  * Delete an exercise (convenience wrapper)
  */
-export const deleteExercise = mutation({
+export const deleteExercise = authedMutation({
   args: {
     exerciseId: v.id("library"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const exercise = await ctx.db.get(args.exerciseId);
 
     invariant(exercise, "Exercise not found");
     invariant(
-      exercise.ownerId === user._id,
-      "Not authorized to delete this exercise",
+      exercise.ownerId === ctx.user.id,
+      "Not authorized to delete this exercise"
     );
 
     await ctx.db.delete(args.exerciseId);
@@ -262,7 +243,7 @@ export const deleteExercise = mutation({
 function buildSearchText(
   title: string,
   description?: string,
-  metadata?: { topic?: string; tags?: string[] },
+  metadata?: { topic?: string; tags?: string[] }
 ): string {
   const parts = [title.toLowerCase()];
   if (description) {
@@ -321,7 +302,7 @@ export const autoTagContent = action({
 /**
  * Save an item with metadata to the library
  */
-export const saveItemWithMetadata = mutation({
+export const saveItemWithMetadata = authedMutation({
   args: {
     title: v.string(),
     type: libraryItemTypeValidator,
@@ -330,17 +311,15 @@ export const saveItemWithMetadata = mutation({
     metadata: v.optional(libraryMetadataValidator),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const searchText = buildSearchText(
       args.title,
       args.description,
-      args.metadata,
+      args.metadata
     );
 
     const now = Date.now();
     const itemId = await ctx.db.insert("library", {
-      ownerId: user._id,
+      ownerId: ctx.user.id,
       title: args.title,
       type: args.type,
       content: args.content,
@@ -358,18 +337,16 @@ export const saveItemWithMetadata = mutation({
 /**
  * Update metadata for a library item
  */
-export const updateItemMetadata = mutation({
+export const updateItemMetadata = authedMutation({
   args: {
     itemId: v.id("library"),
     metadata: libraryMetadataValidator,
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const item = await ctx.db.get(args.itemId);
 
     invariant(item, "Item not found");
-    invariant(item.ownerId === user._id, "Not authorized to modify this item");
+    invariant(item.ownerId === ctx.user.id, "Not authorized to modify this item");
 
     const searchText = buildSearchText(item.title, item.description, args.metadata);
 

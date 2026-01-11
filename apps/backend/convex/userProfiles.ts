@@ -1,105 +1,73 @@
-import invariant from "tiny-invariant";
-import { v } from "convex/values";
+import { authedMutation, authedQuery } from "./functions";
 
-import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
-import { userRolesValidator } from "./schema";
-
-export const create = mutation({
-  args: {
-    role: v.union(v.literal("teacher"), v.literal("student")),
-  },
-  handler: async (ctx, { role }) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    await ctx.db.insert("userProfile", {
-      userId: user._id,
-      roles: [role],
-      activeRole: role,
-    });
-
-    if (role === "teacher") {
-      await ctx.db.insert("teacher", {
-        userId: user._id,
-        createdAt: Date.now(),
-      });
-    }
-
-    if (role === "student") {
-      await ctx.db.insert("student", {
-        userId: user._id,
-        createdAt: Date.now(),
-      });
-    }
-  },
-});
-
-export const get = query({
+/**
+ * Create a teacher record for the current user.
+ * Idempotent - returns existing record if already exists.
+ */
+export const createTeacher = authedMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const profile = await ctx.db
-      .query("userProfile")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+    const existing = await ctx.db
+      .query("teacher")
+      .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    return profile;
-  },
-});
+    if (existing) {
+      return existing._id;
+    }
 
-export const updateActiveRole = mutation({
-  args: {
-    role: v.union(v.literal("teacher"), v.literal("student")),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const profile = await ctx.db
-      .query("userProfile")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .first();
-
-    invariant(profile, "Profile not found");
-
-    await ctx.db.patch(profile._id, {
-      activeRole: args.role,
+    return await ctx.db.insert("teacher", {
+      userId: ctx.user.id,
+      createdAt: Date.now(),
     });
   },
 });
 
-export const activateRole = mutation({
-  args: {
-    role: userRolesValidator,
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const profile = await ctx.db
-      .query("userProfile")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+/**
+ * Create a student record for the current user.
+ * Idempotent - returns existing record if already exists.
+ */
+export const createStudent = authedMutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db
+      .query("student")
+      .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    invariant(profile, "Profile not found");
-    invariant(!profile.roles.includes(args.role), "Role already activated");
+    if (existing) {
+      return existing._id;
+    }
 
-    await ctx.db.patch(profile._id, {
-      roles: Array.from(new Set([...profile.roles, args.role])),
-      activeRole: args.role,
+    return await ctx.db.insert("student", {
+      userId: ctx.user.id,
+      createdAt: Date.now(),
     });
+  },
+});
 
-    if (args.role === "student") {
-      await ctx.db.insert("student", {
-        userId: user._id,
-        createdAt: Date.now(),
-      });
-    }
+/**
+ * Get the current user's teacher record.
+ */
+export const getTeacher = authedQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("teacher")
+      .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
+      .first();
+  },
+});
 
-    if (args.role === "teacher") {
-      await ctx.db.insert("teacher", {
-        userId: user._id,
-        createdAt: Date.now(),
-      });
-    }
+/**
+ * Get the current user's student record.
+ */
+export const getStudent = authedQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("student")
+      .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
+      .first();
   },
 });

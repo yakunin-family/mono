@@ -22,7 +22,7 @@ export const Route = createFileRoute("/join/$token")({
 function JoinPage() {
   const { token } = useParams({ from: "/join/$token" });
   const navigate = useNavigate();
-  const { userId } = Route.useRouteContext();
+  const { user } = Route.useRouteContext();
   const [joinSuccess, setJoinSuccess] = useState(false);
 
   // Fetch invite details (no auth required for this query)
@@ -123,7 +123,7 @@ function JoinPage() {
     };
 
     // User is authenticated
-    if (userId) {
+    if (user) {
       return (
         <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
           <Card className="w-full max-w-md">

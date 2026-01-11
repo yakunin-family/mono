@@ -1,106 +1,23 @@
 import { v } from "convex/values";
 import invariant from "tiny-invariant";
 
-import { Id } from "./_generated/dataModel";
-import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
-import { authComponent } from "./auth";
-
-/**
- * Helper function to check if user has access to a document (for queries)
- * Supports space-based access (new model) and owner/shared access (legacy)
- */
-async function hasDocumentAccess(
-  ctx: QueryCtx,
-  documentId: Id<"document">,
-  userId: string,
-): Promise<boolean> {
-  const document = await ctx.db.get(documentId);
-
-  if (!document) {
-    return false;
-  }
-
-  // New model: space-based access
-  if (document.spaceId) {
-    const space = await ctx.db.get(document.spaceId);
-    if (space && (space.teacherId === userId || space.studentId === userId)) {
-      return true;
-    }
-  }
-
-  // Legacy model: owner check
-  if (document.owner === userId) {
-    return true;
-  }
-
-  // Legacy model: shared access check
-  const share = await ctx.db
-    .query("sharedDocuments")
-    .withIndex("by_document_and_student", (q) =>
-      q.eq("documentId", documentId).eq("studentId", userId),
-    )
-    .first();
-
-  return share !== null;
-}
-
-/**
- * Helper function to check if user has access to a document (for mutations)
- * Supports space-based access (new model) and owner/shared access (legacy)
- */
-async function hasDocumentAccessMutation(
-  ctx: MutationCtx,
-  documentId: Id<"document">,
-  userId: string,
-): Promise<boolean> {
-  const document = await ctx.db.get(documentId);
-
-  if (!document) {
-    return false;
-  }
-
-  // New model: space-based access
-  if (document.spaceId) {
-    const space = await ctx.db.get(document.spaceId);
-    if (space && (space.teacherId === userId || space.studentId === userId)) {
-      return true;
-    }
-  }
-
-  // Legacy model: owner check
-  if (document.owner === userId) {
-    return true;
-  }
-
-  // Legacy model: shared access check
-  const share = await ctx.db
-    .query("sharedDocuments")
-    .withIndex("by_document_and_student", (q) =>
-      q.eq("documentId", documentId).eq("studentId", userId),
-    )
-    .first();
-
-  return share !== null;
-}
-
+import { hasDocumentAccess, verifySpaceAccess } from "./accessControl";
+import { authedMutation, authedQuery } from "./functions";
 
 /**
  * Get a single document by ID
  */
-export const getDocument = query({
+export const getDocument = authedQuery({
   args: {
-    documentId: v.string(),
+    documentId: v.id("document"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const documentId = args.documentId as Id<"document">;
-    const document = await ctx.db.get(documentId);
+    const document = await ctx.db.get(args.documentId);
 
     invariant(document, "Document not found");
 
     // Check if user has access (owner or shared)
-    const hasAccess = await hasDocumentAccess(ctx, documentId, user._id);
+    const hasAccess = await hasDocumentAccess(ctx, args.documentId, ctx.user.id);
 
     invariant(hasAccess, "Not authorized to access this document");
 
@@ -111,15 +28,13 @@ export const getDocument = query({
 /**
  * Update document title
  */
-export const updateDocumentTitle = mutation({
+export const updateDocumentTitle = authedMutation({
   args: {
-    documentId: v.string(),
+    documentId: v.id("document"),
     title: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const document = await ctx.db.get(args.documentId as Id<"document">);
+    const document = await ctx.db.get(args.documentId);
 
     invariant(document, "Document not found");
 
@@ -127,17 +42,17 @@ export const updateDocumentTitle = mutation({
     if (document.spaceId) {
       const space = await ctx.db.get(document.spaceId);
       invariant(
-        space && space.teacherId === user._id,
+        space && space.teacherId === ctx.user.id,
         "Not authorized to modify this document",
       );
     } else {
       invariant(
-        document.owner === user._id,
+        document.owner === ctx.user.id,
         "Not authorized to modify this document",
       );
     }
 
-    await ctx.db.patch(args.documentId as Id<"document">, {
+    await ctx.db.patch(args.documentId, {
       title: args.title,
       updatedAt: Date.now(),
     });
@@ -147,29 +62,22 @@ export const updateDocumentTitle = mutation({
 /**
  * Save document content (Yjs state)
  */
-export const saveDocumentContent = mutation({
+export const saveDocumentContent = authedMutation({
   args: {
-    documentId: v.string(),
+    documentId: v.id("document"),
     content: v.bytes(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const documentId = args.documentId as Id<"document">;
-    const document = await ctx.db.get(documentId);
+    const document = await ctx.db.get(args.documentId);
 
     invariant(document, "Document not found");
 
     // Check if user has access (owner or shared)
-    const hasAccess = await hasDocumentAccessMutation(
-      ctx,
-      documentId,
-      user._id,
-    );
+    const hasAccess = await hasDocumentAccess(ctx, args.documentId, ctx.user.id);
 
     invariant(hasAccess, "Not authorized to modify this document");
 
-    await ctx.db.patch(documentId, {
+    await ctx.db.patch(args.documentId, {
       content: args.content,
       updatedAt: Date.now(),
     });
@@ -179,20 +87,17 @@ export const saveDocumentContent = mutation({
 /**
  * Load document content (Yjs state)
  */
-export const loadDocumentContent = query({
+export const loadDocumentContent = authedQuery({
   args: {
-    documentId: v.string(),
+    documentId: v.id("document"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const documentId = args.documentId as Id<"document">;
-    const document = await ctx.db.get(documentId);
+    const document = await ctx.db.get(args.documentId);
 
     invariant(document, "Document not found");
 
     // Check if user has access (owner or shared)
-    const hasAccess = await hasDocumentAccess(ctx, documentId, user._id);
+    const hasAccess = await hasDocumentAccess(ctx, args.documentId, ctx.user.id);
 
     invariant(hasAccess, "Not authorized to access this document");
 
@@ -200,18 +105,15 @@ export const loadDocumentContent = query({
   },
 });
 
-
 /**
  * Get all lessons (documents) for a specific space
  * Used on student and teacher space detail pages
  */
-export const getSpaceLessons = query({
+export const getSpaceLessons = authedQuery({
   args: {
     spaceId: v.id("spaces"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     // Check space access
     const space = await ctx.db.get(args.spaceId);
     if (!space) {
@@ -219,7 +121,7 @@ export const getSpaceLessons = query({
     }
 
     // Verify user is either teacher or student
-    if (space.teacherId !== user._id && space.studentId !== user._id) {
+    if (space.teacherId !== ctx.user.id && space.studentId !== ctx.user.id) {
       return [];
     }
 
@@ -243,64 +145,14 @@ export const getSpaceLessons = query({
 // ============================================
 
 /**
- * Helper function to check if user has space membership (for queries)
- */
-async function hasSpaceAccess(
-  ctx: QueryCtx,
-  spaceId: Id<"spaces">,
-  userId: string,
-): Promise<{ hasAccess: boolean; isTeacher: boolean; isStudent: boolean }> {
-  const space = await ctx.db.get(spaceId);
-
-  if (!space) {
-    return { hasAccess: false, isTeacher: false, isStudent: false };
-  }
-
-  const isTeacher = space.teacherId === userId;
-  const isStudent = space.studentId === userId;
-
-  return {
-    hasAccess: isTeacher || isStudent,
-    isTeacher,
-    isStudent,
-  };
-}
-
-/**
- * Helper function to check if user has space membership (for mutations)
- */
-async function hasSpaceAccessMutation(
-  ctx: MutationCtx,
-  spaceId: Id<"spaces">,
-  userId: string,
-): Promise<{ hasAccess: boolean; isTeacher: boolean; isStudent: boolean }> {
-  const space = await ctx.db.get(spaceId);
-
-  if (!space) {
-    return { hasAccess: false, isTeacher: false, isStudent: false };
-  }
-
-  const isTeacher = space.teacherId === userId;
-  const isStudent = space.studentId === userId;
-
-  return {
-    hasAccess: isTeacher || isStudent,
-    isTeacher,
-    isStudent,
-  };
-}
-
-/**
  * Get a single lesson with space context
  * Supports both new space-based access and old owner-based access for backward compatibility
  */
-export const getLesson = query({
+export const getLesson = authedQuery({
   args: {
     documentId: v.id("document"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const document = await ctx.db.get(args.documentId);
 
     if (!document) {
@@ -314,8 +166,8 @@ export const getLesson = query({
         return null;
       }
 
-      const isTeacher = space.teacherId === user._id;
-      const isStudent = space.studentId === user._id;
+      const isTeacher = space.teacherId === ctx.user.id;
+      const isStudent = space.studentId === ctx.user.id;
 
       if (!isTeacher && !isStudent) {
         return null;
@@ -332,7 +184,7 @@ export const getLesson = query({
 
     // Fallback: old document model (owned by teacher)
     // Check if user is owner
-    if (document.owner === user._id) {
+    if (document.owner === ctx.user.id) {
       return {
         ...document,
         isTeacher: true,
@@ -344,7 +196,7 @@ export const getLesson = query({
     const sharedAccess = await ctx.db
       .query("sharedDocuments")
       .withIndex("by_document_and_student", (q) =>
-        q.eq("documentId", args.documentId).eq("studentId", user._id),
+        q.eq("documentId", args.documentId).eq("studentId", ctx.user.id),
       )
       .first();
 
@@ -364,15 +216,17 @@ export const getLesson = query({
  * Get next available lesson number for a space
  * Useful for UI to show "This will be Lesson #X"
  */
-export const getNextLessonNumber = query({
+export const getNextLessonNumber = authedQuery({
   args: {
     spaceId: v.id("spaces"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     // Verify space access (only teacher should see this)
-    const { isTeacher } = await hasSpaceAccess(ctx, args.spaceId, user._id);
+    const { isTeacher } = await verifySpaceAccess(
+      ctx,
+      args.spaceId,
+      ctx.user.id,
+    );
 
     if (!isTeacher) {
       return null;
@@ -396,19 +250,17 @@ export const getNextLessonNumber = query({
  * Create a new lesson within a space
  * Auto-assigns the next lesson number (1-indexed)
  */
-export const createLesson = mutation({
+export const createLesson = authedMutation({
   args: {
     spaceId: v.id("spaces"),
     title: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     // Verify space exists and user is the teacher
-    const { hasAccess, isTeacher } = await hasSpaceAccessMutation(
+    const { hasAccess, isTeacher } = await verifySpaceAccess(
       ctx,
       args.spaceId,
-      user._id,
+      ctx.user.id,
     );
 
     invariant(hasAccess, "Space not found");
@@ -446,30 +298,28 @@ export const createLesson = mutation({
 /**
  * Update lesson details (title and/or lessonNumber)
  */
-export const updateLesson = mutation({
+export const updateLesson = authedMutation({
   args: {
     documentId: v.id("document"),
     title: v.optional(v.string()),
     lessonNumber: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const document = await ctx.db.get(args.documentId);
 
     invariant(document, "Lesson not found");
 
     // Verify teacher access
     if (document.spaceId) {
-      const { isTeacher } = await hasSpaceAccessMutation(
+      const { isTeacher } = await verifySpaceAccess(
         ctx,
         document.spaceId,
-        user._id,
+        ctx.user.id,
       );
       invariant(isTeacher, "Only the teacher can update this lesson");
     } else {
       invariant(
-        document.owner === user._id,
+        document.owner === ctx.user.id,
         "Only the owner can update this document",
       );
     }
@@ -499,28 +349,26 @@ export const updateLesson = mutation({
 /**
  * Delete a lesson and all associated homework items
  */
-export const deleteLesson = mutation({
+export const deleteLesson = authedMutation({
   args: {
     documentId: v.id("document"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const document = await ctx.db.get(args.documentId);
 
     invariant(document, "Lesson not found");
 
     // Verify teacher access
     if (document.spaceId) {
-      const { isTeacher } = await hasSpaceAccessMutation(
+      const { isTeacher } = await verifySpaceAccess(
         ctx,
         document.spaceId,
-        user._id,
+        ctx.user.id,
       );
       invariant(isTeacher, "Only the teacher can delete this lesson");
     } else {
       invariant(
-        document.owner === user._id,
+        document.owner === ctx.user.id,
         "Only the owner can delete this document",
       );
     }
@@ -546,19 +394,17 @@ export const deleteLesson = mutation({
  * Reorder lessons in a space
  * Takes an array of documentIds in desired order and updates lessonNumbers (1-indexed)
  */
-export const reorderLessons = mutation({
+export const reorderLessons = authedMutation({
   args: {
     spaceId: v.id("spaces"),
     lessonOrder: v.array(v.id("document")),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     // Verify space and teacher access
-    const { hasAccess, isTeacher } = await hasSpaceAccessMutation(
+    const { hasAccess, isTeacher } = await verifySpaceAccess(
       ctx,
       args.spaceId,
-      user._id,
+      ctx.user.id,
     );
 
     invariant(hasAccess, "Space not found");
@@ -588,23 +434,21 @@ export const reorderLessons = mutation({
 /**
  * Duplicate a lesson (creates a copy in the same space with content)
  */
-export const duplicateLesson = mutation({
+export const duplicateLesson = authedMutation({
   args: {
     documentId: v.id("document"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const original = await ctx.db.get(args.documentId);
 
     invariant(original, "Lesson not found");
     invariant(original.spaceId, "Can only duplicate space-based lessons");
 
     // Verify teacher access
-    const { isTeacher } = await hasSpaceAccessMutation(
+    const { isTeacher } = await verifySpaceAccess(
       ctx,
       original.spaceId,
-      user._id,
+      ctx.user.id,
     );
 
     invariant(isTeacher, "Only the teacher can duplicate lessons");

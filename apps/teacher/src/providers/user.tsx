@@ -1,8 +1,8 @@
-import { UserProfile } from "@app/backend";
+import { Teacher } from "@app/backend";
 import { createContext, ReactNode, useContext } from "react";
 
 interface UserContext {
-  user: UserProfile;
+  teacher: Teacher;
 }
 
 const UserContext = createContext<UserContext | null>(null);
@@ -17,12 +17,12 @@ export function useUser() {
 
 export function UserProvider({
   children,
-  user,
+  teacher,
 }: {
   children: ReactNode;
-  user: UserProfile;
+  teacher: Teacher;
 }) {
   return (
-    <UserContext.Provider value={{ user }}>{children}</UserContext.Provider>
+    <UserContext.Provider value={{ teacher }}>{children}</UserContext.Provider>
   );
 }

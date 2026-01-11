@@ -1,7 +1,8 @@
 import { v } from "convex/values";
+import invariant from "tiny-invariant";
 
-import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
+import { query } from "./_generated/server";
+import { authedMutation, authedQuery } from "./functions";
 
 /**
  * Generate a URL-safe random token (24 characters, alphanumeric)
@@ -20,29 +21,23 @@ function generateToken(): string {
  * Create a new invite link for a specific language.
  * Teacher specifies the language, gets back a shareable token.
  */
-export const createInvite = mutation({
+export const createInvite = authedMutation({
   args: {
     language: v.string(),
     expiresInDays: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     // Validate teacher role by checking the teacher table
     const teacher = await ctx.db
       .query("teacher")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    if (!teacher) {
-      throw new Error("Only teachers can create invites");
-    }
+    invariant(teacher, "Only teachers can create invites");
 
     // Validate language is not empty
     const language = args.language.trim();
-    if (!language) {
-      throw new Error("Language is required");
-    }
+    invariant(language, "Language is required");
 
     // Generate unique token
     let token = generateToken();
@@ -67,7 +62,7 @@ export const createInvite = mutation({
       : undefined;
 
     const inviteId = await ctx.db.insert("spaceInvites", {
-      teacherId: user._id,
+      teacherId: ctx.user.id,
       language,
       token,
       createdAt: now,
@@ -86,48 +81,29 @@ export const createInvite = mutation({
  * Get all invites created by the current teacher.
  * Shows both pending and used invites with status info.
  */
-export const getMyInvites = query({
+export const getMyInvites = authedQuery({
   args: {},
   handler: async (ctx) => {
-    let user;
-    try {
-      user = await authComponent.getAuthUser(ctx);
-    } catch {
-      return [];
-    }
-
     const invites = await ctx.db
       .query("spaceInvites")
-      .withIndex("by_teacher", (q) => q.eq("teacherId", user._id))
+      .withIndex("by_teacher", (q) => q.eq("teacherId", ctx.user.id))
       .collect();
 
-    // Enrich with student info for used invites
-    const enrichedInvites = await Promise.all(
-      invites.map(async (invite) => {
-        let studentName: string | undefined;
+    // Enrich invites with status info
+    const enrichedInvites = invites.map((invite) => {
+      const isExpired = invite.expiresAt
+        ? invite.expiresAt < Date.now()
+        : false;
+      const isPending = !invite.usedAt && !isExpired;
 
-        if (invite.usedBy) {
-          const studentUser = await authComponent.getAnyUserById(
-            ctx,
-            invite.usedBy,
-          );
-          studentName = studentUser?.name ?? "Unknown Student";
-        }
-
-        const isExpired = invite.expiresAt
-          ? invite.expiresAt < Date.now()
-          : false;
-        const isPending = !invite.usedAt && !isExpired;
-
-        return {
-          ...invite,
-          studentName,
-          isExpired,
-          isPending,
-          isUsed: !!invite.usedAt,
-        };
-      }),
-    );
+      return {
+        ...invite,
+        studentName: invite.usedBy ? "Student" : undefined,
+        isExpired,
+        isPending,
+        isUsed: !!invite.usedAt,
+      };
+    });
 
     // Sort: pending first, then by creation date descending
     return enrichedInvites.sort((a, b) => {
@@ -166,13 +142,10 @@ export const getInviteByToken = query({
       return { error: "This invite has expired" as const };
     }
 
-    // Get teacher info
-    const teacherUser = await authComponent.getAnyUserById(ctx, invite.teacherId);
-
     return {
       valid: true as const,
       language: invite.language,
-      teacherName: teacherUser?.name ?? "Unknown Teacher",
+      teacherName: "Teacher",
       teacherId: invite.teacherId,
     };
   },
@@ -182,43 +155,39 @@ export const getInviteByToken = query({
  * Accept an invite - creates a space and marks invite as used.
  * Called by student after they log in.
  */
-export const acceptInvite = mutation({
+export const acceptInvite = authedMutation({
   args: {
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     // Find the invite
     const invite = await ctx.db
       .query("spaceInvites")
       .withIndex("by_token", (q) => q.eq("token", args.token))
       .first();
 
-    if (!invite) {
-      throw new Error("Invite not found");
-    }
+    invariant(invite, "Invite not found");
 
     // Check if already used
-    if (invite.usedAt) {
-      throw new Error("This invite has already been used");
-    }
+    invariant(!invite.usedAt, "This invite has already been used");
 
     // Check if expired
-    if (invite.expiresAt && invite.expiresAt < Date.now()) {
-      throw new Error("This invite has expired");
-    }
+    invariant(
+      !invite.expiresAt || invite.expiresAt >= Date.now(),
+      "This invite has expired",
+    );
 
     // Prevent teacher from accepting their own invite
-    if (invite.teacherId === user._id) {
-      throw new Error("You cannot accept your own invite");
-    }
+    invariant(
+      invite.teacherId !== ctx.user.id,
+      "You cannot accept your own invite",
+    );
 
     // Check if a space already exists for this teacher-student combo with same language
     const existingSpaces = await ctx.db
       .query("spaces")
       .withIndex("by_teacher_and_student", (q) =>
-        q.eq("teacherId", invite.teacherId).eq("studentId", user._id),
+        q.eq("teacherId", invite.teacherId).eq("studentId", ctx.user.id)
       )
       .collect();
 
@@ -226,43 +195,20 @@ export const acceptInvite = mutation({
       (s) => s.language.toLowerCase() === invite.language.toLowerCase(),
     );
 
-    if (duplicateLanguage) {
-      throw new Error(
-        `You already have a ${invite.language} space with this teacher`,
-      );
-    }
-
-    // Ensure user has student role in their profile
-    const userProfile = await ctx.db
-      .query("userProfile")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .first();
-
-    if (userProfile) {
-      if (!userProfile.roles.includes("student")) {
-        // Add student role
-        await ctx.db.patch(userProfile._id, {
-          roles: [...userProfile.roles, "student"],
-        });
-      }
-    } else {
-      // Create profile with student role
-      await ctx.db.insert("userProfile", {
-        userId: user._id,
-        roles: ["student"],
-        activeRole: "student",
-      });
-    }
+    invariant(
+      !duplicateLanguage,
+      `You already have a ${invite.language} space with this teacher`,
+    );
 
     // Ensure student record exists
     const studentRecord = await ctx.db
       .query("student")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
     if (!studentRecord) {
       await ctx.db.insert("student", {
-        userId: user._id,
+        userId: ctx.user.id,
         createdAt: Date.now(),
       });
     }
@@ -271,7 +217,7 @@ export const acceptInvite = mutation({
     const now = Date.now();
     const spaceId = await ctx.db.insert("spaces", {
       teacherId: invite.teacherId,
-      studentId: user._id,
+      studentId: ctx.user.id,
       language: invite.language,
       createdAt: now,
     });
@@ -279,7 +225,7 @@ export const acceptInvite = mutation({
     // Mark invite as used
     await ctx.db.patch(invite._id, {
       usedAt: now,
-      usedBy: user._id,
+      usedBy: ctx.user.id,
       resultingSpaceId: spaceId,
     });
 
@@ -294,27 +240,25 @@ export const acceptInvite = mutation({
  * Revoke (delete) an unused invite.
  * Only the teacher who created it can revoke.
  */
-export const revokeInvite = mutation({
+export const revokeInvite = authedMutation({
   args: {
     inviteId: v.id("spaceInvites"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
     const invite = await ctx.db.get(args.inviteId);
-    if (!invite) {
-      throw new Error("Invite not found");
-    }
+    invariant(invite, "Invite not found");
 
     // Only creator can revoke
-    if (invite.teacherId !== user._id) {
-      throw new Error("Only the invite creator can revoke it");
-    }
+    invariant(
+      invite.teacherId === ctx.user.id,
+      "Only the invite creator can revoke it",
+    );
 
     // Cannot revoke used invites
-    if (invite.usedAt) {
-      throw new Error("Cannot revoke an invite that has already been used");
-    }
+    invariant(
+      !invite.usedAt,
+      "Cannot revoke an invite that has already been used",
+    );
 
     await ctx.db.delete(args.inviteId);
 
@@ -325,25 +269,18 @@ export const revokeInvite = mutation({
 /**
  * Get pending invites count for teacher dashboard badge.
  */
-export const getPendingInvitesCount = query({
+export const getPendingInvitesCount = authedQuery({
   args: {},
   handler: async (ctx) => {
-    let user;
-    try {
-      user = await authComponent.getAuthUser(ctx);
-    } catch {
-      return 0;
-    }
-
     const invites = await ctx.db
       .query("spaceInvites")
-      .withIndex("by_teacher", (q) => q.eq("teacherId", user._id))
+      .withIndex("by_teacher", (q) => q.eq("teacherId", ctx.user.id))
       .collect();
 
     const now = Date.now();
     const pendingCount = invites.filter(
       (invite) =>
-        !invite.usedAt && (!invite.expiresAt || invite.expiresAt > now),
+        !invite.usedAt && (!invite.expiresAt || invite.expiresAt > now)
     ).length;
 
     return pendingCount;

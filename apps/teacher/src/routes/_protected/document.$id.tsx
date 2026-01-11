@@ -24,7 +24,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { ArrowLeftIcon, ChevronDownIcon, FileTextIcon } from "lucide-react";
 
-import { signOut, useSession } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/document/$id")({
   component: DocumentEditorPage,
@@ -33,12 +33,12 @@ export const Route = createFileRoute("/_protected/document/$id")({
 function DocumentEditorPage() {
   const navigate = useNavigate();
   const { id: documentId } = Route.useParams();
-  const { token } = Route.useRouteContext();
+  const { accessToken, user } = Route.useRouteContext();
   const convex = useConvex();
+  const { signOut } = useAuth();
   const [title, setTitle] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editorMode, setEditorMode] = useState<EditorMode>("teacher-editor");
-  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const editorRef = useRef<DocumentEditorHandle | null>(null);
   const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
@@ -84,8 +84,11 @@ function DocumentEditorPage() {
     return () => clearInterval(checkInterval);
   }, [injectTemplateContent]);
 
-  // Get user name from session, fallback to email or "Anonymous"
-  const userName = session?.user?.name || session?.user?.email || "Anonymous";
+  // Get user name from context, fallback to email or "Anonymous"
+  const userName =
+    user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.email || "Anonymous";
 
   // Fetch document
   const documentQuery = useQuery({
@@ -356,10 +359,7 @@ function DocumentEditorPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                await signOut();
-                navigate({ to: "/login" });
-              }}
+              onClick={() => signOut({ returnTo: "/login" })}
             >
               Logout
             </Button>
@@ -374,7 +374,7 @@ function DocumentEditorPage() {
             documentId={documentId}
             canEdit={true}
             mode={editorMode}
-            token={token}
+            token={accessToken ?? undefined}
             userName={userName}
             userColor={userColor}
             websocketUrl={

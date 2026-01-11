@@ -38,7 +38,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 
-import { signOut, useSession } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute(
   "/_protected/spaces/$id/lesson/$lessonId",
@@ -49,10 +49,10 @@ export const Route = createFileRoute(
 function LessonEditorPage() {
   const navigate = useNavigate();
   const { id: spaceId, lessonId } = Route.useParams();
-  const { token } = Route.useRouteContext();
+  const { accessToken, user } = Route.useRouteContext();
   const convex = useConvex();
+  const { signOut } = useAuth();
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
   const editorRef = useRef<DocumentEditorHandle | null>(null);
 
   const [title, setTitle] = useState("");
@@ -61,7 +61,10 @@ function LessonEditorPage() {
   const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
 
   const userColor = useMemo(() => getRandomUserColor(), []);
-  const userName = session?.user?.name || session?.user?.email || "Anonymous";
+  const userName =
+    user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.email || "Anonymous";
 
   const lessonQuery = useQuery({
     ...convexQuery(api.documents.getLesson, {
@@ -377,10 +380,7 @@ function LessonEditorPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                await signOut();
-                navigate({ to: "/login" });
-              }}
+              onClick={() => signOut({ returnTo: "/login" })}
             >
               Logout
             </Button>
@@ -403,7 +403,7 @@ function LessonEditorPage() {
             spaceId={spaceId}
             canEdit={true}
             mode="teacher-editor"
-            token={token}
+            token={accessToken ?? undefined}
             userName={userName}
             userColor={userColor}
             websocketUrl={

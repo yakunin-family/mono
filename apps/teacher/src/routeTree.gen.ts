@@ -15,7 +15,7 @@ import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as ProtectedLibraryRouteImport } from './routes/_protected/library'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
 import { Route as ProtectedSpacesIdRouteImport } from './routes/_protected/spaces.$id'
 import { Route as ProtectedDocumentIdRouteImport } from './routes/_protected/document.$id'
 import { Route as ProtectedSpacesIdNewLessonRouteImport } from './routes/_protected/spaces.$id.new-lesson'
@@ -49,9 +49,9 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRoute,
 } as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
+const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
+  id: '/api/auth/callback',
+  path: '/api/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedSpacesIdRoute = ProtectedSpacesIdRouteImport.update({
@@ -84,7 +84,7 @@ export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
   '/document/$id': typeof ProtectedDocumentIdRoute
   '/spaces/$id': typeof ProtectedSpacesIdRouteWithChildren
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
@@ -95,7 +95,7 @@ export interface FileRoutesByTo {
   '/': typeof ProtectedIndexRoute
   '/document/$id': typeof ProtectedDocumentIdRoute
   '/spaces/$id': typeof ProtectedSpacesIdRouteWithChildren
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
@@ -109,7 +109,7 @@ export interface FileRoutesById {
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/document/$id': typeof ProtectedDocumentIdRoute
   '/_protected/spaces/$id': typeof ProtectedSpacesIdRouteWithChildren
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/_protected/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/_protected/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
@@ -122,7 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/document/$id'
     | '/spaces/$id'
-    | '/api/auth/$'
+    | '/api/auth/callback'
     | '/spaces/$id/new-lesson'
     | '/spaces/$id/lesson/$lessonId'
   fileRoutesByTo: FileRoutesByTo
@@ -133,7 +133,7 @@ export interface FileRouteTypes {
     | '/'
     | '/document/$id'
     | '/spaces/$id'
-    | '/api/auth/$'
+    | '/api/auth/callback'
     | '/spaces/$id/new-lesson'
     | '/spaces/$id/lesson/$lessonId'
   id:
@@ -146,7 +146,7 @@ export interface FileRouteTypes {
     | '/_protected/'
     | '/_protected/document/$id'
     | '/_protected/spaces/$id'
-    | '/api/auth/$'
+    | '/api/auth/callback'
     | '/_protected/spaces/$id/new-lesson'
     | '/_protected/spaces/$id/lesson/$lessonId'
   fileRoutesById: FileRoutesById
@@ -154,7 +154,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   ProtectedRoute: typeof ProtectedRouteWithChildren
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiAuthCallbackRoute: typeof ApiAuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -201,11 +201,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
+    '/api/auth/callback': {
+      id: '/api/auth/callback'
+      path: '/api/auth/callback'
+      fullPath: '/api/auth/callback'
+      preLoaderRoute: typeof ApiAuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/spaces/$id': {
@@ -285,17 +285,18 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   ProtectedRoute: ProtectedRouteWithChildren,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiAuthCallbackRoute: ApiAuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

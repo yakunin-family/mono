@@ -1,42 +1,27 @@
 import { v } from "convex/values";
+import invariant from "tiny-invariant";
 
-import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
+import { authedMutation, authedQuery } from "./functions";
 
 /**
  * Get all spaces where the current user is the teacher
  * Used on teacher dashboard to show list of students
  */
-export const getMySpacesAsTeacher = query({
+export const getMySpacesAsTeacher = authedQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
-    const userId = user._id;
-
     const spaces = await ctx.db
       .query("spaces")
-      .withIndex("by_teacher", (q) => q.eq("teacherId", userId))
+      .withIndex("by_teacher", (q) => q.eq("teacherId", ctx.user.id))
       .collect();
 
-    // Enrich with student info
-    const enrichedSpaces = await Promise.all(
-      spaces.map(async (space) => {
-        const studentUser = await authComponent.getAnyUserById(
-          ctx,
-          space.studentId,
-        );
-
-        return {
-          ...space,
-          studentName: studentUser?.name ?? "Unknown Student",
-          studentEmail: studentUser?.email ?? "",
-        };
-      }),
-    );
+    // Return spaces with placeholder user info
+    // TODO: Store user names in teacher/student tables for display
+    const enrichedSpaces = spaces.map((space) => ({
+      ...space,
+      studentName: "Student",
+      studentEmail: "",
+    }));
 
     // Sort by most recent first
     return enrichedSpaces.sort((a, b) => b.createdAt - a.createdAt);
@@ -47,29 +32,17 @@ export const getMySpacesAsTeacher = query({
  * Get all spaces where the current user is the student
  * Used on student dashboard to show list of teachers/courses
  */
-export const getMySpacesAsStudent = query({
+export const getMySpacesAsStudent = authedQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
-    const userId = user._id;
-
     const spaces = await ctx.db
       .query("spaces")
-      .withIndex("by_student", (q) => q.eq("studentId", userId))
+      .withIndex("by_student", (q) => q.eq("studentId", ctx.user.id))
       .collect();
 
-    // Enrich with teacher info and homework count
+    // Enrich with homework count
     const enrichedSpaces = await Promise.all(
       spaces.map(async (space) => {
-        const teacherUser = await authComponent.getAnyUserById(
-          ctx,
-          space.teacherId,
-        );
-
         // Count incomplete homework items
         const incompleteHomework = await ctx.db
           .query("homeworkItems")
@@ -79,11 +52,11 @@ export const getMySpacesAsStudent = query({
 
         return {
           ...space,
-          teacherName: teacherUser?.name ?? "Unknown Teacher",
-          teacherEmail: teacherUser?.email ?? "",
+          teacherName: "Teacher",
+          teacherEmail: "",
           pendingHomeworkCount: incompleteHomework.length,
         };
-      }),
+      })
     );
 
     return enrichedSpaces.sort((a, b) => b.createdAt - a.createdAt);
@@ -94,38 +67,20 @@ export const getMySpacesAsStudent = query({
  * Get a single space by ID with full details
  * Validates that the current user is either the teacher or student
  */
-export const getSpace = query({
+export const getSpace = authedQuery({
   args: {
     spaceId: v.id("spaces"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return null;
-    }
-
-    const userId = user._id;
-
     const space = await ctx.db.get(args.spaceId);
     if (!space) {
       return null;
     }
 
     // Verify access
-    if (space.teacherId !== userId && space.studentId !== userId) {
+    if (space.teacherId !== ctx.user.id && space.studentId !== ctx.user.id) {
       return null;
     }
-
-    // Get user details
-    const teacherUser = await authComponent.getAnyUserById(
-      ctx,
-      space.teacherId,
-    );
-
-    const studentUser = await authComponent.getAnyUserById(
-      ctx,
-      space.studentId,
-    );
 
     // Get lesson count
     const lessons = await ctx.db
@@ -144,55 +99,50 @@ export const getSpace = query({
 
     return {
       ...space,
-      teacherName: teacherUser?.name ?? "Unknown Teacher",
-      teacherEmail: teacherUser?.email ?? "",
-      studentName: studentUser?.name ?? "Unknown Student",
-      studentEmail: studentUser?.email ?? "",
+      teacherName: "Teacher",
+      teacherEmail: "",
+      studentName: "Student",
+      studentEmail: "",
       lessonCount: lessons.length,
       pendingHomeworkCount: pendingHomework.length,
       completedHomeworkCount: completedHomework.length,
-      isTeacher: space.teacherId === userId,
-      isStudent: space.studentId === userId,
+      isTeacher: space.teacherId === ctx.user.id,
+      isStudent: space.studentId === ctx.user.id,
     };
   },
 });
 
 /**
  * Create a new space directly (used internally, not typically called by UI)
- * The invite flow (Task 2) is the primary way spaces are created
+ * The invite flow is the primary way spaces are created
  */
-export const createSpace = mutation({
+export const createSpace = authedMutation({
   args: {
     studentId: v.string(),
     language: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const userId = user._id;
-
-    // Validate teacher exists and has teacher role
-    const teacherProfile = await ctx.db
-      .query("userProfile")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+    // Validate teacher exists
+    const teacher = await ctx.db
+      .query("teacher")
+      .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    if (!teacherProfile || !teacherProfile.roles.includes("teacher")) {
-      throw new Error("Only teachers can create spaces");
-    }
+    invariant(teacher, "Only teachers can create spaces");
 
     // Validate student exists
-    const studentUser = await authComponent.getAnyUserById(ctx, args.studentId);
+    const student = await ctx.db
+      .query("student")
+      .withIndex("by_userId", (q) => q.eq("userId", args.studentId))
+      .first();
 
-    if (!studentUser) {
-      throw new Error("Student not found");
-    }
+    invariant(student, "Student not found");
 
     // Check if space already exists for this teacher-student-language combo
     const existingSpaces = await ctx.db
       .query("spaces")
       .withIndex("by_teacher_and_student", (q) =>
-        q.eq("teacherId", userId).eq("studentId", args.studentId),
+        q.eq("teacherId", ctx.user.id).eq("studentId", args.studentId),
       )
       .collect();
 
@@ -200,15 +150,14 @@ export const createSpace = mutation({
       (s) => s.language.toLowerCase() === args.language.toLowerCase(),
     );
 
-    if (duplicateLanguage) {
-      throw new Error(
-        `A space for ${args.language} already exists with this student`,
-      );
-    }
+    invariant(
+      !duplicateLanguage,
+      `A space for ${args.language} already exists with this student`,
+    );
 
     // Create the space
     const spaceId = await ctx.db.insert("spaces", {
-      teacherId: userId,
+      teacherId: ctx.user.id,
       studentId: args.studentId,
       language: args.language,
       createdAt: Date.now(),
@@ -222,24 +171,19 @@ export const createSpace = mutation({
  * Delete a space and all associated data
  * Only the teacher can delete a space
  */
-export const deleteSpace = mutation({
+export const deleteSpace = authedMutation({
   args: {
     spaceId: v.id("spaces"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const userId = user._id;
-
     const space = await ctx.db.get(args.spaceId);
-    if (!space) {
-      throw new Error("Space not found");
-    }
+    invariant(space, "Space not found");
 
     // Only teacher can delete
-    if (space.teacherId !== userId) {
-      throw new Error("Only the teacher can delete a space");
-    }
+    invariant(
+      space.teacherId === ctx.user.id,
+      "Only the teacher can delete a space",
+    );
 
     // Delete all homework items in this space
     const homeworkItems = await ctx.db
@@ -271,25 +215,20 @@ export const deleteSpace = mutation({
 /**
  * Update space details (currently only language can be updated)
  */
-export const updateSpace = mutation({
+export const updateSpace = authedMutation({
   args: {
     spaceId: v.id("spaces"),
     language: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-
-    const userId = user._id;
-
     const space = await ctx.db.get(args.spaceId);
-    if (!space) {
-      throw new Error("Space not found");
-    }
+    invariant(space, "Space not found");
 
     // Only teacher can update
-    if (space.teacherId !== userId) {
-      throw new Error("Only the teacher can update a space");
-    }
+    invariant(
+      space.teacherId === ctx.user.id,
+      "Only the teacher can update a space",
+    );
 
     const updates: Partial<{ language: string }> = {};
 

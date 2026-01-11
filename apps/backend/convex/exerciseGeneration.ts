@@ -8,17 +8,14 @@ import {
   internalAction,
   internalMutation,
   internalQuery,
-  mutation,
-  MutationCtx,
-  query,
-  QueryCtx,
 } from "./_generated/server";
 import {
   buildGenerationPrompt,
   buildPlanningPrompt,
   buildValidationPrompt,
 } from "./_generated_prompts";
-import { authComponent } from "./auth";
+import { hasDocumentAccess } from "./accessControl";
+import { authedMutation, authedQuery } from "./functions";
 import {
   generationResponseSchema,
   planningResponseSchema,
@@ -26,104 +23,21 @@ import {
 } from "./validators/exerciseGeneration";
 
 /**
- * Helper function to check if user has access to a document (for mutations)
- * Supports space-based access (new model) and owner/shared access (legacy)
- */
-async function hasDocumentAccessMutation(
-  ctx: MutationCtx,
-  documentId: Id<"document">,
-  userId: string,
-): Promise<boolean> {
-  const document = await ctx.db.get(documentId);
-
-  if (!document) {
-    return false;
-  }
-
-  // New model: space-based access
-  if (document.spaceId) {
-    const space = await ctx.db.get(document.spaceId);
-    if (space && (space.teacherId === userId || space.studentId === userId)) {
-      return true;
-    }
-  }
-
-  // Legacy model: owner check
-  if (document.owner === userId) {
-    return true;
-  }
-
-  // Legacy model: shared access check
-  const share = await ctx.db
-    .query("sharedDocuments")
-    .withIndex("by_document_and_student", (q) =>
-      q.eq("documentId", documentId).eq("studentId", userId),
-    )
-    .first();
-
-  return share !== null;
-}
-
-/**
- * Helper function to check if user has access to a document (for queries)
- * Supports space-based access (new model) and owner/shared access (legacy)
- */
-async function hasDocumentAccessQuery(
-  ctx: QueryCtx,
-  documentId: Id<"document">,
-  userId: string,
-): Promise<boolean> {
-  const document = await ctx.db.get(documentId);
-
-  if (!document) {
-    return false;
-  }
-
-  // New model: space-based access
-  if (document.spaceId) {
-    const space = await ctx.db.get(document.spaceId);
-    if (space && (space.teacherId === userId || space.studentId === userId)) {
-      return true;
-    }
-  }
-
-  // Legacy model: owner check
-  if (document.owner === userId) {
-    return true;
-  }
-
-  // Legacy model: shared access check
-  const share = await ctx.db
-    .query("sharedDocuments")
-    .withIndex("by_document_and_student", (q) =>
-      q.eq("documentId", documentId).eq("studentId", userId),
-    )
-    .first();
-
-  return share !== null;
-}
-
-/**
  * Start a new exercise generation session
  * Creates a session and immediately runs validation step
  */
-export const startExerciseGeneration = mutation({
+export const startExerciseGeneration = authedMutation({
   args: {
-    documentId: v.string(),
+    documentId: v.id("document"),
     promptText: v.string(),
     model: v.string(), // e.g., "openai/gpt-4o" or "anthropic/claude-3-5-sonnet"
   },
   returns: v.object({ sessionId: v.id("exerciseGenerationSession") }),
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    const documentId = args.documentId as Id<"document">;
+    const documentId = args.documentId;
 
     // Verify document access
-    const hasAccess = await hasDocumentAccessMutation(
-      ctx,
-      documentId,
-      user._id,
-    );
+    const hasAccess = await hasDocumentAccess(ctx, documentId, ctx.user.id);
     invariant(hasAccess, "Not authorized to access this document");
 
     const now = Date.now();
@@ -131,7 +45,7 @@ export const startExerciseGeneration = mutation({
     // Create the generation session
     const sessionId = await ctx.db.insert("exerciseGenerationSession", {
       documentId,
-      userId: user._id,
+      userId: ctx.user.id,
       initialPrompt: args.promptText,
       model: args.model,
       currentStep: "validating",
@@ -162,7 +76,7 @@ export const runValidation = internalAction({
     // Get the session
     const session = await ctx.runQuery(
       internal.exerciseGeneration.getSessionForAction,
-      { sessionId },
+      { sessionId }
     );
     invariant(session, "Session not found");
 
@@ -177,7 +91,7 @@ export const runValidation = internalAction({
             userPrompt: session.initialPrompt,
             previousClarifications: args.previousClarifications,
           }),
-        },
+        }
       );
 
       // Load prompt template
@@ -211,7 +125,7 @@ export const runValidation = internalAction({
             sessionId: sessionId as string,
             requirements: validationResult.extractedRequirements,
             newStep: "planning",
-          },
+          }
         );
 
         // Schedule planning step
@@ -220,7 +134,7 @@ export const runValidation = internalAction({
           internal.exerciseGeneration.runPlanning,
           {
             sessionId: sessionId as string,
-          },
+          }
         );
       } else {
         // Need clarification from user
@@ -243,22 +157,21 @@ export const runValidation = internalAction({
 /**
  * User provides answers to clarification questions
  */
-export const answerClarifications = mutation({
+export const answerClarifications = authedMutation({
   args: {
-    sessionId: v.string(),
+    sessionId: v.id("exerciseGenerationSession"),
     answers: v.string(), // JSON string of { questionId: answer }
   },
   returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
+    const sessionId = args.sessionId;
 
     const session = await ctx.db.get(sessionId);
     invariant(session, "Session not found");
-    invariant(session.userId === user._id, "Not authorized");
+    invariant(session.userId === ctx.user.id, "Not authorized");
     invariant(
       session.currentStep === "awaiting_clarification",
-      "Session not awaiting clarification",
+      "Session not awaiting clarification"
     );
 
     // Update session step
@@ -290,7 +203,7 @@ export const runPlanning = internalAction({
     // Get the session
     const session = await ctx.runQuery(
       internal.exerciseGeneration.getSessionForAction,
-      { sessionId },
+      { sessionId }
     );
     invariant(session, "Session not found");
     invariant(session.requirements, "Requirements not set");
@@ -303,7 +216,7 @@ export const runPlanning = internalAction({
           sessionId,
           stepType: "planning",
           input: JSON.stringify(session.requirements),
-        },
+        }
       );
 
       // Build planning prompt
@@ -347,20 +260,19 @@ export const runPlanning = internalAction({
 /**
  * User approves the plan
  */
-export const approvePlan = mutation({
+export const approvePlan = authedMutation({
   args: {
-    sessionId: v.string(),
+    sessionId: v.id("exerciseGenerationSession"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
+    const sessionId = args.sessionId;
 
     const session = await ctx.db.get(sessionId);
     invariant(session, "Session not found");
-    invariant(session.userId === user._id, "Not authorized");
+    invariant(session.userId === ctx.user.id, "Not authorized");
     invariant(
       session.currentStep === "awaiting_approval",
-      "Session not awaiting approval",
+      "Session not awaiting approval"
     );
     invariant(session.plan, "No plan to approve");
 
@@ -392,7 +304,7 @@ export const runGeneration = internalAction({
     // Get the session
     const session = await ctx.runQuery(
       internal.exerciseGeneration.getSessionForAction,
-      { sessionId },
+      { sessionId }
     );
     invariant(session, "Session not found");
     invariant(session.plan, "Plan not set");
@@ -406,7 +318,7 @@ export const runGeneration = internalAction({
           sessionId,
           stepType: "generation",
           input: JSON.stringify(session.plan),
-        },
+        }
       );
 
       // Generate exercises one by one
@@ -437,7 +349,7 @@ export const runGeneration = internalAction({
         } catch (error) {
           console.error(
             `Failed to generate exercise ${exerciseItem.id}:`,
-            error,
+            error
           );
           // Continue with other exercises
         }
@@ -474,22 +386,21 @@ export const runGeneration = internalAction({
 /**
  * Get a generation session by ID for real-time updates
  */
-export const getGenerationSession = query({
+export const getGenerationSession = authedQuery({
   args: {
-    sessionId: v.string(),
+    sessionId: v.id("exerciseGenerationSession"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.getAuthUser(ctx);
-    const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
+    const sessionId = args.sessionId;
 
     const session = await ctx.db.get(sessionId);
     invariant(session, "Session not found");
 
     // Verify document access
-    const hasAccess = await hasDocumentAccessQuery(
+    const hasAccess = await hasDocumentAccess(
       ctx,
       session.documentId,
-      user._id,
+      ctx.user.id
     );
     invariant(hasAccess, "Not authorized to access this session");
 
@@ -549,7 +460,7 @@ export const createStep = internalMutation({
     stepType: v.union(
       v.literal("validation"),
       v.literal("planning"),
-      v.literal("generation"),
+      v.literal("generation")
     ),
     input: v.string(),
   },
@@ -598,7 +509,7 @@ export const updateSessionRequirements = internalMutation({
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     await ctx.db.patch(sessionId, {
       requirements: args.requirements,
-      currentStep: args.newStep as any,
+      currentStep: args.newStep as "planning",
       updatedAt: Date.now(),
     });
   },
@@ -615,7 +526,7 @@ export const updateSessionStep = internalMutation({
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     await ctx.db.patch(sessionId, {
-      currentStep: args.newStep as any,
+      currentStep: args.newStep as "awaiting_clarification",
       updatedAt: Date.now(),
     });
   },
@@ -634,7 +545,7 @@ export const updateSessionPlan = internalMutation({
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     await ctx.db.patch(sessionId, {
       plan: args.plan,
-      currentStep: args.newStep as any,
+      currentStep: args.newStep as "awaiting_approval",
       updatedAt: Date.now(),
     });
   },

@@ -1,21 +1,8 @@
 import { defineSchema, defineTable } from "convex/server";
 import { Infer, v } from "convex/values";
 
-export const userRolesValidator = v.union(
-  v.literal("teacher"),
-  v.literal("student"),
-);
-export type UserRole = Infer<typeof userRolesValidator>;
-
-const userProfile = defineTable({
-  userId: v.string(), // Better Auth user ID
-  roles: v.array(userRolesValidator),
-  activeRole: userRolesValidator,
-}).index("by_userId", ["userId"]);
-export type UserProfile = Infer<typeof schemas.tables.userProfile.validator>;
-
 const teacher = defineTable({
-  userId: v.string(), // Better Auth user ID
+  userId: v.string(), // WorkOS user ID
   createdAt: v.number(),
   aiTokensUsed: v.optional(v.number()), // Total AI tokens consumed
   aiQuotaLimit: v.optional(v.number()), // Monthly quota (not enforced yet)
@@ -30,15 +17,15 @@ const invite = defineTable({
 export type Invite = Infer<typeof schemas.tables.invite.validator>;
 
 const student = defineTable({
-  userId: v.string(), // Better Auth user ID
+  userId: v.string(), // WorkOS user ID
   createdAt: v.number(),
 }).index("by_userId", ["userId"]);
 export type Student = Infer<typeof schemas.tables.student.validator>;
 
 // Spaces - Core entity representing a 1:1 teaching relationship for a specific language
 const spaces = defineTable({
-  teacherId: v.string(), // Better Auth user ID of the teacher
-  studentId: v.string(), // Better Auth user ID of the student
+  teacherId: v.string(), // WorkOS user ID of the teacher
+  studentId: v.string(), // WorkOS user ID of the student
   language: v.string(), // Free text language name (e.g., "German", "Business English")
   createdAt: v.number(),
 })
@@ -76,8 +63,8 @@ const homeworkItems = defineTable({
 export type HomeworkItem = Infer<typeof schemas.tables.homeworkItems.validator>;
 
 const teacherStudents = defineTable({
-  teacherId: v.string(), // Better Auth user ID
-  studentId: v.string(), // Better Auth user ID
+  teacherId: v.string(), // WorkOS user ID
+  studentId: v.string(), // WorkOS user ID
   joinedAt: v.number(),
 })
   .index("by_teacherId", ["teacherId"])
@@ -90,7 +77,7 @@ const document = defineTable({
   spaceId: v.optional(v.id("spaces")), // Which space this lesson belongs to
   lessonNumber: v.optional(v.number()), // Order within space (1, 2, 3...)
   // Existing fields (owner becomes optional for backward compatibility)
-  owner: v.optional(v.string()), // Better Auth user ID (deprecated - use spaceId)
+  owner: v.optional(v.string()), // WorkOS user ID (deprecated - use spaceId)
   title: v.string(),
   content: v.optional(v.bytes()), // Serialized Yjs document state
   createdAt: v.number(),
@@ -103,8 +90,8 @@ export type Document = Infer<typeof schemas.tables.document.validator>;
 
 const sharedDocuments = defineTable({
   documentId: v.id("document"),
-  teacherId: v.string(), // Document owner (Better Auth user ID)
-  studentId: v.string(), // Student with access (Better Auth user ID)
+  teacherId: v.string(), // Document owner (WorkOS user ID)
+  studentId: v.string(), // Student with access (WorkOS user ID)
   sharedAt: v.number(),
 })
   .index("by_document", ["documentId"])
@@ -114,7 +101,7 @@ export type SharedDocument = Infer<typeof schemas.tables.sharedDocuments.validat
 
 const aiGeneration = defineTable({
   documentId: v.id("document"),
-  userId: v.string(), // Better Auth user ID (who requested)
+  userId: v.string(), // WorkOS user ID (who requested)
   promptText: v.string(), // User's prompt
   streamId: v.string(), // From persistent-text-streaming component
   generatedContent: v.string(), // AI response (updated progressively)
@@ -138,7 +125,7 @@ export type AIGeneration = Infer<typeof schemas.tables.aiGeneration.validator>;
 
 const exerciseGenerationSession = defineTable({
   documentId: v.id("document"),
-  userId: v.string(), // Better Auth user ID (who requested)
+  userId: v.string(), // WorkOS user ID (who requested)
   initialPrompt: v.string(), // User's original prompt
   model: v.string(), // AI model to use
   currentStep: v.union(
@@ -249,7 +236,7 @@ export const libraryMetadataValidator = v.object({
 export type LibraryMetadata = Infer<typeof libraryMetadataValidator>;
 
 const library = defineTable({
-  ownerId: v.string(), // Better Auth user ID (teacher)
+  ownerId: v.string(), // WorkOS user ID (teacher)
   title: v.string(),
   type: libraryItemTypeValidator,
   content: v.string(), // JSON-stringified Tiptap content array
@@ -265,7 +252,6 @@ const library = defineTable({
 export type LibraryItem = Infer<typeof schemas.tables.library.validator>;
 
 const schemas = defineSchema({
-  userProfile,
   teacher,
   student,
   teacherStudents,
@@ -276,7 +262,6 @@ const schemas = defineSchema({
   exerciseGenerationSession,
   exerciseGenerationStep,
   library,
-  // New tables for spaces and homework
   spaces,
   spaceInvites,
   homeworkItems,

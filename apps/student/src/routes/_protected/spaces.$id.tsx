@@ -13,7 +13,7 @@ import {
 
 import { HomeworkCard } from "@/components/HomeworkCard";
 import { HomeworkProgress } from "@/components/HomeworkProgress";
-import { signOut } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/spaces/$id")({
   component: SpaceDetailPage,
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_protected/spaces/$id")({
 
 function SpaceDetailPage() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const { id: spaceId } = Route.useParams();
 
   const { data: space, isLoading } = useQuery(
@@ -97,10 +98,7 @@ function SpaceDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={async () => {
-              await signOut();
-              navigate({ to: "/login" });
-            }}
+            onClick={() => signOut({ returnTo: "/login" })}
           >
             Logout
           </Button>

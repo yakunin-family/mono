@@ -2,21 +2,18 @@ import { api } from "@app/backend";
 import { convexQuery } from "@convex-dev/react-query";
 import { Button } from "@package/ui";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
 
-import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { SpaceCard } from "@/components/SpaceCard";
-import { signOut } from "@/lib/auth-client";
-import { useUser } from "@/providers/user";
+import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/")({
   component: DashboardPage,
 });
 
 function DashboardPage() {
-  const navigate = useNavigate();
-  const { user } = useUser();
+  const { signOut } = useAuth();
 
   const { data: spaces, isLoading } = useQuery(
     convexQuery(api.spaces.getMySpacesAsStudent, {}),
@@ -29,16 +26,10 @@ function DashboardPage() {
         <div className="flex items-center justify-between px-6 py-4">
           <h1 className="text-2xl font-bold">My Learning</h1>
           <div className="flex items-center gap-4">
-            {user.roles.includes("teacher") && (
-              <RoleSwitcher currentRole="student" />
-            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                await signOut();
-                navigate({ to: "/login" });
-              }}
+              onClick={() => signOut({ returnTo: "/login" })}
             >
               Logout
             </Button>

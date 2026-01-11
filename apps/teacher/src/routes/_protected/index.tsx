@@ -1,7 +1,7 @@
 import { api } from "@app/backend";
 import { Button } from "@package/ui";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { LibraryIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useState } from "react";
@@ -9,15 +9,15 @@ import { useState } from "react";
 import { CreateInviteDialog } from "@/components/CreateInviteDialog";
 import { InvitesList } from "@/components/InvitesList";
 import { SpaceCard } from "@/components/SpaceCard";
-import { signOut } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/")({
   component: DashboardPage,
 });
 
 function DashboardPage() {
-  const navigate = useNavigate();
   const convex = useConvex();
+  const { signOut } = useAuth();
   const [showCreateInvite, setShowCreateInvite] = useState(false);
 
   // Fetch spaces where user is teacher
@@ -57,10 +57,7 @@ function DashboardPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                await signOut();
-                navigate({ to: "/login" });
-              }}
+              onClick={() => signOut({ returnTo: "/login" })}
             >
               Logout
             </Button>

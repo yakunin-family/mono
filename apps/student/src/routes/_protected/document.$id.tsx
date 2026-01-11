@@ -7,7 +7,7 @@ import { useConvex } from "convex/react";
 import { ArrowLeftIcon } from "lucide-react";
 import { useMemo } from "react";
 
-import { signOut, useSession } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/document/$id")({
   component: DocumentViewerPage,
@@ -16,16 +16,19 @@ export const Route = createFileRoute("/_protected/document/$id")({
 function DocumentViewerPage() {
   const navigate = useNavigate();
   const { id: documentId } = Route.useParams();
-  const { token } = Route.useRouteContext();
+  const { accessToken, user } = Route.useRouteContext();
   const convex = useConvex();
-  const { data: session } = useSession();
+  const { signOut } = useAuth();
   const queryClient = useQueryClient();
 
   // Generate a stable random color for this user
   const userColor = useMemo(() => getRandomUserColor(), []);
 
-  // Get user name from session, fallback to email or "Anonymous"
-  const userName = session?.user?.name || session?.user?.email || "Anonymous";
+  // Get user name from context, fallback to email or "Anonymous"
+  const userName =
+    user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.email || "Anonymous";
 
   // Fetch document
   const documentQuery = useQuery({
@@ -79,10 +82,7 @@ function DocumentViewerPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                await signOut();
-                navigate({ to: "/login" });
-              }}
+              onClick={() => signOut({ returnTo: "/login" })}
             >
               Logout
             </Button>
@@ -97,7 +97,7 @@ function DocumentViewerPage() {
             documentId={documentId}
             canEdit={true}
             mode="student"
-            token={token}
+            token={accessToken ?? undefined}
             userName={userName}
             userColor={userColor}
             websocketUrl={

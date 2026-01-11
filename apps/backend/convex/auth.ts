@@ -1,34 +1,38 @@
-import { createClient, type GenericCtx } from "@convex-dev/better-auth";
-import { convex } from "@convex-dev/better-auth/plugins";
-import { betterAuth } from "better-auth";
+import invariant from "tiny-invariant";
 
-import { components } from "./_generated/api";
-import { DataModel } from "./_generated/dataModel";
+import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 
-const siteUrl = process.env.SITE_URL!;
+export interface AuthUser {
+  id: string;
+  email?: string;
+  name?: string;
+}
 
-export const authComponent = createClient<DataModel>(components.betterAuth);
+type Ctx = QueryCtx | MutationCtx | ActionCtx;
 
-export const createAuth = (
-  ctx: GenericCtx<DataModel>,
-  { optionsOnly } = { optionsOnly: false },
-) => {
-  return betterAuth({
-    // disable logging when createAuth is called just to generate options.
-    // this is not required, but there's a lot of noise in logs without it.
-    logger: {
-      disabled: optionsOnly,
-    },
-    baseURL: siteUrl,
-    trustedOrigins: [
-      "http://localhost:3000", // teacher app
-      "http://localhost:3001", // student app
-    ],
-    database: authComponent.adapter(ctx),
-    emailAndPassword: {
-      enabled: true,
-      requireEmailVerification: false,
-    },
-    plugins: [convex()],
-  });
-};
+/**
+ * Get the authenticated user from WorkOS JWT.
+ * Returns the user identity if authenticated, null otherwise.
+ */
+export async function getAuthUser(ctx: Ctx): Promise<AuthUser | null> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    return null;
+  }
+
+  return {
+    id: identity.subject,
+    email: identity.email,
+    name: identity.name,
+  };
+}
+
+/**
+ * Get the authenticated user or throw if not authenticated.
+ * Use this in protected endpoints.
+ */
+export async function requireAuth(ctx: Ctx): Promise<AuthUser> {
+  const user = await getAuthUser(ctx);
+  invariant(user, "Not authenticated");
+  return user;
+}
