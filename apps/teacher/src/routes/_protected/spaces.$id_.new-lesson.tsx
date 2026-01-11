@@ -8,7 +8,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 
-export const Route = createFileRoute("/_protected/spaces/$id/new-lesson")({
+export const Route = createFileRoute("/_protected/spaces/$id_/new-lesson")({
   component: NewLessonPage,
 });
 

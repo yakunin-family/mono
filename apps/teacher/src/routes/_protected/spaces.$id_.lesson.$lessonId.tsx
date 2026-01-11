@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import { api, type Id } from "@app/backend";
 import { convexQuery } from "@convex-dev/react-query";
 import {
@@ -37,11 +35,12 @@ import {
   SaveIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute(
-  "/_protected/spaces/$id/lesson/$lessonId",
+  "/_protected/spaces/$id_/lesson/$lessonId",
 )({
   component: LessonEditorPage,
 });
@@ -229,7 +228,7 @@ function LessonEditorPage() {
     const result = await convex.mutation(
       api.exerciseGeneration.startExerciseGeneration,
       {
-        documentId: lessonId,
+        documentId: lessonId as Id<"document">,
         promptText,
         model,
       },

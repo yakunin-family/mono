@@ -120,18 +120,14 @@ export function ExerciseGenerationView(props: NodeViewProps) {
 
     const nodeSize = editor.state.doc.nodeAt(pos)?.nodeSize ?? 0;
 
-    // Generate unique IDs for exercise instances
-    const generateId = () =>
-      `exercise-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
     // Convert each generated exercise to Tiptap nodes and wrap in Exercise node
+    // UniqueID extension will automatically generate instanceId for each exercise
     const exerciseNodes = generationResult.exercises.map((ex) => {
       const contentNodes = exerciseToTiptap(ex.content);
 
       // Wrap in Exercise node
       return {
         type: "exercise",
-        attrs: { instanceId: generateId() },
         content: contentNodes,
       };
     });

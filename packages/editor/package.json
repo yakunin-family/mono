@@ -41,6 +41,7 @@
     "@tiptap/extension-table-cell": "^3.11.1",
     "@tiptap/extension-table-header": "^3.11.1",
     "@tiptap/extension-table-row": "^3.11.1",
+    "@tiptap/extension-unique-id": "^3.15.3",
     "@tiptap/markdown": "^3.11.1",
     "@tiptap/pm": "^3.11.1",
     "@tiptap/react": "^3.11.1",

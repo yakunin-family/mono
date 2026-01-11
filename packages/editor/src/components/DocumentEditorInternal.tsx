@@ -7,6 +7,7 @@ import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableRow } from "@tiptap/extension-table-row";
+import UniqueID from "@tiptap/extension-unique-id";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -111,6 +112,10 @@ export function DocumentEditorInternal({
       }),
       Blank,
       Exercise,
+      UniqueID.configure({
+        types: ["exercise"],
+        attributeName: "instanceId",
+      }),
       Group,
       WritingArea,
       NoteBlock,
@@ -206,11 +211,9 @@ export function DocumentEditorInternal({
 
         if (item.type === "exercise") {
           // Wrap exercises in an exercise node
+          // UniqueID extension will automatically generate instanceId
           nodes.push({
             type: "exercise",
-            attrs: {
-              instanceId: `exercise-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            },
             content,
           });
         } else if (item.type === "group") {

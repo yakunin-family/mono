@@ -1,18 +1,17 @@
-import { useEffect, useMemo, useRef } from "react";
-
 import { api, type Id } from "@app/backend";
 import { convexQuery } from "@convex-dev/react-query";
 import { DocumentEditor, getRandomUserColor } from "@package/editor";
 import { Badge, Button } from "@package/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { useAuth } from "@/lib/auth-client";
 
 export const Route = createFileRoute(
-  "/_protected/spaces/$id/lesson/$lessonId",
+  "/_protected/spaces/$id_/lesson/$lessonId",
 )({
   component: StudentLessonPage,
   validateSearch: (search: Record<string, unknown>) => {
@@ -23,7 +22,6 @@ export const Route = createFileRoute(
 });
 
 function StudentLessonPage() {
-  const navigate = useNavigate();
   const { id: spaceId, lessonId } = Route.useParams();
   const { scrollToExercise } = Route.useSearch();
   const { accessToken, user } = Route.useRouteContext();
@@ -73,7 +71,10 @@ function StudentLessonPage() {
           `[data-exercise-instance-id="${scrollToExercise}"]`,
         );
         if (exerciseElement) {
-          exerciseElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          exerciseElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
           exerciseElement.classList.add(
             "ring-2",
             "ring-primary",
