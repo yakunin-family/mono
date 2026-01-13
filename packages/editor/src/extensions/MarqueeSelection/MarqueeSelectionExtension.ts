@@ -22,11 +22,31 @@ interface MarqueePluginState {
   currentY: number;
 }
 
-const GUTTER_WIDTH = 48;
+const isOutsideContent = (view: EditorView, x: number, y: number): boolean => {
+  let isInsideAnyBlock = false;
 
-const isInGutter = (view: EditorView, x: number): boolean => {
-  const editorRect = view.dom.getBoundingClientRect();
-  return x < editorRect.left + GUTTER_WIDTH;
+  view.state.doc.forEach((node, pos) => {
+    if (node.isBlock && !isInsideAnyBlock) {
+      try {
+        const domNode = view.nodeDOM(pos);
+        if (domNode instanceof HTMLElement) {
+          const rect = domNode.getBoundingClientRect();
+          if (
+            x >= rect.left &&
+            x <= rect.right &&
+            y >= rect.top &&
+            y <= rect.bottom
+          ) {
+            isInsideAnyBlock = true;
+          }
+        }
+      } catch {
+        // Node may not have DOM representation
+      }
+    }
+  });
+
+  return !isInsideAnyBlock;
 };
 
 const getTopLevelBlocksWithRects = (view: EditorView): BlockInfo[] => {
@@ -102,7 +122,7 @@ const createMarqueeSelectionPlugin = (
     props: {
       handleDOMEvents: {
         mousedown: (view, event) => {
-          if (!isInGutter(view, event.clientX)) return false;
+          if (!isOutsideContent(view, event.clientX, event.clientY)) return false;
           if (event.button !== 0) return false;
 
           const pluginState: MarqueePluginState = {

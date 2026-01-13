@@ -39,10 +39,7 @@ import { SelectionSave } from "../extensions/SelectionSave";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { WritingArea } from "../extensions/WritingArea";
 import { EditorStatusBar } from "./EditorStatusBar";
-import {
-  LibraryDrawer,
-  type LibraryItemWithMetadata,
-} from "./LibraryDrawer";
+import { LibraryDrawer, type LibraryItemWithMetadata } from "./LibraryDrawer";
 import { MarqueeOverlay } from "./MarqueeOverlay";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
@@ -245,10 +242,7 @@ export function DocumentEditorInternal({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="relative flex flex-col px-12 pt-12 pb-[30vh]"
-    >
+    <div ref={containerRef} className="relative flex flex-col">
       <EditorContent
         editor={editor}
         className="[&_.tiptap]:min-h-[400px] [&_.tiptap]:outline-none"

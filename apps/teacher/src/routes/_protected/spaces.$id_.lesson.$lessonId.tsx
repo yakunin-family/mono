@@ -396,49 +396,47 @@ function LessonEditorPage() {
       </header>
 
       <main className="flex-1 bg-background">
-        <div className="mx-auto max-w-4xl">
-          <DocumentEditor
-            documentId={lessonId}
-            spaceId={spaceId}
-            canEdit={true}
-            mode="teacher-editor"
-            token={accessToken ?? undefined}
-            userName={userName}
-            userColor={userColor}
-            websocketUrl={
-              process.env.NODE_ENV === "development"
-                ? "ws://127.0.0.1:1234"
-                : "wss://collab.untitled.nikita-yakunin.dev"
-            }
-            convexClient={convex}
-            queryClient={queryClient}
-            onStartExerciseGeneration={handleStartExerciseGeneration}
-            onSaveExerciseToBank={handleSaveExerciseToBank}
-            onSaveGroupToLibrary={handleSaveGroupToLibrary}
-            libraryItems={libraryQuery.data}
-            isLoadingLibraryItems={libraryQuery.isLoading}
-            editorRef={editorRef}
-          />
+        <DocumentEditor
+          documentId={lessonId}
+          spaceId={spaceId}
+          canEdit={true}
+          mode="teacher-editor"
+          token={accessToken ?? undefined}
+          userName={userName}
+          userColor={userColor}
+          websocketUrl={
+            process.env.NODE_ENV === "development"
+              ? "ws://127.0.0.1:1234"
+              : "wss://collab.untitled.nikita-yakunin.dev"
+          }
+          convexClient={convex}
+          queryClient={queryClient}
+          onStartExerciseGeneration={handleStartExerciseGeneration}
+          onSaveExerciseToBank={handleSaveExerciseToBank}
+          onSaveGroupToLibrary={handleSaveGroupToLibrary}
+          libraryItems={libraryQuery.data}
+          isLoadingLibraryItems={libraryQuery.isLoading}
+          editorRef={editorRef}
+        />
 
-          <SaveToLibraryDrawer
-            open={saveTemplateModalOpen}
-            onOpenChange={setSaveTemplateModalOpen}
-            type="template"
-            contentForTagging={getTemplateContent()}
-            onSave={handleSaveAsTemplate}
-            onAutoTag={async (content) => {
-              const result = await autoTagMutation.mutateAsync(content);
-              return {
-                language: result.language,
-                levels: result.levels as LibraryMetadata["levels"],
-                topic: result.topic,
-                tags: result.tags,
-                autoTagged: result.autoTagged,
-              };
-            }}
-            isSaving={saveTemplateMutation.isPending}
-          />
-        </div>
+        <SaveToLibraryDrawer
+          open={saveTemplateModalOpen}
+          onOpenChange={setSaveTemplateModalOpen}
+          type="template"
+          contentForTagging={getTemplateContent()}
+          onSave={handleSaveAsTemplate}
+          onAutoTag={async (content) => {
+            const result = await autoTagMutation.mutateAsync(content);
+            return {
+              language: result.language,
+              levels: result.levels as LibraryMetadata["levels"],
+              topic: result.topic,
+              tags: result.tags,
+              autoTagged: result.autoTagged,
+            };
+          }}
+          isSaving={saveTemplateMutation.isPending}
+        />
       </main>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

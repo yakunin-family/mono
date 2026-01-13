@@ -17,7 +17,6 @@ import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
 import { Route as ProtectedSpacesIdRouteImport } from './routes/_protected/spaces.$id'
-import { Route as ProtectedDocumentIdRouteImport } from './routes/_protected/document.$id'
 import { Route as ProtectedSpacesIdLessonLessonIdRouteImport } from './routes/_protected/spaces.$id_.lesson.$lessonId'
 
 const ProtectedRoute = ProtectedRouteImport.update({
@@ -58,11 +57,6 @@ const ProtectedSpacesIdRoute = ProtectedSpacesIdRouteImport.update({
   path: '/spaces/$id',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedDocumentIdRoute = ProtectedDocumentIdRouteImport.update({
-  id: '/document/$id',
-  path: '/document/$id',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedSpacesIdLessonLessonIdRoute =
   ProtectedSpacesIdLessonLessonIdRouteImport.update({
     id: '/spaces/$id_/lesson/$lessonId',
@@ -75,7 +69,6 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof ProtectedIndexRoute
-  '/document/$id': typeof ProtectedDocumentIdRoute
   '/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
@@ -85,7 +78,6 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof ProtectedIndexRoute
-  '/document/$id': typeof ProtectedDocumentIdRoute
   '/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
@@ -98,7 +90,6 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute
   '/join/$token': typeof JoinTokenRoute
   '/_protected/': typeof ProtectedIndexRoute
-  '/_protected/document/$id': typeof ProtectedDocumentIdRoute
   '/_protected/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/_protected/spaces/$id_/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
@@ -110,7 +101,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/join/$token'
     | '/'
-    | '/document/$id'
     | '/spaces/$id'
     | '/api/auth/callback'
     | '/spaces/$id/lesson/$lessonId'
@@ -120,7 +110,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/join/$token'
     | '/'
-    | '/document/$id'
     | '/spaces/$id'
     | '/api/auth/callback'
     | '/spaces/$id/lesson/$lessonId'
@@ -132,7 +121,6 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/join/$token'
     | '/_protected/'
-    | '/_protected/document/$id'
     | '/_protected/spaces/$id'
     | '/api/auth/callback'
     | '/_protected/spaces/$id_/lesson/$lessonId'
@@ -203,13 +191,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSpacesIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/document/$id': {
-      id: '/_protected/document/$id'
-      path: '/document/$id'
-      fullPath: '/document/$id'
-      preLoaderRoute: typeof ProtectedDocumentIdRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/spaces/$id_/lesson/$lessonId': {
       id: '/_protected/spaces/$id_/lesson/$lessonId'
       path: '/spaces/$id/lesson/$lessonId'
@@ -234,14 +215,12 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface ProtectedRouteChildren {
   ProtectedIndexRoute: typeof ProtectedIndexRoute
-  ProtectedDocumentIdRoute: typeof ProtectedDocumentIdRoute
   ProtectedSpacesIdRoute: typeof ProtectedSpacesIdRoute
   ProtectedSpacesIdLessonLessonIdRoute: typeof ProtectedSpacesIdLessonLessonIdRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedIndexRoute: ProtectedIndexRoute,
-  ProtectedDocumentIdRoute: ProtectedDocumentIdRoute,
   ProtectedSpacesIdRoute: ProtectedSpacesIdRoute,
   ProtectedSpacesIdLessonLessonIdRoute: ProtectedSpacesIdLessonLessonIdRoute,
 }

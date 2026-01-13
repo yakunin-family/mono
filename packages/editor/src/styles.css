@@ -7,6 +7,10 @@
 .tiptap {
   @apply text-foreground;
 
+  >* {
+    @apply max-w-4xl mx-auto;
+  }
+
   /* Focus state */
   &:focus {
     @apply outline-none;
@@ -133,6 +137,7 @@
 
 /* Writing Area Styles */
 .writing-area-content {
+
   /* Remove paragraph margins inside writing areas for continuous lines */
   & p {
     margin-block: 0;

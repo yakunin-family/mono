@@ -17,7 +17,6 @@ import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
 import { Route as ProtectedSpacesIdRouteImport } from './routes/_protected/spaces.$id'
-import { Route as ProtectedDocumentIdRouteImport } from './routes/_protected/document.$id'
 import { Route as ProtectedSpacesIdNewLessonRouteImport } from './routes/_protected/spaces.$id_.new-lesson'
 import { Route as ProtectedSpacesIdLessonLessonIdRouteImport } from './routes/_protected/spaces.$id_.lesson.$lessonId'
 
@@ -59,11 +58,6 @@ const ProtectedSpacesIdRoute = ProtectedSpacesIdRouteImport.update({
   path: '/spaces/$id',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedDocumentIdRoute = ProtectedDocumentIdRouteImport.update({
-  id: '/document/$id',
-  path: '/document/$id',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedSpacesIdNewLessonRoute =
   ProtectedSpacesIdNewLessonRouteImport.update({
     id: '/spaces/$id_/new-lesson',
@@ -82,7 +76,6 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute
   '/library': typeof ProtectedLibraryRoute
   '/': typeof ProtectedIndexRoute
-  '/document/$id': typeof ProtectedDocumentIdRoute
   '/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
@@ -93,7 +86,6 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRoute
   '/library': typeof ProtectedLibraryRoute
   '/': typeof ProtectedIndexRoute
-  '/document/$id': typeof ProtectedDocumentIdRoute
   '/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
@@ -107,7 +99,6 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute
   '/_protected/library': typeof ProtectedLibraryRoute
   '/_protected/': typeof ProtectedIndexRoute
-  '/_protected/document/$id': typeof ProtectedDocumentIdRoute
   '/_protected/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/_protected/spaces/$id_/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
@@ -120,7 +111,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/library'
     | '/'
-    | '/document/$id'
     | '/spaces/$id'
     | '/api/auth/callback'
     | '/spaces/$id/new-lesson'
@@ -131,7 +121,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/library'
     | '/'
-    | '/document/$id'
     | '/spaces/$id'
     | '/api/auth/callback'
     | '/spaces/$id/new-lesson'
@@ -144,7 +133,6 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/_protected/library'
     | '/_protected/'
-    | '/_protected/document/$id'
     | '/_protected/spaces/$id'
     | '/api/auth/callback'
     | '/_protected/spaces/$id_/new-lesson'
@@ -215,13 +203,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSpacesIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/document/$id': {
-      id: '/_protected/document/$id'
-      path: '/document/$id'
-      fullPath: '/document/$id'
-      preLoaderRoute: typeof ProtectedDocumentIdRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/spaces/$id_/new-lesson': {
       id: '/_protected/spaces/$id_/new-lesson'
       path: '/spaces/$id/new-lesson'
@@ -254,7 +235,6 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 interface ProtectedRouteChildren {
   ProtectedLibraryRoute: typeof ProtectedLibraryRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
-  ProtectedDocumentIdRoute: typeof ProtectedDocumentIdRoute
   ProtectedSpacesIdRoute: typeof ProtectedSpacesIdRoute
   ProtectedSpacesIdNewLessonRoute: typeof ProtectedSpacesIdNewLessonRoute
   ProtectedSpacesIdLessonLessonIdRoute: typeof ProtectedSpacesIdLessonLessonIdRoute
@@ -263,7 +243,6 @@ interface ProtectedRouteChildren {
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedLibraryRoute: ProtectedLibraryRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
-  ProtectedDocumentIdRoute: ProtectedDocumentIdRoute,
   ProtectedSpacesIdRoute: ProtectedSpacesIdRoute,
   ProtectedSpacesIdNewLessonRoute: ProtectedSpacesIdNewLessonRoute,
   ProtectedSpacesIdLessonLessonIdRoute: ProtectedSpacesIdLessonLessonIdRoute,

@@ -175,25 +175,23 @@ function StudentLessonPage() {
         </div>
       </header>
 
-      <main className="flex-1 bg-background p-6 pb-10">
-        <div className="mx-auto max-w-4xl">
-          <DocumentEditor
-            documentId={lessonId}
-            spaceId={spaceId}
-            canEdit={true}
-            mode="student"
-            token={accessToken ?? undefined}
-            userName={userName}
-            userColor={userColor}
-            websocketUrl={
-              process.env.NODE_ENV === "development"
-                ? "ws://127.0.0.1:1234"
-                : "wss://collab.untitled.nikita-yakunin.dev"
-            }
-            convexClient={convex}
-            queryClient={queryClient}
-          />
-        </div>
+      <main className="flex-1 bg-background">
+        <DocumentEditor
+          documentId={lessonId}
+          spaceId={spaceId}
+          canEdit={true}
+          mode="student"
+          token={accessToken ?? undefined}
+          userName={userName}
+          userColor={userColor}
+          websocketUrl={
+            process.env.NODE_ENV === "development"
+              ? "ws://127.0.0.1:1234"
+              : "wss://collab.untitled.nikita-yakunin.dev"
+          }
+          convexClient={convex}
+          queryClient={queryClient}
+        />
       </main>
     </div>
   );
