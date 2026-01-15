@@ -570,17 +570,21 @@ export const completeSession = internalMutation({
       updatedAt: Date.now(),
     });
 
-    // Update teacher's token usage
+    // Update AI usage in separate aiUsage table
     if (args.tokensUsed) {
-      const teacher = await ctx.db
-        .query("teacher")
+      const existingUsage = await ctx.db
+        .query("aiUsage")
         .withIndex("by_userId", (q) => q.eq("userId", session.userId))
         .first();
 
-      if (teacher) {
-        const currentUsage = teacher.aiTokensUsed || 0;
-        await ctx.db.patch(teacher._id, {
-          aiTokensUsed: currentUsage + args.tokensUsed,
+      if (existingUsage) {
+        await ctx.db.patch(existingUsage._id, {
+          aiTokensUsed: (existingUsage.aiTokensUsed || 0) + args.tokensUsed,
+        });
+      } else {
+        await ctx.db.insert("aiUsage", {
+          userId: session.userId,
+          aiTokensUsed: args.tokensUsed,
         });
       }
     }

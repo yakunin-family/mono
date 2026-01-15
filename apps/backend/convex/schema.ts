@@ -1,28 +1,23 @@
 import { defineSchema, defineTable } from "convex/server";
 import { Infer, v } from "convex/values";
 
-const teacher = defineTable({
-  userId: v.string(), // WorkOS user ID
-  name: v.optional(v.string()), // Display name (updated on login)
+// UserProfile - Unified user table for all users
+const userProfile = defineTable({
+  userId: v.string(), // WorkOS user ID (unique)
+  name: v.optional(v.string()), // Display name
   createdAt: v.number(),
+  isTeacher: v.boolean(),
+  isStudent: v.boolean(),
+}).index("by_userId", ["userId"]);
+export type UserProfile = Infer<typeof schemas.tables.userProfile.validator>;
+
+// AI Usage - Separate table for AI token tracking
+const aiUsage = defineTable({
+  userId: v.string(), // WorkOS user ID
   aiTokensUsed: v.optional(v.number()), // Total AI tokens consumed
   aiQuotaLimit: v.optional(v.number()), // Monthly quota (not enforced yet)
 }).index("by_userId", ["userId"]);
-export type Teacher = Infer<typeof schemas.tables.teacher.validator>;
-
-const invite = defineTable({
-  teacherId: v.id("teacher"),
-  token: v.string(),
-  createdAt: v.number(),
-}).index("by_token", ["token"]);
-export type Invite = Infer<typeof schemas.tables.invite.validator>;
-
-const student = defineTable({
-  userId: v.string(), // WorkOS user ID
-  name: v.optional(v.string()), // Display name (updated on login)
-  createdAt: v.number(),
-}).index("by_userId", ["userId"]);
-export type Student = Infer<typeof schemas.tables.student.validator>;
+export type AIUsage = Infer<typeof schemas.tables.aiUsage.validator>;
 
 // Spaces - Core entity representing a 1:1 teaching relationship for a specific language
 const spaces = defineTable({
@@ -64,16 +59,6 @@ const homeworkItems = defineTable({
   .index("by_document", ["documentId"]);
 export type HomeworkItem = Infer<typeof schemas.tables.homeworkItems.validator>;
 
-const teacherStudents = defineTable({
-  teacherId: v.string(), // WorkOS user ID
-  studentId: v.string(), // WorkOS user ID
-  joinedAt: v.number(),
-})
-  .index("by_teacherId", ["teacherId"])
-  .index("by_studentId", ["studentId"])
-  .index("by_teacher_and_student", ["teacherId", "studentId"]);
-export type TeacherStudent = Infer<typeof schemas.tables.teacherStudents.validator>;
-
 const document = defineTable({
   // Space-related fields (new)
   spaceId: v.optional(v.id("spaces")), // Which space this lesson belongs to
@@ -89,17 +74,6 @@ const document = defineTable({
   .index("by_space", ["spaceId"])
   .index("by_space_lesson", ["spaceId", "lessonNumber"]);
 export type Document = Infer<typeof schemas.tables.document.validator>;
-
-const sharedDocuments = defineTable({
-  documentId: v.id("document"),
-  teacherId: v.string(), // Document owner (WorkOS user ID)
-  studentId: v.string(), // Student with access (WorkOS user ID)
-  sharedAt: v.number(),
-})
-  .index("by_document", ["documentId"])
-  .index("by_student", ["studentId"])
-  .index("by_document_and_student", ["documentId", "studentId"]);
-export type SharedDocument = Infer<typeof schemas.tables.sharedDocuments.validator>;
 
 const aiGeneration = defineTable({
   documentId: v.id("document"),
@@ -254,19 +228,16 @@ const library = defineTable({
 export type LibraryItem = Infer<typeof schemas.tables.library.validator>;
 
 const schemas = defineSchema({
-  teacher,
-  student,
-  teacherStudents,
-  invite,
+  userProfile,
+  aiUsage,
+  spaces,
+  spaceInvites,
+  homeworkItems,
   document,
-  sharedDocuments,
   aiGeneration,
   exerciseGenerationSession,
   exerciseGenerationStep,
   library,
-  spaces,
-  spaceInvites,
-  homeworkItems,
 });
 
 export default schemas;

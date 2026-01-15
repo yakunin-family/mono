@@ -27,13 +27,13 @@ export const createInvite = authedMutation({
     expiresInDays: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // Validate teacher role by checking the teacher table
-    const teacher = await ctx.db
-      .query("teacher")
+    // Validate teacher role using unified userProfile table
+    const profile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    invariant(teacher, "Only teachers can create invites");
+    invariant(profile?.isTeacher, "Only teachers can create invites");
 
     // Validate language is not empty
     const language = args.language.trim();
@@ -142,10 +142,16 @@ export const getInviteByToken = query({
       return { error: "This invite has expired" as const };
     }
 
+    // Look up teacher name from unified userProfile table
+    const teacherProfile = await ctx.db
+      .query("userProfile")
+      .withIndex("by_userId", (q) => q.eq("userId", invite.teacherId))
+      .first();
+
     return {
       valid: true as const,
       language: invite.language,
-      teacherName: "Teacher",
+      teacherName: teacherProfile?.name ?? "Teacher",
       teacherId: invite.teacherId,
     };
   },
@@ -200,21 +206,27 @@ export const acceptInvite = authedMutation({
       `You already have a ${invite.language} space with this teacher`,
     );
 
-    // Ensure student record exists
-    const studentRecord = await ctx.db
-      .query("student")
+    // Ensure student record exists in userProfile table
+    const existingProfile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    if (!studentRecord) {
-      await ctx.db.insert("student", {
+    if (existingProfile) {
+      // Update name and ensure student role is set
+      await ctx.db.patch(existingProfile._id, {
+        name: ctx.user.name,
+        isStudent: true,
+      });
+    } else {
+      // Create new userProfile
+      await ctx.db.insert("userProfile", {
         userId: ctx.user.id,
         name: ctx.user.name,
         createdAt: Date.now(),
+        isTeacher: false,
+        isStudent: true,
       });
-    } else if (studentRecord.name !== ctx.user.name) {
-      // Update name if changed
-      await ctx.db.patch(studentRecord._id, { name: ctx.user.name });
     }
 
     // Create the space

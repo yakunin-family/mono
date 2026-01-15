@@ -17,9 +17,9 @@ export const getMySpacesAsTeacher = authedQuery({
 
     const enrichedSpaces = await Promise.all(
       spaces.map(async (space) => {
-        // Look up student info
-        const student = await ctx.db
-          .query("student")
+        // Look up student info from unified userProfile table
+        const studentProfile = await ctx.db
+          .query("userProfile")
           .withIndex("by_userId", (q) => q.eq("userId", space.studentId))
           .first();
 
@@ -38,7 +38,7 @@ export const getMySpacesAsTeacher = authedQuery({
 
         return {
           ...space,
-          studentName: student?.name ?? "Student",
+          studentName: studentProfile?.name ?? "Student",
           lessonCount: lessons.length,
           pendingHomeworkCount: incompleteHomework.length,
         };
@@ -65,9 +65,9 @@ export const getMySpacesAsStudent = authedQuery({
     // Enrich with teacher info and homework count
     const enrichedSpaces = await Promise.all(
       spaces.map(async (space) => {
-        // Look up teacher info
-        const teacher = await ctx.db
-          .query("teacher")
+        // Look up teacher info from unified userProfile table
+        const teacherProfile = await ctx.db
+          .query("userProfile")
           .withIndex("by_userId", (q) => q.eq("userId", space.teacherId))
           .first();
 
@@ -80,7 +80,7 @@ export const getMySpacesAsStudent = authedQuery({
 
         return {
           ...space,
-          teacherName: teacher?.name ?? "Teacher",
+          teacherName: teacherProfile?.name ?? "Teacher",
           pendingHomeworkCount: incompleteHomework.length,
         };
       }),
@@ -109,14 +109,14 @@ export const getSpace = authedQuery({
       return null;
     }
 
-    // Look up teacher and student info
-    const teacher = await ctx.db
-      .query("teacher")
+    // Look up teacher and student info from unified userProfile table
+    const teacherProfile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", space.teacherId))
       .first();
 
-    const student = await ctx.db
-      .query("student")
+    const studentProfile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", space.studentId))
       .first();
 
@@ -137,8 +137,8 @@ export const getSpace = authedQuery({
 
     return {
       ...space,
-      teacherName: teacher?.name ?? "Teacher",
-      studentName: student?.name ?? "Student",
+      teacherName: teacherProfile?.name ?? "Teacher",
+      studentName: studentProfile?.name ?? "Student",
       lessonCount: lessons.length,
       pendingHomeworkCount: pendingHomework.length,
       completedHomeworkCount: completedHomework.length,
@@ -158,21 +158,21 @@ export const createSpace = authedMutation({
     language: v.string(),
   },
   handler: async (ctx, args) => {
-    // Validate teacher exists
-    const teacher = await ctx.db
-      .query("teacher")
+    // Validate user is a teacher
+    const teacherProfile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    invariant(teacher, "Only teachers can create spaces");
+    invariant(teacherProfile?.isTeacher, "Only teachers can create spaces");
 
     // Validate student exists
-    const student = await ctx.db
-      .query("student")
+    const studentProfile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", args.studentId))
       .first();
 
-    invariant(student, "Student not found");
+    invariant(studentProfile?.isStudent, "Student not found");
 
     // Check if space already exists for this teacher-student-language combo
     const existingSpaces = await ctx.db

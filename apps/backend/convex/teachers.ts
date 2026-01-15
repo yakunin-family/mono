@@ -7,18 +7,19 @@ export const getTeacherByUserId = query({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
-    const teacher = await ctx.db
-      .query("teacher")
+    // Use unified userProfile table
+    const profile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .first();
 
-    if (!teacher) {
+    if (!profile || !profile.isTeacher) {
       return null;
     }
 
     return {
-      teacher,
-      name: null, // User name not available without Better Auth user store
+      teacher: profile,
+      name: profile.name ?? null,
     };
   },
 });

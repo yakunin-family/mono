@@ -126,16 +126,8 @@ export const getHomeworkForDocument = authedQuery({
         return [];
       }
     } else if (document.owner !== ctx.user.id) {
-      // Legacy document - check shared access
-      const shared = await ctx.db
-        .query("sharedDocuments")
-        .withIndex("by_document_and_student", (q) =>
-          q.eq("documentId", args.documentId).eq("studentId", ctx.user.id),
-        )
-        .first();
-      if (!shared) {
-        return [];
-      }
+      // Legacy document - owner check only (no shared access since sharedDocuments removed)
+      return [];
     }
 
     // Get homework items for this document

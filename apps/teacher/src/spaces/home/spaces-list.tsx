@@ -23,8 +23,6 @@ interface SpaceCardProps {
 }
 
 export function SpaceCard({ space }: SpaceCardProps) {
-  console.log(space);
-
   return (
     <Link to="/spaces/$id" params={{ id: space._id }}>
       <Card className="hover:bg-muted/50 transition-colors cursor-pointer py-0">

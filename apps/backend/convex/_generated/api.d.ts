@@ -17,7 +17,6 @@ import type * as exerciseGeneration from "../exerciseGeneration.js";
 import type * as functions from "../functions.js";
 import type * as homework from "../homework.js";
 import type * as http from "../http.js";
-import type * as invite from "../invite.js";
 import type * as spaceInvites from "../spaceInvites.js";
 import type * as spaces from "../spaces.js";
 import type * as teachers from "../teachers.js";
@@ -41,7 +40,6 @@ declare const fullApi: ApiFromModules<{
   functions: typeof functions;
   homework: typeof homework;
   http: typeof http;
-  invite: typeof invite;
   spaceInvites: typeof spaceInvites;
   spaces: typeof spaces;
   teachers: typeof teachers;

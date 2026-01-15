@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/auth/callback")({
         onSuccess: async ({ accessToken }) => {
           const convex = new ConvexHttpClient(env.VITE_CONVEX_URL);
           convex.setAuth(accessToken);
-          await convex.mutation(api.userProfiles.createStudent, {});
+          await convex.mutation(api.userProfiles.ensureStudentRole, {});
         },
       }),
     },

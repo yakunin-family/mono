@@ -1,83 +1,102 @@
 import { authedMutation, authedQuery } from "./functions";
 
 /**
- * Create a teacher record for the current user.
- * Idempotent - returns existing record if already exists.
+ * Ensure user profile exists and set teacher role.
+ * Idempotent - safe to call multiple times.
  */
-export const createTeacher = authedMutation({
+export const ensureTeacherRole = authedMutation({
   args: {},
   handler: async (ctx) => {
-    const existing = await ctx.db
-      .query("teacher")
+    const existingProfile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    if (existing) {
-      // Update name if changed
-      if (existing.name !== ctx.user.name) {
-        await ctx.db.patch(existing._id, { name: ctx.user.name });
-      }
-      return existing._id;
+    if (existingProfile) {
+      await ctx.db.patch(existingProfile._id, {
+        name: ctx.user.name,
+        isTeacher: true,
+      });
+      return existingProfile._id;
     }
 
-    return await ctx.db.insert("teacher", {
+    return await ctx.db.insert("userProfile", {
       userId: ctx.user.id,
       name: ctx.user.name,
       createdAt: Date.now(),
+      isTeacher: true,
+      isStudent: false,
     });
   },
 });
 
 /**
- * Create a student record for the current user.
- * Idempotent - returns existing record if already exists.
+ * Ensure user profile exists and set student role.
+ * Idempotent - safe to call multiple times.
  */
-export const createStudent = authedMutation({
+export const ensureStudentRole = authedMutation({
   args: {},
   handler: async (ctx) => {
-    const existing = await ctx.db
-      .query("student")
+    const existingProfile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    if (existing) {
-      // Update name if changed
-      if (existing.name !== ctx.user.name) {
-        await ctx.db.patch(existing._id, { name: ctx.user.name });
-      }
-      return existing._id;
+    if (existingProfile) {
+      await ctx.db.patch(existingProfile._id, {
+        name: ctx.user.name,
+        isStudent: true,
+      });
+      return existingProfile._id;
     }
 
-    return await ctx.db.insert("student", {
+    return await ctx.db.insert("userProfile", {
       userId: ctx.user.id,
       name: ctx.user.name,
       createdAt: Date.now(),
+      isTeacher: false,
+      isStudent: true,
     });
   },
 });
 
 /**
- * Get the current user's teacher record.
+ * Get current user's unified profile.
  */
-export const getTeacher = authedQuery({
+export const getMyProfile = authedQuery({
   args: {},
   handler: async (ctx) => {
     return await ctx.db
-      .query("teacher")
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
   },
 });
 
 /**
- * Get the current user's student record.
+ * Check if current user has teacher role.
  */
-export const getStudent = authedQuery({
+export const isTeacher = authedQuery({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
-      .query("student")
+    const profile = await ctx.db
+      .query("userProfile")
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
+    return profile?.isTeacher ?? false;
+  },
+});
+
+/**
+ * Check if current user has student role.
+ */
+export const isStudent = authedQuery({
+  args: {},
+  handler: async (ctx) => {
+    const profile = await ctx.db
+      .query("userProfile")
+      .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
+      .first();
+    return profile?.isStudent ?? false;
   },
 });

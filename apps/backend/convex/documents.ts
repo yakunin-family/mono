@@ -192,22 +192,6 @@ export const getLesson = authedQuery({
       };
     }
 
-    // Check shared access (old model)
-    const sharedAccess = await ctx.db
-      .query("sharedDocuments")
-      .withIndex("by_document_and_student", (q) =>
-        q.eq("documentId", args.documentId).eq("studentId", ctx.user.id),
-      )
-      .first();
-
-    if (sharedAccess) {
-      return {
-        ...document,
-        isTeacher: false,
-        isStudent: true,
-      };
-    }
-
     return null;
   },
 });

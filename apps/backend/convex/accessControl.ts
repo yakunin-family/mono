@@ -30,15 +30,7 @@ export async function hasDocumentAccess(
     return true;
   }
 
-  // Legacy model: shared access check
-  const share = await ctx.db
-    .query("sharedDocuments")
-    .withIndex("by_document_and_student", (q) =>
-      q.eq("documentId", documentId).eq("studentId", userId),
-    )
-    .first();
-
-  return share !== null;
+  return false;
 }
 
 /**
