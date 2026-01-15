@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
+import { AuthGate } from "@/components/AuthGate";
+
 export const Route = createFileRoute("/_protected")({
   beforeLoad: async ({ context }) => {
     if (!context.user) {
@@ -14,5 +16,9 @@ export const Route = createFileRoute("/_protected")({
 });
 
 function ProtectedLayout() {
-  return <Outlet />;
+  return (
+    <AuthGate>
+      <Outlet />
+    </AuthGate>
+  );
 }

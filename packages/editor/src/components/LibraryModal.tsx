@@ -129,10 +129,10 @@ export function LibraryModal({
           </div>
           <Select
             value={filter}
-            onValueChange={(value) => setFilter(value as FilterType)}
+            onValueChange={(value) => value && setFilter(value as FilterType)}
           >
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Filter by type" />
+              <SelectValue>Filter by type</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>

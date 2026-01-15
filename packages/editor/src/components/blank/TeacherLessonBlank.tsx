@@ -52,15 +52,16 @@ export function TeacherLessonBlank({
       {/* Peek Button */}
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-blue-600 focus:outline-none"
-              contentEditable={false}
-              aria-label="Show correct answer"
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </button>
+          <TooltipTrigger
+            render={
+              <button
+                type="button"
+                className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-blue-600 focus:outline-none"
+                aria-label="Show correct answer"
+              />
+            }
+          >
+            <Eye className="h-3.5 w-3.5" />
           </TooltipTrigger>
           <TooltipContent>
             <p className="text-sm">

@@ -1,4 +1,5 @@
 import { api, type Id } from "@app/backend";
+import { convexQuery } from "@convex-dev/react-query";
 import {
   Badge,
   Card,
@@ -7,14 +8,9 @@ import {
   CardTitle,
   Progress,
 } from "@package/ui";
-import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import {
-  ClipboardCheckIcon,
-  ClipboardListIcon,
-  ClockIcon,
-} from "lucide-react";
+import { ClipboardCheckIcon, ClipboardListIcon, ClockIcon } from "lucide-react";
 
 interface HomeworkReviewSectionProps {
   spaceId: string;

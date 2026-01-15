@@ -346,7 +346,7 @@ function LessonEditorPage() {
 
           <div className="flex items-center gap-2">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger>
                 <Button variant="ghost" size="icon-sm">
                   <MoreHorizontalIcon className="size-4" />
                 </Button>

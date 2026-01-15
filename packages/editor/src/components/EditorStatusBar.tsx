@@ -25,13 +25,15 @@ export function EditorStatusBar({ status, editor }: EditorStatusBarProps) {
       </div>
 
       <Dialog open={debugOpen} onOpenChange={setDebugOpen}>
-        <DialogTrigger asChild>
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            HTML
-          </button>
+        <DialogTrigger
+          render={
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            />
+          }
+        >
+          HTML
         </DialogTrigger>
         <DebugHtmlModal editor={editor} />
       </Dialog>

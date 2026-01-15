@@ -318,10 +318,10 @@ export function LibraryDrawer({
           <div className="flex flex-wrap gap-2">
             <Select
               value={typeFilter}
-              onValueChange={(v) => setTypeFilter(v as FilterType)}
+              onValueChange={(v) => v && setTypeFilter(v as FilterType)}
             >
               <SelectTrigger className="w-[100px] h-8 text-xs">
-                <SelectValue placeholder="Type" />
+                <SelectValue>Type</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
@@ -334,9 +334,9 @@ export function LibraryDrawer({
             </Select>
 
             {uniqueLanguages.length > 0 && (
-              <Select value={languageFilter} onValueChange={setLanguageFilter}>
+              <Select value={languageFilter} onValueChange={(v) => v && setLanguageFilter(v)}>
                 <SelectTrigger className="w-[110px] h-8 text-xs">
-                  <SelectValue placeholder="Language" />
+                  <SelectValue>Language</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Languages</SelectItem>

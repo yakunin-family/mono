@@ -272,9 +272,9 @@ export function SaveToLibraryDrawer({
             {/* Language */}
             <div className="space-y-2">
               <Label>Language</Label>
-              <Select value={language} onValueChange={setLanguage}>
+              <Select value={language} onValueChange={(v) => setLanguage(v ?? "")}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select language..." />
+                  <SelectValue>Select language...</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">None</SelectItem>

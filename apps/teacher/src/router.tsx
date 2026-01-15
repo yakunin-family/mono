@@ -1,5 +1,4 @@
 import { createRouter } from "@tanstack/react-router";
-import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
 import * as Convex from "./integrations/convex/provider";
 import * as TanstackQuery from "./integrations/tanstack-query/root-provider";
@@ -28,10 +27,8 @@ export const getRouter = () => {
     },
   });
 
-  setupRouterSsrQueryIntegration({
-    router,
-    queryClient: rqContext.queryClient,
-  });
+  // NOTE: SSR query integration disabled to avoid auth race condition with Convex
+  // Queries will only run on the client after auth is established
 
   return router;
 };

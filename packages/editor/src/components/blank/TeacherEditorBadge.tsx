@@ -62,16 +62,17 @@ export function TeacherEditorBadge({
       {!isEditing ? (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                variant="secondary"
-                className="cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
-                onClick={() => setIsEditing(true)}
-                contentEditable={false}
-                aria-label="Edit correct answer"
-              >
-                {correctAnswer || "[blank]"}
-              </Badge>
+            <TooltipTrigger
+              render={
+                <Badge
+                  variant="secondary"
+                  className="cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={() => setIsEditing(true)}
+                  aria-label="Edit correct answer"
+                />
+              }
+            >
+              {correctAnswer || "[blank]"}
             </TooltipTrigger>
             {hasAlternatives && (
               <TooltipContent>

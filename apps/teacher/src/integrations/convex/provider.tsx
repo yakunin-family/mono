@@ -1,8 +1,22 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { ConvexProvider } from "convex/react";
-import { useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { env } from "@/env";
+
+interface ConvexAuthState {
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}
+
+const ConvexAuthContext = createContext<ConvexAuthState>({
+  isLoading: true,
+  isAuthenticated: false,
+});
+
+export function useConvexAuthState() {
+  return useContext(ConvexAuthContext);
+}
 
 export const getContext = () => {
   const convexQueryClient = new ConvexQueryClient(env.VITE_CONVEX_URL, {
@@ -24,17 +38,26 @@ export default function AppConvexProvider({
   convexQueryClient: ConvexQueryClient;
   accessToken?: string | null;
 }) {
+  const [authState, setAuthState] = useState<ConvexAuthState>({
+    isLoading: true,
+    isAuthenticated: false,
+  });
+
   useEffect(() => {
     if (accessToken) {
       convexQueryClient.convexClient.setAuth(async () => accessToken);
+      setAuthState({ isLoading: false, isAuthenticated: true });
     } else {
       convexQueryClient.convexClient.clearAuth();
+      setAuthState({ isLoading: false, isAuthenticated: false });
     }
   }, [accessToken, convexQueryClient]);
 
   return (
-    <ConvexProvider client={convexQueryClient.convexClient}>
-      {children}
-    </ConvexProvider>
+    <ConvexAuthContext.Provider value={authState}>
+      <ConvexProvider client={convexQueryClient.convexClient}>
+        {children}
+      </ConvexProvider>
+    </ConvexAuthContext.Provider>
   );
 }
