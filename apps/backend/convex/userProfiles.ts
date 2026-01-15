@@ -13,11 +13,16 @@ export const createTeacher = authedMutation({
       .first();
 
     if (existing) {
+      // Update name if changed
+      if (existing.name !== ctx.user.name) {
+        await ctx.db.patch(existing._id, { name: ctx.user.name });
+      }
       return existing._id;
     }
 
     return await ctx.db.insert("teacher", {
       userId: ctx.user.id,
+      name: ctx.user.name,
       createdAt: Date.now(),
     });
   },
@@ -36,11 +41,16 @@ export const createStudent = authedMutation({
       .first();
 
     if (existing) {
+      // Update name if changed
+      if (existing.name !== ctx.user.name) {
+        await ctx.db.patch(existing._id, { name: ctx.user.name });
+      }
       return existing._id;
     }
 
     return await ctx.db.insert("student", {
       userId: ctx.user.id,
+      name: ctx.user.name,
       createdAt: Date.now(),
     });
   },

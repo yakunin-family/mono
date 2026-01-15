@@ -22,6 +22,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - ✅ Complex business logic explanations that clarify non-obvious behavior
    - **Rule of thumb:** If the comment won't be useful to someone reading the code in 6 months, don't write it.
 
+4. **Kebab-Case for All Files** - All file names must use kebab-case (lowercase with hyphens).
+   - ❌ `MyComponent.tsx`, `userProfile.ts`, `API_utils.ts`
+   - ✅ `my-component.tsx`, `user-profile.ts`, `api-utils.ts`
+   - This applies to all files: components, utilities, hooks, types, tests, etc.
+   - Exception: Framework-required files (e.g., `README.md`, `package.json`, config files like `tsconfig.json`)
+
 ## Repository Structure
 
 This is a **pnpm monorepo** managed by **Turborepo** with the following workspace structure:
@@ -389,8 +395,12 @@ export function MyNodeView(props: NodeViewProps) {
 ### UI Package (`packages/ui`)
 
 - Shared component library using **shadcn/ui**
-- Add new shadcn components: `pnpx shadcn@latest add <component>`
 - Components are built with `tsup` and consumed by apps via workspace references
+
+**Adding new components:**
+- **ALWAYS use shadcn CLI**: `cd packages/ui && pnpx shadcn@latest add <component>`
+- **NEVER manually create component files** - the CLI generates properly configured components with correct imports and styles
+- Export new components from `packages/ui/src/index.ts` after adding them
 
 ### Exercises Package (`packages/exercises`)
 
@@ -484,7 +494,7 @@ export function MyNodeView(props: NodeViewProps) {
 
 7. **Path Aliases**: Both apps use path aliases configured in `tsconfig.json`. Import from `@/` to reference `src/`.
 
-8. **shadcn Components**: Must be installed from the app directory where they'll be used (`apps/teacher` or `apps/student`), not from repo root.
+8. **shadcn Components**: Install using `cd packages/ui && pnpx shadcn@latest add <component>`. Always use the CLI, never manually create shadcn component files.
 
 9. **Authentication**:
    - Better Auth sessions are shared between apps (same domain in development)

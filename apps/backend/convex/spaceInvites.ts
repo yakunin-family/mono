@@ -209,8 +209,12 @@ export const acceptInvite = authedMutation({
     if (!studentRecord) {
       await ctx.db.insert("student", {
         userId: ctx.user.id,
+        name: ctx.user.name,
         createdAt: Date.now(),
       });
+    } else if (studentRecord.name !== ctx.user.name) {
+      // Update name if changed
+      await ctx.db.patch(studentRecord._id, { name: ctx.user.name });
     }
 
     // Create the space

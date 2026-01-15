@@ -18,10 +18,9 @@ import {
   SelectValue,
 } from "@package/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import {
-  ArrowLeftIcon,
   FileTextIcon,
   LayoutTemplateIcon,
   ListIcon,
@@ -33,7 +32,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-export const Route = createFileRoute("/_protected/library")({
+export const Route = createFileRoute("/_protected/_app/library")({
   component: LibraryPage,
 });
 
@@ -208,44 +207,35 @@ function LibraryPage() {
     searchQuery.trim().length > 0;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-background">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link to="/">
-              <Button variant="ghost" size="icon">
-                <ArrowLeftIcon className="size-4" />
-              </Button>
-            </Link>
-            <h1 className="text-2xl font-bold">Library</h1>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              setSearchMode((m) =>
-                m === "structured" ? "natural" : "structured",
-              )
-            }
-            className="text-xs gap-1"
-          >
-            {searchMode === "structured" ? (
-              <>
-                <ToggleLeftIcon className="size-4" />
-                Natural Search
-              </>
-            ) : (
-              <>
-                <ToggleRightIcon className="size-4" />
-                Structured
-              </>
-            )}
-          </Button>
-        </div>
-      </header>
-
-      <main className="flex-1 bg-muted p-6">
+    <main className="flex-1 bg-muted p-6">
         <div className="mx-auto max-w-4xl space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold">Library</h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setSearchMode((m) =>
+                  m === "structured" ? "natural" : "structured",
+                )
+              }
+              className="text-xs gap-1"
+            >
+              {searchMode === "structured" ? (
+                <>
+                  <ToggleLeftIcon className="size-4" />
+                  Natural Search
+                </>
+              ) : (
+                <>
+                  <ToggleRightIcon className="size-4" />
+                  Structured
+                </>
+              )}
+            </Button>
+          </div>
+
           {/* Search and Filters */}
           <div className="rounded-lg border bg-background p-4 space-y-3">
             {/* Search Input */}
@@ -495,7 +485,6 @@ function LibraryPage() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+    </main>
   );
 }

@@ -143,9 +143,6 @@ function SpaceDetailPage() {
                   {space.language}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {space.studentEmail}
-              </p>
             </div>
           </div>
 

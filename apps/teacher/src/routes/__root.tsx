@@ -1,6 +1,4 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
-import { getAuth } from "@workos/authkit-tanstack-react-start";
-import { AuthKitProvider } from "@workos/authkit-tanstack-react-start/client";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +9,8 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { createServerFn } from "@tanstack/react-start";
+import { getAuth } from "@workos/authkit-tanstack-react-start";
+import { AuthKitProvider } from "@workos/authkit-tanstack-react-start/client";
 
 import ConvexProvider from "../integrations/convex/provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -41,7 +41,9 @@ const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
           lastName: auth.user.lastName ?? undefined,
         }
       : null,
-    accessToken: auth.user ? (auth as { accessToken: string }).accessToken : null,
+    accessToken: auth.user
+      ? (auth as { accessToken: string }).accessToken
+      : null,
   };
 });
 

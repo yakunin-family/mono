@@ -15,13 +15,35 @@ export const getMySpacesAsTeacher = authedQuery({
       .withIndex("by_teacher", (q) => q.eq("teacherId", ctx.user.id))
       .collect();
 
-    // Return spaces with placeholder user info
-    // TODO: Store user names in teacher/student tables for display
-    const enrichedSpaces = spaces.map((space) => ({
-      ...space,
-      studentName: "Student",
-      studentEmail: "",
-    }));
+    const enrichedSpaces = await Promise.all(
+      spaces.map(async (space) => {
+        // Look up student info
+        const student = await ctx.db
+          .query("student")
+          .withIndex("by_userId", (q) => q.eq("userId", space.studentId))
+          .first();
+
+        // Get lesson count
+        const lessons = await ctx.db
+          .query("document")
+          .withIndex("by_space", (q) => q.eq("spaceId", space._id))
+          .collect();
+
+        // Get pending homework count
+        const incompleteHomework = await ctx.db
+          .query("homeworkItems")
+          .withIndex("by_space", (q) => q.eq("spaceId", space._id))
+          .filter((q) => q.eq(q.field("completedAt"), undefined))
+          .collect();
+
+        return {
+          ...space,
+          studentName: student?.name ?? "Student",
+          lessonCount: lessons.length,
+          pendingHomeworkCount: incompleteHomework.length,
+        };
+      }),
+    );
 
     // Sort by most recent first
     return enrichedSpaces.sort((a, b) => b.createdAt - a.createdAt);
@@ -40,9 +62,15 @@ export const getMySpacesAsStudent = authedQuery({
       .withIndex("by_student", (q) => q.eq("studentId", ctx.user.id))
       .collect();
 
-    // Enrich with homework count
+    // Enrich with teacher info and homework count
     const enrichedSpaces = await Promise.all(
       spaces.map(async (space) => {
+        // Look up teacher info
+        const teacher = await ctx.db
+          .query("teacher")
+          .withIndex("by_userId", (q) => q.eq("userId", space.teacherId))
+          .first();
+
         // Count incomplete homework items
         const incompleteHomework = await ctx.db
           .query("homeworkItems")
@@ -52,11 +80,10 @@ export const getMySpacesAsStudent = authedQuery({
 
         return {
           ...space,
-          teacherName: "Teacher",
-          teacherEmail: "",
+          teacherName: teacher?.name ?? "Teacher",
           pendingHomeworkCount: incompleteHomework.length,
         };
-      })
+      }),
     );
 
     return enrichedSpaces.sort((a, b) => b.createdAt - a.createdAt);
@@ -82,6 +109,17 @@ export const getSpace = authedQuery({
       return null;
     }
 
+    // Look up teacher and student info
+    const teacher = await ctx.db
+      .query("teacher")
+      .withIndex("by_userId", (q) => q.eq("userId", space.teacherId))
+      .first();
+
+    const student = await ctx.db
+      .query("student")
+      .withIndex("by_userId", (q) => q.eq("userId", space.studentId))
+      .first();
+
     // Get lesson count
     const lessons = await ctx.db
       .query("document")
@@ -99,10 +137,8 @@ export const getSpace = authedQuery({
 
     return {
       ...space,
-      teacherName: "Teacher",
-      teacherEmail: "",
-      studentName: "Student",
-      studentEmail: "",
+      teacherName: teacher?.name ?? "Teacher",
+      studentName: student?.name ?? "Student",
       lessonCount: lessons.length,
       pendingHomeworkCount: pendingHomework.length,
       completedHomeworkCount: completedHomework.length,

@@ -9,44 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ProtectedRouteImport } from './routes/_protected'
-import { Route as AuthRouteImport } from './routes/_auth'
-import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
-import { Route as ProtectedLibraryRouteImport } from './routes/_protected/library'
+import { Route as ProtectedRouteRouteImport } from './routes/_protected/route'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as ProtectedAppRouteRouteImport } from './routes/_protected/_app/route'
+import { Route as ProtectedAppIndexRouteImport } from './routes/_protected/_app/index'
 import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
 import { Route as ProtectedSpacesIdRouteImport } from './routes/_protected/spaces.$id'
+import { Route as ProtectedAppLibraryRouteImport } from './routes/_protected/_app/library'
 import { Route as ProtectedSpacesIdNewLessonRouteImport } from './routes/_protected/spaces.$id_.new-lesson'
 import { Route as ProtectedSpacesIdLessonLessonIdRouteImport } from './routes/_protected/spaces.$id_.lesson.$lessonId'
 
-const ProtectedRoute = ProtectedRouteImport.update({
+const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
   id: '/_protected',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
+const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedLibraryRoute = ProtectedLibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
-  getParentRoute: () => ProtectedRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
-  getParentRoute: () => AuthRoute,
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => AuthRoute,
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const ProtectedAppRouteRoute = ProtectedAppRouteRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+const ProtectedAppIndexRoute = ProtectedAppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProtectedAppRouteRoute,
 } as any)
 const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
   id: '/api/auth/callback',
@@ -56,51 +56,57 @@ const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
 const ProtectedSpacesIdRoute = ProtectedSpacesIdRouteImport.update({
   id: '/spaces/$id',
   path: '/spaces/$id',
-  getParentRoute: () => ProtectedRoute,
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+const ProtectedAppLibraryRoute = ProtectedAppLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => ProtectedAppRouteRoute,
 } as any)
 const ProtectedSpacesIdNewLessonRoute =
   ProtectedSpacesIdNewLessonRouteImport.update({
     id: '/spaces/$id_/new-lesson',
     path: '/spaces/$id/new-lesson',
-    getParentRoute: () => ProtectedRoute,
+    getParentRoute: () => ProtectedRouteRoute,
   } as any)
 const ProtectedSpacesIdLessonLessonIdRoute =
   ProtectedSpacesIdLessonLessonIdRouteImport.update({
     id: '/spaces/$id_/lesson/$lessonId',
     path: '/spaces/$id/lesson/$lessonId',
-    getParentRoute: () => ProtectedRoute,
+    getParentRoute: () => ProtectedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
-  '/library': typeof ProtectedLibraryRoute
-  '/': typeof ProtectedIndexRoute
+  '/library': typeof ProtectedAppLibraryRoute
   '/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/': typeof ProtectedAppIndexRoute
   '/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
-  '/library': typeof ProtectedLibraryRoute
-  '/': typeof ProtectedIndexRoute
+  '/library': typeof ProtectedAppLibraryRoute
   '/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/': typeof ProtectedAppIndexRoute
   '/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_auth': typeof AuthRouteWithChildren
-  '/_protected': typeof ProtectedRouteWithChildren
+  '/_auth': typeof AuthRouteRouteWithChildren
+  '/_protected': typeof ProtectedRouteRouteWithChildren
+  '/_protected/_app': typeof ProtectedAppRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/signup': typeof AuthSignupRoute
-  '/_protected/library': typeof ProtectedLibraryRoute
-  '/_protected/': typeof ProtectedIndexRoute
+  '/_protected/_app/library': typeof ProtectedAppLibraryRoute
   '/_protected/spaces/$id': typeof ProtectedSpacesIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/_protected/_app/': typeof ProtectedAppIndexRoute
   '/_protected/spaces/$id_/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/_protected/spaces/$id_/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
@@ -110,9 +116,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/library'
-    | '/'
     | '/spaces/$id'
     | '/api/auth/callback'
+    | '/'
     | '/spaces/$id/new-lesson'
     | '/spaces/$id/lesson/$lessonId'
   fileRoutesByTo: FileRoutesByTo
@@ -120,28 +126,29 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/library'
-    | '/'
     | '/spaces/$id'
     | '/api/auth/callback'
+    | '/'
     | '/spaces/$id/new-lesson'
     | '/spaces/$id/lesson/$lessonId'
   id:
     | '__root__'
     | '/_auth'
     | '/_protected'
+    | '/_protected/_app'
     | '/_auth/login'
     | '/_auth/signup'
-    | '/_protected/library'
-    | '/_protected/'
+    | '/_protected/_app/library'
     | '/_protected/spaces/$id'
     | '/api/auth/callback'
+    | '/_protected/_app/'
     | '/_protected/spaces/$id_/new-lesson'
     | '/_protected/spaces/$id_/lesson/$lessonId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthRoute: typeof AuthRouteWithChildren
-  ProtectedRoute: typeof ProtectedRouteWithChildren
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  ProtectedRouteRoute: typeof ProtectedRouteRouteWithChildren
   ApiAuthCallbackRoute: typeof ApiAuthCallbackRoute
 }
 
@@ -151,43 +158,43 @@ declare module '@tanstack/react-router' {
       id: '/_protected'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof ProtectedRouteImport
+      preLoaderRoute: typeof ProtectedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
       id: '/_auth'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof AuthRouteImport
+      preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_protected/': {
-      id: '/_protected/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof ProtectedIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/library': {
-      id: '/_protected/library'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof ProtectedLibraryRouteImport
-      parentRoute: typeof ProtectedRoute
     }
     '/_auth/signup': {
       id: '/_auth/signup'
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof AuthSignupRouteImport
-      parentRoute: typeof AuthRoute
+      parentRoute: typeof AuthRouteRoute
     }
     '/_auth/login': {
       id: '/_auth/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof AuthRoute
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_protected/_app': {
+      id: '/_protected/_app'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof ProtectedAppRouteRouteImport
+      parentRoute: typeof ProtectedRouteRoute
+    }
+    '/_protected/_app/': {
+      id: '/_protected/_app/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof ProtectedAppIndexRouteImport
+      parentRoute: typeof ProtectedAppRouteRoute
     }
     '/api/auth/callback': {
       id: '/api/auth/callback'
@@ -201,60 +208,80 @@ declare module '@tanstack/react-router' {
       path: '/spaces/$id'
       fullPath: '/spaces/$id'
       preLoaderRoute: typeof ProtectedSpacesIdRouteImport
-      parentRoute: typeof ProtectedRoute
+      parentRoute: typeof ProtectedRouteRoute
+    }
+    '/_protected/_app/library': {
+      id: '/_protected/_app/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof ProtectedAppLibraryRouteImport
+      parentRoute: typeof ProtectedAppRouteRoute
     }
     '/_protected/spaces/$id_/new-lesson': {
       id: '/_protected/spaces/$id_/new-lesson'
       path: '/spaces/$id/new-lesson'
       fullPath: '/spaces/$id/new-lesson'
       preLoaderRoute: typeof ProtectedSpacesIdNewLessonRouteImport
-      parentRoute: typeof ProtectedRoute
+      parentRoute: typeof ProtectedRouteRoute
     }
     '/_protected/spaces/$id_/lesson/$lessonId': {
       id: '/_protected/spaces/$id_/lesson/$lessonId'
       path: '/spaces/$id/lesson/$lessonId'
       fullPath: '/spaces/$id/lesson/$lessonId'
       preLoaderRoute: typeof ProtectedSpacesIdLessonLessonIdRouteImport
-      parentRoute: typeof ProtectedRoute
+      parentRoute: typeof ProtectedRouteRoute
     }
   }
 }
 
-interface AuthRouteChildren {
+interface AuthRouteRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
 }
 
-const AuthRouteChildren: AuthRouteChildren = {
+const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
 }
 
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
+  AuthRouteRouteChildren,
+)
 
-interface ProtectedRouteChildren {
-  ProtectedLibraryRoute: typeof ProtectedLibraryRoute
-  ProtectedIndexRoute: typeof ProtectedIndexRoute
+interface ProtectedAppRouteRouteChildren {
+  ProtectedAppLibraryRoute: typeof ProtectedAppLibraryRoute
+  ProtectedAppIndexRoute: typeof ProtectedAppIndexRoute
+}
+
+const ProtectedAppRouteRouteChildren: ProtectedAppRouteRouteChildren = {
+  ProtectedAppLibraryRoute: ProtectedAppLibraryRoute,
+  ProtectedAppIndexRoute: ProtectedAppIndexRoute,
+}
+
+const ProtectedAppRouteRouteWithChildren =
+  ProtectedAppRouteRoute._addFileChildren(ProtectedAppRouteRouteChildren)
+
+interface ProtectedRouteRouteChildren {
+  ProtectedAppRouteRoute: typeof ProtectedAppRouteRouteWithChildren
   ProtectedSpacesIdRoute: typeof ProtectedSpacesIdRoute
   ProtectedSpacesIdNewLessonRoute: typeof ProtectedSpacesIdNewLessonRoute
   ProtectedSpacesIdLessonLessonIdRoute: typeof ProtectedSpacesIdLessonLessonIdRoute
 }
 
-const ProtectedRouteChildren: ProtectedRouteChildren = {
-  ProtectedLibraryRoute: ProtectedLibraryRoute,
-  ProtectedIndexRoute: ProtectedIndexRoute,
+const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
+  ProtectedAppRouteRoute: ProtectedAppRouteRouteWithChildren,
   ProtectedSpacesIdRoute: ProtectedSpacesIdRoute,
   ProtectedSpacesIdNewLessonRoute: ProtectedSpacesIdNewLessonRoute,
   ProtectedSpacesIdLessonLessonIdRoute: ProtectedSpacesIdLessonLessonIdRoute,
 }
 
-const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
-  ProtectedRouteChildren,
+const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
+  ProtectedRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  AuthRoute: AuthRouteWithChildren,
-  ProtectedRoute: ProtectedRouteWithChildren,
+  AuthRouteRoute: AuthRouteRouteWithChildren,
+  ProtectedRouteRoute: ProtectedRouteRouteWithChildren,
   ApiAuthCallbackRoute: ApiAuthCallbackRoute,
 }
 export const routeTree = rootRouteImport

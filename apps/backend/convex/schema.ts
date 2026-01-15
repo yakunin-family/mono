@@ -3,6 +3,7 @@ import { Infer, v } from "convex/values";
 
 const teacher = defineTable({
   userId: v.string(), // WorkOS user ID
+  name: v.optional(v.string()), // Display name (updated on login)
   createdAt: v.number(),
   aiTokensUsed: v.optional(v.number()), // Total AI tokens consumed
   aiQuotaLimit: v.optional(v.number()), // Monthly quota (not enforced yet)
@@ -18,6 +19,7 @@ export type Invite = Infer<typeof schemas.tables.invite.validator>;
 
 const student = defineTable({
   userId: v.string(), // WorkOS user ID
+  name: v.optional(v.string()), // Display name (updated on login)
   createdAt: v.number(),
 }).index("by_userId", ["userId"]);
 export type Student = Infer<typeof schemas.tables.student.validator>;
