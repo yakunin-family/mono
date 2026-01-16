@@ -1,9 +1,4 @@
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  Separator,
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -14,13 +9,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
 } from "@package/ui";
 import {
   createFileRoute,
   Link,
   Outlet,
-  useMatches,
   useRouteContext,
 } from "@tanstack/react-router";
 import { HomeIcon, LibraryIcon } from "lucide-react";

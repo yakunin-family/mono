@@ -140,6 +140,60 @@ export const getSpaceLessons = authedQuery({
   },
 });
 
+/**
+ * Get all lessons for a space with homework counts
+ * Used for the lessons table on the space detail page
+ */
+export const getSpaceLessonsWithHomeworkCounts = authedQuery({
+  args: {
+    spaceId: v.id("spaces"),
+  },
+  handler: async (ctx, args) => {
+    // Check space access
+    const space = await ctx.db.get(args.spaceId);
+    if (!space) {
+      return [];
+    }
+
+    // Verify user is either teacher or student
+    if (space.teacherId !== ctx.user.id && space.studentId !== ctx.user.id) {
+      return [];
+    }
+
+    // Get all documents for this space
+    const documents = await ctx.db
+      .query("document")
+      .withIndex("by_space", (q) => q.eq("spaceId", args.spaceId))
+      .collect();
+
+    // Get all homework items for this space
+    const homeworkItems = await ctx.db
+      .query("homeworkItems")
+      .withIndex("by_space", (q) => q.eq("spaceId", args.spaceId))
+      .collect();
+
+    // Count homework items per document
+    const homeworkCountByDocument = new Map<string, number>();
+    for (const item of homeworkItems) {
+      const count = homeworkCountByDocument.get(item.documentId) ?? 0;
+      homeworkCountByDocument.set(item.documentId, count + 1);
+    }
+
+    // Enrich documents with homework counts
+    const enrichedDocuments = documents.map((doc) => ({
+      ...doc,
+      homeworkCount: homeworkCountByDocument.get(doc._id) ?? 0,
+    }));
+
+    // Sort by lesson number
+    return enrichedDocuments.sort((a, b) => {
+      const aNum = a.lessonNumber ?? 0;
+      const bNum = b.lessonNumber ?? 0;
+      return aNum - bNum;
+    });
+  },
+});
+
 // ============================================
 // LESSON (Space-based Document) OPERATIONS
 // ============================================
