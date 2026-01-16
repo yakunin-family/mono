@@ -20,12 +20,23 @@ import {
   Outlet,
   useRouteContext,
 } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { HomeIcon, LibraryIcon } from "lucide-react";
 
 import { NavUser } from "@/components/sidebar/nav-user";
 import { UserAvatar } from "@/components/user-avatar";
 
+const getSidebarState = createServerFn({ method: "GET" }).handler(async () => {
+  const sidebarCookie = getCookie("sidebar_state");
+  return sidebarCookie !== "false";
+});
+
 export const Route = createFileRoute("/_protected/_app")({
+  beforeLoad: async () => {
+    const sidebarOpen = await getSidebarState();
+    return { sidebarOpen };
+  },
   loader: async ({ context }) => {
     const spaces = await context.queryClient.ensureQueryData(
       convexQuery(api.spaces.getMySpacesAsTeacher, {}),
@@ -37,6 +48,7 @@ export const Route = createFileRoute("/_protected/_app")({
 
 function RouteComponent() {
   const { spaces: preloadedSpaces } = Route.useLoaderData();
+  const { sidebarOpen } = Route.useRouteContext();
   const { user } = useRouteContext({ from: "/_protected" });
 
   const spacesQuery = useQuery({
@@ -49,7 +61,7 @@ function RouteComponent() {
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User";
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={sidebarOpen}>
       <Sidebar collapsible="icon" variant="inset">
         <SidebarContent>
           <SidebarGroup>
