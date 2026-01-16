@@ -107,7 +107,7 @@ function SpaceDetailPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbPage>Spaces</BreadcrumbPage>
+                <BreadcrumbPage>Students</BreadcrumbPage>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>

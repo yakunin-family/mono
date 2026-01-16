@@ -15,6 +15,7 @@ export const ensureTeacherRole = authedMutation({
     if (existingProfile) {
       await ctx.db.patch(existingProfile._id, {
         name: ctx.user.name,
+        pictureUrl: ctx.user.pictureUrl,
         isTeacher: true,
       });
       return existingProfile._id;
@@ -23,6 +24,7 @@ export const ensureTeacherRole = authedMutation({
     return await ctx.db.insert("userProfile", {
       userId: ctx.user.id,
       name: ctx.user.name,
+      pictureUrl: ctx.user.pictureUrl,
       createdAt: Date.now(),
       isTeacher: true,
       isStudent: false,
@@ -45,6 +47,7 @@ export const ensureStudentRole = authedMutation({
     if (existingProfile) {
       await ctx.db.patch(existingProfile._id, {
         name: ctx.user.name,
+        pictureUrl: ctx.user.pictureUrl,
         isStudent: true,
       });
       return existingProfile._id;
@@ -53,6 +56,7 @@ export const ensureStudentRole = authedMutation({
     return await ctx.db.insert("userProfile", {
       userId: ctx.user.id,
       name: ctx.user.name,
+      pictureUrl: ctx.user.pictureUrl,
       createdAt: Date.now(),
       isTeacher: false,
       isStudent: true,

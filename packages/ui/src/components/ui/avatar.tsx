@@ -2,16 +2,13 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Avatar({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
+function Avatar({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="avatar"
       className={cn(
         "relative flex size-8 shrink-0 overflow-hidden rounded-full",
-        className
+        className,
       )}
       {...props}
     />
@@ -28,7 +25,7 @@ function AvatarImage({
   onLoadingStatusChange?: (status: "loading" | "loaded" | "error") => void;
 }) {
   const [status, setStatus] = React.useState<"loading" | "loaded" | "error">(
-    "loading"
+    "loading",
   );
 
   React.useEffect(() => {
@@ -65,20 +62,17 @@ function AvatarImage({
   );
 }
 
-function AvatarFallback({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
+function AvatarFallback({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="avatar-fallback"
       className={cn(
         "bg-muted flex size-full items-center justify-center rounded-full",
-        className
+        className,
       )}
       {...props}
     />
   );
 }
 
-export { Avatar, AvatarImage, AvatarFallback };
+export { Avatar, AvatarFallback, AvatarImage };

@@ -6,6 +6,7 @@ export interface AuthUser {
   id: string;
   email?: string;
   name?: string;
+  pictureUrl?: string;
 }
 
 type Ctx = QueryCtx | MutationCtx | ActionCtx;
@@ -24,6 +25,7 @@ export async function getAuthUser(ctx: Ctx): Promise<AuthUser | null> {
     id: identity.subject,
     email: identity.email,
     name: identity.name,
+    pictureUrl: identity.pictureUrl,
   };
 }
 

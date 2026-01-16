@@ -1,9 +1,4 @@
-import { ChevronsUpDown, LogOut } from "lucide-react";
-
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -16,24 +11,18 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@package/ui";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 
+import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth-client";
 
 interface NavUserProps {
   user: {
+    id: string;
     name: string;
     email: string;
     avatar?: string;
   };
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 export function NavUser({ user }: NavUserProps) {
@@ -50,12 +39,12 @@ export function NavUser({ user }: NavUserProps) {
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
-                    {getInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  id={user.id}
+                  pictureUrl={user.avatar}
+                  name={user.name}
+                  size={32}
+                />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
@@ -73,12 +62,12 @@ export function NavUser({ user }: NavUserProps) {
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">
-                      {getInitials(user.name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    id={user.id}
+                    pictureUrl={user.avatar}
+                    name={user.name}
+                    size={32}
+                  />
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
                     <span className="truncate text-xs">{user.email}</span>

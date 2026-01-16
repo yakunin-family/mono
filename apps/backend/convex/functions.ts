@@ -23,6 +23,7 @@ export const authedQuery = customQuery(
       id: identity.subject,
       email: identity.email,
       name: identity.name,
+      pictureUrl: identity.pictureUrl,
     };
     return { user };
   }),
@@ -42,6 +43,7 @@ export const authedMutation = customMutation(
       id: identity.subject,
       email: identity.email,
       name: identity.name,
+      pictureUrl: identity.pictureUrl,
     };
     return { user };
   }),
@@ -61,6 +63,7 @@ export const authedAction = customAction(
       id: identity.subject,
       email: identity.email,
       name: identity.name,
+      pictureUrl: identity.pictureUrl,
     };
     return { user };
   }),

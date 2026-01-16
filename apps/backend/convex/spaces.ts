@@ -39,6 +39,7 @@ export const getMySpacesAsTeacher = authedQuery({
         return {
           ...space,
           studentName: studentProfile?.name ?? "Student",
+          studentPictureUrl: studentProfile?.pictureUrl,
           lessonCount: lessons.length,
           pendingHomeworkCount: incompleteHomework.length,
         };

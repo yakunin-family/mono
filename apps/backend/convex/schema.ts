@@ -5,6 +5,7 @@ import { Infer, v } from "convex/values";
 const userProfile = defineTable({
   userId: v.string(), // WorkOS user ID (unique)
   name: v.optional(v.string()), // Display name
+  pictureUrl: v.optional(v.string()), // Profile picture URL from auth provider
   createdAt: v.number(),
   isTeacher: v.boolean(),
   isStudent: v.boolean(),
