@@ -4,7 +4,6 @@ import {
   DocumentEditor,
   type DocumentEditorHandle,
   getRandomUserColor,
-  LibraryMetadata,
   SaveToLibraryData,
   SaveToLibraryDrawer,
 } from "@package/editor";
@@ -92,7 +91,7 @@ function LessonEditorPage() {
   const libraryQuery = useQuery({
     queryKey: ["library"],
     queryFn: async () => {
-      return await convex.query(api.exerciseBank.getMyItems, {});
+      return await convex.query(api.library.getMyItems, {});
     },
   });
 
@@ -146,7 +145,7 @@ function LessonEditorPage() {
       title: string;
       content: string;
     }) => {
-      await convex.mutation(api.exerciseBank.saveExercise, { title, content });
+      await convex.mutation(api.library.saveExercise, { title, content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["library"] });
@@ -161,7 +160,7 @@ function LessonEditorPage() {
       title: string;
       content: string;
     }) => {
-      await convex.mutation(api.exerciseBank.saveItem, {
+      await convex.mutation(api.library.saveItem, {
         title,
         content,
         type: "group",
@@ -184,7 +183,7 @@ function LessonEditorPage() {
       description?: string;
       metadata?: SaveToLibraryData["metadata"];
     }) => {
-      await convex.mutation(api.exerciseBank.saveItemWithMetadata, {
+      await convex.mutation(api.library.saveItemWithMetadata, {
         title,
         content,
         type: "template",
@@ -195,7 +194,6 @@ function LessonEditorPage() {
               levels: metadata.levels,
               topic: metadata.topic,
               tags: metadata.tags,
-              autoTagged: metadata.autoTagged,
             }
           : undefined,
       });
@@ -206,11 +204,6 @@ function LessonEditorPage() {
     },
   });
 
-  const autoTagMutation = useMutation({
-    mutationFn: async (content: string) => {
-      return await convex.action(api.exerciseBank.autoTagContent, { content });
-    },
-  });
 
   useEffect(() => {
     if (lessonQuery.data && !isTitleDirty) {
@@ -433,18 +426,7 @@ function LessonEditorPage() {
           open={saveTemplateModalOpen}
           onOpenChange={setSaveTemplateModalOpen}
           type="template"
-          contentForTagging={getTemplateContent()}
           onSave={handleSaveAsTemplate}
-          onAutoTag={async (content) => {
-            const result = await autoTagMutation.mutateAsync(content);
-            return {
-              language: result.language,
-              levels: result.levels as LibraryMetadata["levels"],
-              topic: result.topic,
-              tags: result.tags,
-              autoTagged: result.autoTagged,
-            };
-          }}
           isSaving={saveTemplateMutation.isPending}
         />
       </StandalonePageContent>

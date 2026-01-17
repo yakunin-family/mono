@@ -41,9 +41,9 @@ export function SaveExerciseModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Save to Exercise Bank</DialogTitle>
+          <DialogTitle>Save to Library</DialogTitle>
           <DialogDescription>
-            Give this exercise a title to save it to your bank
+            Give this exercise a title to save it to your library
           </DialogDescription>
         </DialogHeader>
 

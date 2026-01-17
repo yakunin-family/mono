@@ -73,13 +73,13 @@ function LibraryPage() {
   const libraryQuery = useQuery({
     queryKey: ["library"],
     queryFn: async () => {
-      return await convex.query(api.exerciseBank.getMyItems, {});
+      return await convex.query(api.library.getMyItems, {});
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (itemId: string) => {
-      await convex.mutation(api.exerciseBank.deleteItem, {
+      await convex.mutation(api.library.deleteItem, {
         itemId: itemId as never,
       });
     },

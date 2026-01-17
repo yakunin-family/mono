@@ -17,13 +17,13 @@ import * as Y from "yjs";
 
 import type { EditorMode } from "@/types";
 
-export interface ExerciseBankStorage {
+export interface LibraryStorage {
   saveExercise?: (title: string, content: string) => Promise<void>;
 }
 
 declare module "@tiptap/core" {
   interface Storage {
-    exerciseBank: ExerciseBankStorage;
+    library: LibraryStorage;
   }
 }
 
@@ -169,10 +169,10 @@ export function DocumentEditorInternal({
     }
   }, [editor, mode]);
 
-  // Set exercise bank save callback in editor storage
+  // Set library save callback in editor storage
   useEffect(() => {
     if (editor) {
-      editor.storage.exerciseBank = {
+      editor.storage.library = {
         saveExercise: onSaveExerciseToBank,
       };
     }

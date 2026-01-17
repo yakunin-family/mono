@@ -1,6 +1,6 @@
 import { generateObject } from "ai";
+import { ConvexError } from "convex/values";
 import { v } from "convex/values";
-import invariant from "tiny-invariant";
 
 import { action } from "./_generated/server";
 import { buildAutoTagPrompt } from "./_generated_prompts";
@@ -115,11 +115,12 @@ export const getItem = authedQuery({
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.itemId);
 
-    invariant(item, "Item not found");
-    invariant(
-      item.ownerId === ctx.user.id,
-      "Not authorized to access this item"
-    );
+    if (!item) {
+      throw new ConvexError("Item not found");
+    }
+    if (item.ownerId !== ctx.user.id) {
+      throw new ConvexError("Not authorized to access this item");
+    }
 
     return item;
   },
@@ -135,11 +136,12 @@ export const getExercise = authedQuery({
   handler: async (ctx, args) => {
     const exercise = await ctx.db.get(args.exerciseId);
 
-    invariant(exercise, "Exercise not found");
-    invariant(
-      exercise.ownerId === ctx.user.id,
-      "Not authorized to access this exercise"
-    );
+    if (!exercise) {
+      throw new ConvexError("Exercise not found");
+    }
+    if (exercise.ownerId !== ctx.user.id) {
+      throw new ConvexError("Not authorized to access this exercise");
+    }
 
     return exercise;
   },
@@ -156,11 +158,12 @@ export const updateItemTitle = authedMutation({
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.itemId);
 
-    invariant(item, "Item not found");
-    invariant(
-      item.ownerId === ctx.user.id,
-      "Not authorized to modify this item"
-    );
+    if (!item) {
+      throw new ConvexError("Item not found");
+    }
+    if (item.ownerId !== ctx.user.id) {
+      throw new ConvexError("Not authorized to modify this item");
+    }
 
     await ctx.db.patch(args.itemId, {
       title: args.title,
@@ -180,11 +183,12 @@ export const updateExerciseTitle = authedMutation({
   handler: async (ctx, args) => {
     const exercise = await ctx.db.get(args.exerciseId);
 
-    invariant(exercise, "Exercise not found");
-    invariant(
-      exercise.ownerId === ctx.user.id,
-      "Not authorized to modify this exercise"
-    );
+    if (!exercise) {
+      throw new ConvexError("Exercise not found");
+    }
+    if (exercise.ownerId !== ctx.user.id) {
+      throw new ConvexError("Not authorized to modify this exercise");
+    }
 
     await ctx.db.patch(args.exerciseId, {
       title: args.title,
@@ -203,11 +207,12 @@ export const deleteItem = authedMutation({
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.itemId);
 
-    invariant(item, "Item not found");
-    invariant(
-      item.ownerId === ctx.user.id,
-      "Not authorized to delete this item"
-    );
+    if (!item) {
+      throw new ConvexError("Item not found");
+    }
+    if (item.ownerId !== ctx.user.id) {
+      throw new ConvexError("Not authorized to delete this item");
+    }
 
     await ctx.db.delete(args.itemId);
   },
@@ -223,11 +228,12 @@ export const deleteExercise = authedMutation({
   handler: async (ctx, args) => {
     const exercise = await ctx.db.get(args.exerciseId);
 
-    invariant(exercise, "Exercise not found");
-    invariant(
-      exercise.ownerId === ctx.user.id,
-      "Not authorized to delete this exercise"
-    );
+    if (!exercise) {
+      throw new ConvexError("Exercise not found");
+    }
+    if (exercise.ownerId !== ctx.user.id) {
+      throw new ConvexError("Not authorized to delete this exercise");
+    }
 
     await ctx.db.delete(args.exerciseId);
   },
@@ -345,8 +351,12 @@ export const updateItemMetadata = authedMutation({
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.itemId);
 
-    invariant(item, "Item not found");
-    invariant(item.ownerId === ctx.user.id, "Not authorized to modify this item");
+    if (!item) {
+      throw new ConvexError("Item not found");
+    }
+    if (item.ownerId !== ctx.user.id) {
+      throw new ConvexError("Not authorized to modify this item");
+    }
 
     const searchText = buildSearchText(item.title, item.description, args.metadata);
 

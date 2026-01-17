@@ -250,6 +250,32 @@ defineTable({
 }).index("userId", ["userId"]);
 ```
 
+**Error Handling with ConvexError**:
+
+Use `ConvexError` from `convex/values` for all user-facing errors in Convex functions. This ensures error messages are always preserved and visible in logs/client.
+
+```ts
+import { ConvexError } from "convex/values";
+
+// ✅ CORRECT - Use ConvexError with descriptive messages
+if (!document) {
+  throw new ConvexError("Document not found");
+}
+if (!hasAccess) {
+  throw new ConvexError("Not authorized to access this document");
+}
+
+// ❌ WRONG - Never use tiny-invariant or similar assertion libraries
+// They strip messages in production, making debugging impossible
+invariant(document, "Document not found"); // Don't do this
+```
+
+Key points:
+- Always use `ConvexError` for expected error conditions (auth, permissions, validation, not found)
+- Use plain `Error` only for unexpected internal errors in actions
+- Error messages should be clear and user-friendly
+- Never use `tiny-invariant` or similar libraries that strip messages in production
+
 ### Document Editor Package (`packages/editor`)
 
 - **Purpose**: Shared collaborative rich-text editor used by both teacher and student apps

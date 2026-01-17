@@ -1,5 +1,5 @@
+import { ConvexError } from "convex/values";
 import { v } from "convex/values";
-import invariant from "tiny-invariant";
 
 import { verifySpaceAccess } from "./accessControl";
 import { authedMutation, authedQuery } from "./functions";
@@ -276,10 +276,14 @@ export const markAsHomework = authedMutation({
   handler: async (ctx, args) => {
     // Get document
     const document = await ctx.db.get(args.documentId);
-    invariant(document, "Document not found");
+    if (!document) {
+      throw new ConvexError("Document not found");
+    }
 
     // Verify teacher access
-    invariant(document.spaceId, "Document is not in a space");
+    if (!document.spaceId) {
+      throw new ConvexError("Document is not in a space");
+    }
 
     const { hasAccess, isTeacher } = await verifySpaceAccess(
       ctx,
@@ -287,8 +291,12 @@ export const markAsHomework = authedMutation({
       ctx.user.id,
     );
 
-    invariant(hasAccess, "Space not found");
-    invariant(isTeacher, "Only the teacher can mark homework");
+    if (!hasAccess) {
+      throw new ConvexError("Space not found");
+    }
+    if (!isTeacher) {
+      throw new ConvexError("Only the teacher can mark homework");
+    }
 
     // Check if already marked as homework
     const existing = await ctx.db
@@ -299,7 +307,9 @@ export const markAsHomework = authedMutation({
       )
       .first();
 
-    invariant(!existing, "This exercise is already marked as homework");
+    if (existing) {
+      throw new ConvexError("This exercise is already marked as homework");
+    }
 
     // Create homework item
     const homeworkId = await ctx.db.insert("homeworkItems", {
@@ -323,7 +333,9 @@ export const removeFromHomework = authedMutation({
   },
   handler: async (ctx, args) => {
     const homeworkItem = await ctx.db.get(args.homeworkId);
-    invariant(homeworkItem, "Homework item not found");
+    if (!homeworkItem) {
+      throw new ConvexError("Homework item not found");
+    }
 
     // Verify teacher access through space
     const { hasAccess, isTeacher } = await verifySpaceAccess(
@@ -332,8 +344,12 @@ export const removeFromHomework = authedMutation({
       ctx.user.id,
     );
 
-    invariant(hasAccess, "Space not found");
-    invariant(isTeacher, "Only the teacher can remove homework");
+    if (!hasAccess) {
+      throw new ConvexError("Space not found");
+    }
+    if (!isTeacher) {
+      throw new ConvexError("Only the teacher can remove homework");
+    }
 
     await ctx.db.delete(args.homeworkId);
 
@@ -354,7 +370,9 @@ export const bulkMarkAsHomework = authedMutation({
   handler: async (ctx, args) => {
     // Get document
     const document = await ctx.db.get(args.documentId);
-    invariant(document && document.spaceId, "Document not found or not in a space");
+    if (!document || !document.spaceId) {
+      throw new ConvexError("Document not found or not in a space");
+    }
 
     // Verify teacher access
     const { hasAccess, isTeacher } = await verifySpaceAccess(
@@ -363,8 +381,12 @@ export const bulkMarkAsHomework = authedMutation({
       ctx.user.id,
     );
 
-    invariant(hasAccess, "Space not found");
-    invariant(isTeacher, "Only the teacher can mark homework");
+    if (!hasAccess) {
+      throw new ConvexError("Space not found");
+    }
+    if (!isTeacher) {
+      throw new ConvexError("Only the teacher can mark homework");
+    }
 
     // Get existing homework for this document
     const existingHomework = await ctx.db
@@ -413,7 +435,9 @@ export const completeHomework = authedMutation({
   },
   handler: async (ctx, args) => {
     const homeworkItem = await ctx.db.get(args.homeworkId);
-    invariant(homeworkItem, "Homework item not found");
+    if (!homeworkItem) {
+      throw new ConvexError("Homework item not found");
+    }
 
     // Verify student access through space
     const { hasAccess, isStudent } = await verifySpaceAccess(
@@ -422,8 +446,12 @@ export const completeHomework = authedMutation({
       ctx.user.id,
     );
 
-    invariant(hasAccess, "Space not found");
-    invariant(isStudent, "Only the student can mark homework as complete");
+    if (!hasAccess) {
+      throw new ConvexError("Space not found");
+    }
+    if (!isStudent) {
+      throw new ConvexError("Only the student can mark homework as complete");
+    }
 
     // Already completed?
     if (homeworkItem.completedAt) {
@@ -448,7 +476,9 @@ export const uncompleteHomework = authedMutation({
   },
   handler: async (ctx, args) => {
     const homeworkItem = await ctx.db.get(args.homeworkId);
-    invariant(homeworkItem, "Homework item not found");
+    if (!homeworkItem) {
+      throw new ConvexError("Homework item not found");
+    }
 
     // Verify student access through space
     const { hasAccess, isStudent } = await verifySpaceAccess(
@@ -457,8 +487,12 @@ export const uncompleteHomework = authedMutation({
       ctx.user.id,
     );
 
-    invariant(hasAccess, "Space not found");
-    invariant(isStudent, "Only the student can undo completion");
+    if (!hasAccess) {
+      throw new ConvexError("Space not found");
+    }
+    if (!isStudent) {
+      throw new ConvexError("Only the student can undo completion");
+    }
 
     await ctx.db.patch(args.homeworkId, {
       completedAt: undefined,

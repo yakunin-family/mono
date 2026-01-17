@@ -4,7 +4,7 @@ import {
   customMutation,
   customQuery,
 } from "convex-helpers/server/customFunctions";
-import invariant from "tiny-invariant";
+import { ConvexError } from "convex/values";
 
 import { action, mutation, query } from "./_generated/server";
 import type { AuthUser } from "./auth";
@@ -18,7 +18,9 @@ export const authedQuery = customQuery(
   query,
   customCtx(async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    invariant(identity, "Not authenticated");
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
     const user: AuthUser = {
       id: identity.subject,
       email: identity.email,
@@ -38,7 +40,9 @@ export const authedMutation = customMutation(
   mutation,
   customCtx(async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    invariant(identity, "Not authenticated");
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
     const user: AuthUser = {
       id: identity.subject,
       email: identity.email,
@@ -58,7 +62,9 @@ export const authedAction = customAction(
   action,
   customCtx(async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    invariant(identity, "Not authenticated");
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
     const user: AuthUser = {
       id: identity.subject,
       email: identity.email,

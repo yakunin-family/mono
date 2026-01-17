@@ -182,7 +182,7 @@ const server = Server.configure({
           console.log("Initializing from template:", document.templateId);
 
           // Fetch the template content
-          const template = await authClient.query(api.exerciseBank.getItem, {
+          const template = await authClient.query(api.library.getItem, {
             itemId: document.templateId,
           });
 

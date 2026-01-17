@@ -47,7 +47,7 @@ export function CreateLessonDialog({
   });
 
   const templatesQuery = useQuery({
-    ...convexQuery(api.exerciseBank.getMyItems, { type: "template" }),
+    ...convexQuery(api.library.getMyItems, { type: "template" }),
     enabled: open,
   });
 

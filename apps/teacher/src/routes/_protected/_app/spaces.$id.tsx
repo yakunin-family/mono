@@ -154,7 +154,7 @@ function SpaceDetailPageContent() {
   const [createLessonDialogOpen, setCreateLessonDialogOpen] = useState(false);
 
   const templatesQuery = useQuery({
-    ...convexQuery(api.exerciseBank.getMyItems, { type: "template" }),
+    ...convexQuery(api.library.getMyItems, { type: "template" }),
   });
 
   const spaceQuery = useQuery({

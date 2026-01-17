@@ -91,8 +91,8 @@ export function ExerciseView(props: NodeViewProps) {
     },
   });
 
-  // Existing save to bank functionality
-  const saveExercise = editor.storage.exerciseBank?.saveExercise;
+  // Existing save to library functionality
+  const saveExercise = editor.storage.library?.saveExercise;
 
   const handleSaveToBank = async () => {
     if (!saveExercise) return;

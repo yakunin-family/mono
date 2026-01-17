@@ -14,11 +14,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  Switch,
   Textarea,
 } from "@package/ui";
-import { Loader2Icon, XIcon } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { XIcon } from "lucide-react";
+import { useState } from "react";
 
 import type { CEFRLevel } from "../utils/searchQueryParser";
 
@@ -30,7 +29,6 @@ export interface LibraryMetadata {
   topic?: string;
   exerciseTypes?: string[];
   tags?: string[];
-  autoTagged?: boolean;
 }
 
 export interface SaveToLibraryData {
@@ -43,9 +41,7 @@ interface SaveToLibraryDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   type: LibraryItemType;
-  contentForTagging?: string;
   onSave: (data: SaveToLibraryData) => void;
-  onAutoTag?: (content: string) => Promise<LibraryMetadata>;
   isSaving?: boolean;
 }
 
@@ -94,15 +90,11 @@ export function SaveToLibraryDrawer({
   open,
   onOpenChange,
   type,
-  contentForTagging,
   onSave,
-  onAutoTag,
   isSaving,
 }: SaveToLibraryDrawerProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [autoTagEnabled, setAutoTagEnabled] = useState(true);
-  const [isAutoTagging, setIsAutoTagging] = useState(false);
 
   // Metadata fields
   const [language, setLanguage] = useState<string>("");
@@ -112,51 +104,6 @@ export function SaveToLibraryDrawer({
   const [topic, setTopic] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-
-  // Reset state when drawer opens
-  useEffect(() => {
-    if (open) {
-      setTitle("");
-      setDescription("");
-      setLanguage("");
-      setSelectedLevels(new Set());
-      setTopic("");
-      setTags([]);
-      setTagInput("");
-      setIsAutoTagging(false);
-    }
-  }, [open]);
-
-  // Auto-tag when drawer opens with content
-  const runAutoTag = useCallback(async () => {
-    if (!contentForTagging || !onAutoTag || !autoTagEnabled) return;
-
-    setIsAutoTagging(true);
-    try {
-      const metadata = await onAutoTag(contentForTagging);
-
-      // Populate fields with AI results
-      if (metadata.language) setLanguage(metadata.language);
-      if (metadata.levels && metadata.levels.length > 0) {
-        setSelectedLevels(new Set(metadata.levels));
-      }
-      if (metadata.topic) setTopic(metadata.topic);
-      if (metadata.tags && metadata.tags.length > 0) {
-        setTags(metadata.tags);
-      }
-    } catch (error) {
-      console.error("Auto-tagging failed:", error);
-    } finally {
-      setIsAutoTagging(false);
-    }
-  }, [contentForTagging, onAutoTag, autoTagEnabled]);
-
-  // Trigger auto-tag when drawer opens
-  useEffect(() => {
-    if (open && autoTagEnabled && contentForTagging && onAutoTag) {
-      runAutoTag();
-    }
-  }, [open, autoTagEnabled, contentForTagging, onAutoTag, runAutoTag]);
 
   const toggleLevel = (level: CEFRLevel) => {
     const newLevels = new Set(selectedLevels);
@@ -192,12 +139,11 @@ export function SaveToLibraryDrawer({
       );
     if (topic) metadata.topic = topic;
     if (tags.length > 0) metadata.tags = tags;
-    metadata.autoTagged = autoTagEnabled;
 
     onSave({
       title: title.trim(),
       description: description.trim() || undefined,
-      metadata: Object.keys(metadata).length > 1 ? metadata : undefined,
+      metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
     });
   };
 
@@ -238,32 +184,6 @@ export function SaveToLibraryDrawer({
               rows={2}
             />
           </div>
-
-          {/* Auto-tag toggle */}
-          {onAutoTag && (
-            <div className="flex items-center justify-between py-2 border-t">
-              <div>
-                <Label htmlFor="auto-tag" className="font-medium">
-                  AI Auto-tagging
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Automatically analyze content for metadata
-                </p>
-              </div>
-              <Switch
-                id="auto-tag"
-                checked={autoTagEnabled}
-                onCheckedChange={setAutoTagEnabled}
-              />
-            </div>
-          )}
-
-          {isAutoTagging && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-              <Loader2Icon className="size-4 animate-spin" />
-              Analyzing content...
-            </div>
-          )}
 
           {/* Metadata Section */}
           <div className="space-y-4 border-t pt-4">
@@ -360,7 +280,7 @@ export function SaveToLibraryDrawer({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!title.trim() || isSaving || isAutoTagging}
+            disabled={!title.trim() || isSaving}
           >
             {isSaving ? "Saving..." : "Save"}
           </Button>

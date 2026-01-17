@@ -1,6 +1,6 @@
 import { generateObject } from "ai";
+import { ConvexError } from "convex/values";
 import { v } from "convex/values";
-import invariant from "tiny-invariant";
 
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
@@ -38,7 +38,9 @@ export const startExerciseGeneration = authedMutation({
 
     // Verify document access
     const hasAccess = await hasDocumentAccess(ctx, documentId, ctx.user.id);
-    invariant(hasAccess, "Not authorized to access this document");
+    if (!hasAccess) {
+      throw new ConvexError("Not authorized to access this document");
+    }
 
     const now = Date.now();
 
@@ -78,7 +80,9 @@ export const runValidation = internalAction({
       internal.exerciseGeneration.getSessionForAction,
       { sessionId }
     );
-    invariant(session, "Session not found");
+    if (!session) {
+      throw new Error("Session not found");
+    }
 
     try {
       // Create validation step record
@@ -167,12 +171,15 @@ export const answerClarifications = authedMutation({
     const sessionId = args.sessionId;
 
     const session = await ctx.db.get(sessionId);
-    invariant(session, "Session not found");
-    invariant(session.userId === ctx.user.id, "Not authorized");
-    invariant(
-      session.currentStep === "awaiting_clarification",
-      "Session not awaiting clarification"
-    );
+    if (!session) {
+      throw new ConvexError("Session not found");
+    }
+    if (session.userId !== ctx.user.id) {
+      throw new ConvexError("Not authorized");
+    }
+    if (session.currentStep !== "awaiting_clarification") {
+      throw new ConvexError("Session not awaiting clarification");
+    }
 
     // Update session step
     await ctx.db.patch(sessionId, {
@@ -205,8 +212,12 @@ export const runPlanning = internalAction({
       internal.exerciseGeneration.getSessionForAction,
       { sessionId }
     );
-    invariant(session, "Session not found");
-    invariant(session.requirements, "Requirements not set");
+    if (!session) {
+      throw new Error("Session not found");
+    }
+    if (!session.requirements) {
+      throw new Error("Requirements not set");
+    }
 
     try {
       // Create planning step record
@@ -268,13 +279,18 @@ export const approvePlan = authedMutation({
     const sessionId = args.sessionId;
 
     const session = await ctx.db.get(sessionId);
-    invariant(session, "Session not found");
-    invariant(session.userId === ctx.user.id, "Not authorized");
-    invariant(
-      session.currentStep === "awaiting_approval",
-      "Session not awaiting approval"
-    );
-    invariant(session.plan, "No plan to approve");
+    if (!session) {
+      throw new ConvexError("Session not found");
+    }
+    if (session.userId !== ctx.user.id) {
+      throw new ConvexError("Not authorized");
+    }
+    if (session.currentStep !== "awaiting_approval") {
+      throw new ConvexError("Session not awaiting approval");
+    }
+    if (!session.plan) {
+      throw new ConvexError("No plan to approve");
+    }
 
     // Update session step
     await ctx.db.patch(sessionId, {
@@ -306,9 +322,15 @@ export const runGeneration = internalAction({
       internal.exerciseGeneration.getSessionForAction,
       { sessionId }
     );
-    invariant(session, "Session not found");
-    invariant(session.plan, "Plan not set");
-    invariant(session.requirements, "Requirements not set");
+    if (!session) {
+      throw new Error("Session not found");
+    }
+    if (!session.plan) {
+      throw new Error("Plan not set");
+    }
+    if (!session.requirements) {
+      throw new Error("Requirements not set");
+    }
 
     try {
       // Create generation step record
@@ -394,7 +416,9 @@ export const getGenerationSession = authedQuery({
     const sessionId = args.sessionId;
 
     const session = await ctx.db.get(sessionId);
-    invariant(session, "Session not found");
+    if (!session) {
+      throw new ConvexError("Session not found");
+    }
 
     // Verify document access
     const hasAccess = await hasDocumentAccess(
@@ -402,7 +426,9 @@ export const getGenerationSession = authedQuery({
       session.documentId,
       ctx.user.id
     );
-    invariant(hasAccess, "Not authorized to access this session");
+    if (!hasAccess) {
+      throw new ConvexError("Not authorized to access this session");
+    }
 
     // Get all steps for this session
     const steps = await ctx.db
@@ -562,7 +588,9 @@ export const completeSession = internalMutation({
   handler: async (ctx, args) => {
     const sessionId = args.sessionId as Id<"exerciseGenerationSession">;
     const session = await ctx.db.get(sessionId);
-    invariant(session, "Session not found");
+    if (!session) {
+      throw new Error("Session not found");
+    }
 
     await ctx.db.patch(sessionId, {
       currentStep: "completed",

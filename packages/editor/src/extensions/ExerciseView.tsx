@@ -23,13 +23,13 @@ import type { EditorMode } from "../types";
 import type { ExerciseAttributes } from "./Exercise";
 import { BlockSelection } from "./MarqueeSelection";
 
-interface ExerciseBankStorage {
+interface LibraryStorage {
   saveExercise?: (title: string, content: string) => Promise<void>;
 }
 
 declare module "@tiptap/core" {
   interface Storage {
-    exerciseBank: ExerciseBankStorage;
+    library: LibraryStorage;
   }
 }
 
@@ -110,7 +110,7 @@ export function ExerciseView(props: NodeViewProps) {
 
     const contentJson = JSON.stringify(contentNodes);
 
-    const saveToBank = editor.storage.exerciseBank?.saveExercise;
+    const saveToBank = editor.storage.library?.saveExercise;
 
     if (saveToBank) {
       setIsSaving(true);
@@ -262,7 +262,7 @@ export function ExerciseView(props: NodeViewProps) {
                   className="h-6 w-6 text-muted-foreground hover:text-primary"
                   contentEditable={false}
                   onClick={() => setShowSaveModal(true)}
-                  title="Save to Exercise Bank"
+                  title="Save to Library"
                 >
                   <BookmarkPlusIcon className="h-3.5 w-3.5" />
                 </Button>

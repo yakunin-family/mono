@@ -1,5 +1,5 @@
+import { ConvexError } from "convex/values";
 import { v } from "convex/values";
-import invariant from "tiny-invariant";
 
 import { authedMutation, authedQuery } from "./functions";
 
@@ -165,7 +165,9 @@ export const createSpace = authedMutation({
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    invariant(teacherProfile?.isTeacher, "Only teachers can create spaces");
+    if (!teacherProfile?.isTeacher) {
+      throw new ConvexError("Only teachers can create spaces");
+    }
 
     // Validate student exists
     const studentProfile = await ctx.db
@@ -173,7 +175,9 @@ export const createSpace = authedMutation({
       .withIndex("by_userId", (q) => q.eq("userId", args.studentId))
       .first();
 
-    invariant(studentProfile?.isStudent, "Student not found");
+    if (!studentProfile?.isStudent) {
+      throw new ConvexError("Student not found");
+    }
 
     // Check if space already exists for this teacher-student-language combo
     const existingSpaces = await ctx.db
@@ -187,10 +191,9 @@ export const createSpace = authedMutation({
       (s) => s.language.toLowerCase() === args.language.toLowerCase(),
     );
 
-    invariant(
-      !duplicateLanguage,
-      `A space for ${args.language} already exists with this student`,
-    );
+    if (duplicateLanguage) {
+      throw new ConvexError(`A space for ${args.language} already exists with this student`);
+    }
 
     // Create the space
     const spaceId = await ctx.db.insert("spaces", {
@@ -214,13 +217,14 @@ export const deleteSpace = authedMutation({
   },
   handler: async (ctx, args) => {
     const space = await ctx.db.get(args.spaceId);
-    invariant(space, "Space not found");
+    if (!space) {
+      throw new ConvexError("Space not found");
+    }
 
     // Only teacher can delete
-    invariant(
-      space.teacherId === ctx.user.id,
-      "Only the teacher can delete a space",
-    );
+    if (space.teacherId !== ctx.user.id) {
+      throw new ConvexError("Only the teacher can delete a space");
+    }
 
     // Delete all homework items in this space
     const homeworkItems = await ctx.db
@@ -259,13 +263,14 @@ export const updateSpace = authedMutation({
   },
   handler: async (ctx, args) => {
     const space = await ctx.db.get(args.spaceId);
-    invariant(space, "Space not found");
+    if (!space) {
+      throw new ConvexError("Space not found");
+    }
 
     // Only teacher can update
-    invariant(
-      space.teacherId === ctx.user.id,
-      "Only the teacher can update a space",
-    );
+    if (space.teacherId !== ctx.user.id) {
+      throw new ConvexError("Only the teacher can update a space");
+    }
 
     const updates: Partial<{ language: string }> = {};
 

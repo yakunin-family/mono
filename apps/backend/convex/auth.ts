@@ -1,4 +1,4 @@
-import invariant from "tiny-invariant";
+import { ConvexError } from "convex/values";
 
 import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 
@@ -35,6 +35,8 @@ export async function getAuthUser(ctx: Ctx): Promise<AuthUser | null> {
  */
 export async function requireAuth(ctx: Ctx): Promise<AuthUser> {
   const user = await getAuthUser(ctx);
-  invariant(user, "Not authenticated");
+  if (!user) {
+    throw new ConvexError("Not authenticated");
+  }
   return user;
 }

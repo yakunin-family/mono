@@ -1,5 +1,5 @@
+import { ConvexError } from "convex/values";
 import { v } from "convex/values";
-import invariant from "tiny-invariant";
 
 import { query } from "./_generated/server";
 import { authedMutation, authedQuery } from "./functions";
@@ -33,11 +33,15 @@ export const createInvite = authedMutation({
       .withIndex("by_userId", (q) => q.eq("userId", ctx.user.id))
       .first();
 
-    invariant(profile?.isTeacher, "Only teachers can create invites");
+    if (!profile?.isTeacher) {
+      throw new ConvexError("Only teachers can create invites");
+    }
 
     // Validate language is not empty
     const language = args.language.trim();
-    invariant(language, "Language is required");
+    if (!language) {
+      throw new ConvexError("Language is required");
+    }
 
     // Generate unique token
     let token = generateToken();
@@ -172,22 +176,24 @@ export const acceptInvite = authedMutation({
       .withIndex("by_token", (q) => q.eq("token", args.token))
       .first();
 
-    invariant(invite, "Invite not found");
+    if (!invite) {
+      throw new ConvexError("Invite not found");
+    }
 
     // Check if already used
-    invariant(!invite.usedAt, "This invite has already been used");
+    if (invite.usedAt) {
+      throw new ConvexError("This invite has already been used");
+    }
 
     // Check if expired
-    invariant(
-      !invite.expiresAt || invite.expiresAt >= Date.now(),
-      "This invite has expired",
-    );
+    if (invite.expiresAt && invite.expiresAt < Date.now()) {
+      throw new ConvexError("This invite has expired");
+    }
 
     // Prevent teacher from accepting their own invite
-    invariant(
-      invite.teacherId !== ctx.user.id,
-      "You cannot accept your own invite",
-    );
+    if (invite.teacherId === ctx.user.id) {
+      throw new ConvexError("You cannot accept your own invite");
+    }
 
     // Check if a space already exists for this teacher-student combo with same language
     const existingSpaces = await ctx.db
@@ -201,10 +207,9 @@ export const acceptInvite = authedMutation({
       (s) => s.language.toLowerCase() === invite.language.toLowerCase(),
     );
 
-    invariant(
-      !duplicateLanguage,
-      `You already have a ${invite.language} space with this teacher`,
-    );
+    if (duplicateLanguage) {
+      throw new ConvexError(`You already have a ${invite.language} space with this teacher`);
+    }
 
     // Ensure student record exists in userProfile table
     const existingProfile = await ctx.db
@@ -262,19 +267,19 @@ export const revokeInvite = authedMutation({
   },
   handler: async (ctx, args) => {
     const invite = await ctx.db.get(args.inviteId);
-    invariant(invite, "Invite not found");
+    if (!invite) {
+      throw new ConvexError("Invite not found");
+    }
 
     // Only creator can revoke
-    invariant(
-      invite.teacherId === ctx.user.id,
-      "Only the invite creator can revoke it",
-    );
+    if (invite.teacherId !== ctx.user.id) {
+      throw new ConvexError("Only the invite creator can revoke it");
+    }
 
     // Cannot revoke used invites
-    invariant(
-      !invite.usedAt,
-      "Cannot revoke an invite that has already been used",
-    );
+    if (invite.usedAt) {
+      throw new ConvexError("Cannot revoke an invite that has already been used");
+    }
 
     await ctx.db.delete(args.inviteId);
 

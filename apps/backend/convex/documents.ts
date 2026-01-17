@@ -1,5 +1,5 @@
+import { ConvexError } from "convex/values";
 import { v } from "convex/values";
-import invariant from "tiny-invariant";
 
 import { hasDocumentAccess, verifySpaceAccess } from "./accessControl";
 import { authedMutation, authedQuery } from "./functions";
@@ -14,12 +14,16 @@ export const getDocument = authedQuery({
   handler: async (ctx, args) => {
     const document = await ctx.db.get(args.documentId);
 
-    invariant(document, "Document not found");
+    if (!document) {
+      throw new ConvexError("Document not found");
+    }
 
     // Check if user has access (owner or shared)
     const hasAccess = await hasDocumentAccess(ctx, args.documentId, ctx.user.id);
 
-    invariant(hasAccess, "Not authorized to access this document");
+    if (!hasAccess) {
+      throw new ConvexError("Not authorized to access this document");
+    }
 
     return document;
   },
@@ -36,20 +40,20 @@ export const updateDocumentTitle = authedMutation({
   handler: async (ctx, args) => {
     const document = await ctx.db.get(args.documentId);
 
-    invariant(document, "Document not found");
+    if (!document) {
+      throw new ConvexError("Document not found");
+    }
 
     // Check access through space membership or legacy owner
     if (document.spaceId) {
       const space = await ctx.db.get(document.spaceId);
-      invariant(
-        space && space.teacherId === ctx.user.id,
-        "Not authorized to modify this document",
-      );
+      if (!space || space.teacherId !== ctx.user.id) {
+        throw new ConvexError("Not authorized to modify this document");
+      }
     } else {
-      invariant(
-        document.owner === ctx.user.id,
-        "Not authorized to modify this document",
-      );
+      if (document.owner !== ctx.user.id) {
+        throw new ConvexError("Not authorized to modify this document");
+      }
     }
 
     await ctx.db.patch(args.documentId, {
@@ -70,12 +74,16 @@ export const saveDocumentContent = authedMutation({
   handler: async (ctx, args) => {
     const document = await ctx.db.get(args.documentId);
 
-    invariant(document, "Document not found");
+    if (!document) {
+      throw new ConvexError("Document not found");
+    }
 
     // Check if user has access (owner or shared)
     const hasAccess = await hasDocumentAccess(ctx, args.documentId, ctx.user.id);
 
-    invariant(hasAccess, "Not authorized to modify this document");
+    if (!hasAccess) {
+      throw new ConvexError("Not authorized to modify this document");
+    }
 
     await ctx.db.patch(args.documentId, {
       content: args.content,
@@ -94,12 +102,16 @@ export const loadDocumentContent = authedQuery({
   handler: async (ctx, args) => {
     const document = await ctx.db.get(args.documentId);
 
-    invariant(document, "Document not found");
+    if (!document) {
+      throw new ConvexError("Document not found");
+    }
 
     // Check if user has access (owner or shared)
     const hasAccess = await hasDocumentAccess(ctx, args.documentId, ctx.user.id);
 
-    invariant(hasAccess, "Not authorized to access this document");
+    if (!hasAccess) {
+      throw new ConvexError("Not authorized to access this document");
+    }
 
     return document.content || null;
   },
@@ -302,16 +314,19 @@ export const createLesson = authedMutation({
       ctx.user.id,
     );
 
-    invariant(hasAccess, "Space not found");
-    invariant(isTeacher, "Only the teacher can create lessons in this space");
+    if (!hasAccess) {
+      throw new ConvexError("Space not found");
+    }
+    if (!isTeacher) {
+      throw new ConvexError("Only the teacher can create lessons in this space");
+    }
 
     // If templateId provided, verify it exists and belongs to the user
     if (args.templateId) {
       const template = await ctx.db.get(args.templateId);
-      invariant(
-        template && template.ownerId === ctx.user.id,
-        "Template not found or not accessible",
-      );
+      if (!template || template.ownerId !== ctx.user.id) {
+        throw new ConvexError("Template not found or not accessible");
+      }
     }
 
     // Get the highest lesson number in this space
@@ -356,7 +371,9 @@ export const updateLesson = authedMutation({
   handler: async (ctx, args) => {
     const document = await ctx.db.get(args.documentId);
 
-    invariant(document, "Lesson not found");
+    if (!document) {
+      throw new ConvexError("Lesson not found");
+    }
 
     // Verify teacher access
     if (document.spaceId) {
@@ -365,12 +382,13 @@ export const updateLesson = authedMutation({
         document.spaceId,
         ctx.user.id,
       );
-      invariant(isTeacher, "Only the teacher can update this lesson");
+      if (!isTeacher) {
+        throw new ConvexError("Only the teacher can update this lesson");
+      }
     } else {
-      invariant(
-        document.owner === ctx.user.id,
-        "Only the owner can update this document",
-      );
+      if (document.owner !== ctx.user.id) {
+        throw new ConvexError("Only the owner can update this document");
+      }
     }
 
     const updates: {
@@ -405,7 +423,9 @@ export const deleteLesson = authedMutation({
   handler: async (ctx, args) => {
     const document = await ctx.db.get(args.documentId);
 
-    invariant(document, "Lesson not found");
+    if (!document) {
+      throw new ConvexError("Lesson not found");
+    }
 
     // Verify teacher access
     if (document.spaceId) {
@@ -414,12 +434,13 @@ export const deleteLesson = authedMutation({
         document.spaceId,
         ctx.user.id,
       );
-      invariant(isTeacher, "Only the teacher can delete this lesson");
+      if (!isTeacher) {
+        throw new ConvexError("Only the teacher can delete this lesson");
+      }
     } else {
-      invariant(
-        document.owner === ctx.user.id,
-        "Only the owner can delete this document",
-      );
+      if (document.owner !== ctx.user.id) {
+        throw new ConvexError("Only the owner can delete this document");
+      }
     }
 
     // Delete all homework items associated with this document first (cascade delete)
@@ -456,19 +477,24 @@ export const reorderLessons = authedMutation({
       ctx.user.id,
     );
 
-    invariant(hasAccess, "Space not found");
-    invariant(isTeacher, "Only the teacher can reorder lessons");
+    if (!hasAccess) {
+      throw new ConvexError("Space not found");
+    }
+    if (!isTeacher) {
+      throw new ConvexError("Only the teacher can reorder lessons");
+    }
 
     // Update each lesson's lessonNumber based on position in array
     for (let i = 0; i < args.lessonOrder.length; i++) {
       const documentId = args.lessonOrder[i]!;
       const document = await ctx.db.get(documentId);
 
-      invariant(document, `Lesson ${documentId} not found`);
-      invariant(
-        document.spaceId === args.spaceId,
-        `Lesson ${documentId} does not belong to this space`,
-      );
+      if (!document) {
+        throw new ConvexError(`Lesson ${documentId} not found`);
+      }
+      if (document.spaceId !== args.spaceId) {
+        throw new ConvexError(`Lesson ${documentId} does not belong to this space`);
+      }
 
       await ctx.db.patch(documentId, {
         lessonNumber: i + 1, // 1-indexed
@@ -490,8 +516,12 @@ export const duplicateLesson = authedMutation({
   handler: async (ctx, args) => {
     const original = await ctx.db.get(args.documentId);
 
-    invariant(original, "Lesson not found");
-    invariant(original.spaceId, "Can only duplicate space-based lessons");
+    if (!original) {
+      throw new ConvexError("Lesson not found");
+    }
+    if (!original.spaceId) {
+      throw new ConvexError("Can only duplicate space-based lessons");
+    }
 
     // Verify teacher access
     const { isTeacher } = await verifySpaceAccess(
@@ -500,7 +530,9 @@ export const duplicateLesson = authedMutation({
       ctx.user.id,
     );
 
-    invariant(isTeacher, "Only the teacher can duplicate lessons");
+    if (!isTeacher) {
+      throw new ConvexError("Only the teacher can duplicate lessons");
+    }
 
     // Get next lesson number
     const lessons = await ctx.db
