@@ -2,6 +2,8 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
+import { BlockSelection } from "./MarqueeSelection";
+
 export interface SelectionSaveStorage {
   hasMultiBlockSelection: boolean;
   selectionCoords: { top: number; left: number } | null;
@@ -15,20 +17,6 @@ declare module "@tiptap/core" {
 }
 
 export const selectionSavePluginKey = new PluginKey("selectionSave");
-
-const countBlocksInSelection = (view: EditorView): number => {
-  const { from, to, empty } = view.state.selection;
-  if (empty) return 0;
-
-  let blockCount = 0;
-  view.state.doc.nodesBetween(from, to, (node) => {
-    if (node.isBlock && node.type.name !== "doc") {
-      blockCount++;
-    }
-  });
-
-  return blockCount;
-};
 
 const getSelectionCoords = (
   view: EditorView,
@@ -62,8 +50,10 @@ export const SelectionSave = Extension.create({
         view: () => {
           return {
             update: (view) => {
-              const blockCount = countBlocksInSelection(view);
-              const hasMultiBlock = blockCount >= 2;
+              const selection = view.state.selection;
+              const isBlockSelection = selection instanceof BlockSelection;
+              const hasMultiBlock =
+                isBlockSelection && selection.blockPositions.length >= 2;
 
               if (hasMultiBlock) {
                 const coords = getSelectionCoords(view);

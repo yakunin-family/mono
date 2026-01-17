@@ -29,6 +29,7 @@ declare module "@tiptap/core" {
 
 import { Blank } from "../extensions/Blank";
 import { BlockHover } from "../extensions/BlockHover";
+import { BlockSelectionCommands } from "../extensions/block-selection-commands";
 import { DocumentContext } from "../extensions/DocumentContext";
 import { Exercise } from "../extensions/Exercise";
 import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
@@ -91,7 +92,8 @@ export function DocumentEditorInternal({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        codeBlock: false, // Disable code blocks as they're not needed
+        codeBlock: false,
+        undoRedo: false,
       }),
       Markdown,
       Collaboration.configure({
@@ -126,6 +128,7 @@ export function DocumentEditorInternal({
       BlockHover,
       SelectionSave,
       MarqueeSelection,
+      BlockSelectionCommands,
       DocumentContext.configure({
         documentId,
         spaceId,

@@ -21,6 +21,7 @@ import { SaveExerciseModal } from "../components/SaveExerciseModal";
 import { useHomework } from "../hooks/useHomework";
 import type { EditorMode } from "../types";
 import type { ExerciseAttributes } from "./Exercise";
+import { BlockSelection } from "./MarqueeSelection";
 
 interface ExerciseBankStorage {
   saveExercise?: (title: string, content: string) => Promise<void>;
@@ -43,6 +44,12 @@ export function ExerciseView(props: NodeViewProps) {
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // When BlockSelection is active, ignore the `selected` prop to avoid double highlighting.
+  // The `.block-selected` decoration from MarqueeSelection handles the visual feedback.
+  const isBlockSelectionActive =
+    editor.state.selection instanceof BlockSelection;
+  const effectiveSelected = isBlockSelectionActive ? false : selected;
 
   const mode = editor.storage.editorMode as EditorMode | undefined;
   const documentId = editor.storage.documentContext?.documentId as
@@ -130,7 +137,7 @@ export function ExerciseView(props: NodeViewProps) {
 
   const getBorderClass = () => {
     if (!isHomework) {
-      return selected
+      return effectiveSelected
         ? "border-primary ring-2 ring-primary/20"
         : "border-border/50 hover:border-border hover:bg-accent/10";
     }

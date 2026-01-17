@@ -84,7 +84,7 @@ export function GroupView(props: NodeViewProps) {
   const isTeacherEditor = editorMode === "teacher-editor";
 
   return (
-    <NodeViewWrapper className="my-4 block group/group-node">
+    <NodeViewWrapper className="my-4 block group/group-node" data-node-type="group">
       <div className="rounded-lg border-2 border-dashed border-border/50 bg-muted/5 p-4 transition-all hover:border-border hover:bg-muted/10">
         {isTeacherEditor && (
           <div className="mb-2 flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover/group-node:opacity-100">

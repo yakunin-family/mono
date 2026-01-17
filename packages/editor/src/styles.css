@@ -183,3 +183,14 @@
 .block-selected {
   @apply ring-2 ring-primary/50 ring-offset-2 rounded-sm bg-primary/5;
 }
+
+/* Group Node Selection (when selected via NodeSelection after grouping) */
+.tiptap .ProseMirror-selectednode > [data-node-type="group"] > div {
+  @apply ring-2 ring-primary/50 ring-offset-2 rounded-sm;
+}
+
+/* Disable text selection during marquee drag */
+.marquee-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+}

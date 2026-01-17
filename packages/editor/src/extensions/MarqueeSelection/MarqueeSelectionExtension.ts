@@ -100,6 +100,20 @@ const findIntersectingBlocks = (
 const createMarqueeSelectionPlugin = (
   storage: MarqueeSelectionStorage
 ): Plugin => {
+  let windowMoveHandler: ((e: MouseEvent) => void) | null = null;
+  let windowUpHandler: ((e: MouseEvent) => void) | null = null;
+
+  const cleanup = () => {
+    if (windowMoveHandler) {
+      window.removeEventListener("mousemove", windowMoveHandler);
+      windowMoveHandler = null;
+    }
+    if (windowUpHandler) {
+      window.removeEventListener("mouseup", windowUpHandler);
+      windowUpHandler = null;
+    }
+  };
+
   return new Plugin({
     key: marqueeSelectionPluginKey,
 
@@ -147,78 +161,85 @@ const createMarqueeSelectionPlugin = (
 
           window.dispatchEvent(new CustomEvent("marqueeUpdate"));
 
-          event.preventDefault();
-          return true;
-        },
+          view.dom.classList.add("marquee-dragging");
 
-        mousemove: (view, event) => {
-          const state = marqueeSelectionPluginKey.getState(view.state);
-          if (!state?.isActive) return false;
+          windowMoveHandler = (e: MouseEvent) => {
+            const state = marqueeSelectionPluginKey.getState(view.state);
+            if (!state?.isActive) return;
 
-          const newState: MarqueePluginState = {
-            ...state,
-            currentX: event.clientX,
-            currentY: event.clientY,
-          };
+            const newState: MarqueePluginState = {
+              ...state,
+              currentX: e.clientX,
+              currentY: e.clientY,
+            };
 
-          view.dispatch(
-            view.state.tr.setMeta(marqueeSelectionPluginKey, newState)
-          );
-
-          storage.rect = {
-            startX: state.startX,
-            startY: state.startY,
-            endX: event.clientX,
-            endY: event.clientY,
-          };
-
-          window.dispatchEvent(new CustomEvent("marqueeUpdate"));
-
-          return true;
-        },
-
-        mouseup: (view, event) => {
-          const state = marqueeSelectionPluginKey.getState(view.state);
-          if (!state?.isActive) return false;
-
-          const marqueeRect: MarqueeRect = {
-            startX: state.startX,
-            startY: state.startY,
-            endX: event.clientX,
-            endY: event.clientY,
-          };
-
-          const blockPositions = findIntersectingBlocks(view, marqueeRect);
-
-          // Reset plugin state
-          const resetState: MarqueePluginState = {
-            isActive: false,
-            startX: 0,
-            startY: 0,
-            currentX: 0,
-            currentY: 0,
-          };
-
-          storage.isActive = false;
-          storage.rect = null;
-
-          window.dispatchEvent(new CustomEvent("marqueeEnd"));
-
-          if (blockPositions.length > 0) {
-            const selection = BlockSelection.create(
-              view.state.doc,
-              blockPositions
-            );
-            const tr = view.state.tr
-              .setMeta(marqueeSelectionPluginKey, resetState)
-              .setSelection(selection);
-            view.dispatch(tr);
-          } else {
             view.dispatch(
-              view.state.tr.setMeta(marqueeSelectionPluginKey, resetState)
+              view.state.tr.setMeta(marqueeSelectionPluginKey, newState)
             );
-          }
 
+            storage.rect = {
+              startX: state.startX,
+              startY: state.startY,
+              endX: e.clientX,
+              endY: e.clientY,
+            };
+
+            window.dispatchEvent(new CustomEvent("marqueeUpdate"));
+          };
+
+          windowUpHandler = (e: MouseEvent) => {
+            const state = marqueeSelectionPluginKey.getState(view.state);
+            if (!state?.isActive) {
+              cleanup();
+              return;
+            }
+
+            const marqueeRect: MarqueeRect = {
+              startX: state.startX,
+              startY: state.startY,
+              endX: e.clientX,
+              endY: e.clientY,
+            };
+
+            const blockPositions = findIntersectingBlocks(view, marqueeRect);
+
+            const resetState: MarqueePluginState = {
+              isActive: false,
+              startX: 0,
+              startY: 0,
+              currentX: 0,
+              currentY: 0,
+            };
+
+            storage.isActive = false;
+            storage.rect = null;
+
+            window.getSelection()?.removeAllRanges();
+            view.dom.classList.remove("marquee-dragging");
+            window.dispatchEvent(new CustomEvent("marqueeEnd"));
+
+            cleanup();
+
+            if (blockPositions.length > 0) {
+              const selection = BlockSelection.create(
+                view.state.doc,
+                blockPositions
+              );
+              const tr = view.state.tr
+                .setMeta(marqueeSelectionPluginKey, resetState)
+                .setSelection(selection);
+              view.dispatch(tr);
+            } else {
+              view.dispatch(
+                view.state.tr.setMeta(marqueeSelectionPluginKey, resetState)
+              );
+            }
+          };
+
+          window.addEventListener("mousemove", windowMoveHandler);
+          window.addEventListener("mouseup", windowUpHandler);
+
+          event.preventDefault();
           return true;
         },
       },
@@ -243,6 +264,7 @@ const createMarqueeSelectionPlugin = (
 
     view: () => ({
       destroy: () => {
+        cleanup();
         storage.isActive = false;
         storage.rect = null;
       },

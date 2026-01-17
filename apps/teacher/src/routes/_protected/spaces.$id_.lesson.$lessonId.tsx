@@ -9,6 +9,12 @@ import {
   SaveToLibraryDrawer,
 } from "@package/editor";
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
   Button,
   Dialog,
   DialogContent,
@@ -27,7 +33,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import {
-  ArrowLeftIcon,
   CopyIcon,
   FileTextIcon,
   Loader2Icon,
@@ -37,7 +42,11 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useAuth } from "@/lib/auth-client";
+import {
+  StandalonePageContent,
+  StandalonePageHeader,
+  StandalonePageShell,
+} from "@/components/standalone-page-shell";
 
 export const Route = createFileRoute(
   "/_protected/spaces/$id_/lesson/$lessonId",
@@ -50,7 +59,6 @@ function LessonEditorPage() {
   const { id: spaceId, lessonId } = Route.useParams();
   const { accessToken, user } = Route.useRouteContext();
   const convex = useConvex();
-  const { signOut } = useAuth();
   const queryClient = useQueryClient();
   const editorRef = useRef<DocumentEditorHandle | null>(null);
 
@@ -263,26 +271,36 @@ function LessonEditorPage() {
 
   if (lessonQuery.isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
-      </div>
+      <StandalonePageShell>
+        <StandalonePageHeader backTo="/spaces/$id" backParams={{ id: spaceId }}>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <span className="text-muted-foreground">Loading...</span>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </StandalonePageHeader>
+        <StandalonePageContent className="flex items-center justify-center">
+          <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+        </StandalonePageContent>
+      </StandalonePageShell>
     );
   }
 
   if (!lessonQuery.data) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b bg-background">
-          <div className="flex items-center gap-4 px-6 py-4">
-            <Link to="/spaces/$id" params={{ id: spaceId }}>
-              <Button variant="ghost" size="icon-sm">
-                <ArrowLeftIcon className="size-4" />
-              </Button>
-            </Link>
-            <span className="text-muted-foreground">Lesson not found</span>
-          </div>
-        </header>
-        <main className="flex-1 bg-muted p-6">
+      <StandalonePageShell>
+        <StandalonePageHeader backTo="/spaces/$id" backParams={{ id: spaceId }}>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <span className="text-muted-foreground">Lesson not found</span>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </StandalonePageHeader>
+        <StandalonePageContent className="flex items-center justify-center p-6">
           <div className="mx-auto max-w-4xl py-12 text-center">
             <p className="mb-4 text-muted-foreground">
               This lesson does not exist or you do not have access to it.
@@ -291,111 +309,103 @@ function LessonEditorPage() {
               <Button>Back to Space</Button>
             </Link>
           </div>
-        </main>
-      </div>
+        </StandalonePageContent>
+      </StandalonePageShell>
     );
   }
 
   const lesson = lessonQuery.data;
   const space = spaceQuery.data;
 
+  const actionsDropdown = (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon-sm">
+            <MoreHorizontalIcon className="size-4" />
+          </Button>
+        }
+      />
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setSaveTemplateModalOpen(true)}>
+          <FileTextIcon className="size-4" />
+          Save as Template
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => duplicateLessonMutation.mutate()}
+          disabled={duplicateLessonMutation.isPending}
+        >
+          <CopyIcon className="size-4" />
+          Duplicate Lesson
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => setShowDeleteDialog(true)}
+          className="text-destructive focus:text-destructive"
+        >
+          <Trash2Icon className="size-4" />
+          Delete Lesson
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-background">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link to="/spaces/$id" params={{ id: spaceId }}>
-              <Button variant="ghost" size="icon-sm">
-                <ArrowLeftIcon className="size-4" />
-              </Button>
-            </Link>
+    <StandalonePageShell>
+      <StandalonePageHeader
+        backTo="/spaces/$id"
+        backParams={{ id: spaceId }}
+        actions={actionsDropdown}
+      >
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink render={<Link to="/" />}>Students</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                render={<Link to="/spaces/$id" params={{ id: spaceId }} />}
+              >
+                {space?.studentName ?? "..."}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="flex items-center gap-1">
+                <Input
+                  value={title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  onBlur={handleTitleSave}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  className="h-auto border-none bg-transparent p-0 font-normal focus-visible:ring-0"
+                  style={{ width: `${Math.max(title.length, 10)}ch` }}
+                />
+                {isTitleDirty && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={handleTitleSave}
+                    disabled={updateLessonMutation.isPending}
+                  >
+                    {updateLessonMutation.isPending ? (
+                      <Loader2Icon className="size-4 animate-spin" />
+                    ) : (
+                      <SaveIcon className="size-4" />
+                    )}
+                  </Button>
+                )}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </StandalonePageHeader>
 
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">
-                Lesson #{lesson.lessonNumber}
-              </span>
-              <span className="text-muted-foreground">-</span>
-              <Input
-                value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.currentTarget.blur();
-                  }
-                }}
-                className="h-auto border-none bg-transparent p-0 text-lg font-semibold focus-visible:ring-0"
-                style={{ width: `${Math.max(title.length, 10)}ch` }}
-              />
-              {isTitleDirty && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={handleTitleSave}
-                  disabled={updateLessonMutation.isPending}
-                >
-                  {updateLessonMutation.isPending ? (
-                    <Loader2Icon className="size-4 animate-spin" />
-                  ) : (
-                    <SaveIcon className="size-4" />
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant="ghost" size="icon-sm">
-                  <MoreHorizontalIcon className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => setSaveTemplateModalOpen(true)}
-                >
-                  <FileTextIcon className="size-4" />
-                  Save as Template
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => duplicateLessonMutation.mutate()}
-                  disabled={duplicateLessonMutation.isPending}
-                >
-                  <CopyIcon className="size-4" />
-                  Duplicate Lesson
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2Icon className="size-4" />
-                  Delete Lesson
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => signOut({ returnTo: "/login" })}
-            >
-              Logout
-            </Button>
-          </div>
-        </div>
-
-        {space && (
-          <div className="border-t px-6 py-2">
-            <p className="text-sm text-muted-foreground">
-              {space.studentName} - {space.language}
-            </p>
-          </div>
-        )}
-      </header>
-
-      <main className="flex-1 bg-background">
+      <StandalonePageContent className="relative">
         <DocumentEditor
           documentId={lessonId}
           spaceId={spaceId}
@@ -437,16 +447,15 @@ function LessonEditorPage() {
           }}
           isSaving={saveTemplateMutation.isPending}
         />
-      </main>
+      </StandalonePageContent>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete this lesson?</DialogTitle>
             <DialogDescription>
-              This will permanently delete &quot;Lesson #{lesson.lessonNumber} -{" "}
-              {lesson.title}&quot; and all associated homework. This action
-              cannot be undone.
+              This will permanently delete &quot;{lesson.title}&quot; and all
+              associated homework. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -466,6 +475,6 @@ function LessonEditorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </StandalonePageShell>
   );
 }
