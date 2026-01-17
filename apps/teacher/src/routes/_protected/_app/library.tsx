@@ -1,14 +1,11 @@
 import { api } from "@app/backend";
-import {
-  type CEFRLevel,
-  formatLevelsDisplay,
-  type LibraryItemWithMetadata,
-  matchesSearchQuery,
-  parseSearchQuery,
-  suggestFiltersFromText,
-} from "@package/editor";
+import { type CEFRLevel, formatLevelsDisplay } from "@package/editor";
 import {
   Badge,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
   Button,
   Input,
   Select,
@@ -25,12 +22,12 @@ import {
   LayoutTemplateIcon,
   ListIcon,
   SearchIcon,
-  ToggleLeftIcon,
-  ToggleRightIcon,
   TrashIcon,
   XIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+
+import { AppContent, AppHeader, AppShell } from "@/components/app-shell";
 
 export const Route = createFileRoute("/_protected/_app/library")({
   component: LibraryPage,
@@ -38,7 +35,7 @@ export const Route = createFileRoute("/_protected/_app/library")({
 
 type LibraryItemType = "exercise" | "group" | "template";
 type FilterType = "all" | LibraryItemType;
-type SearchMode = "structured" | "natural";
+type LevelFilter = "all" | CEFRLevel;
 
 const typeBadgeColors: Record<LibraryItemType, string> = {
   exercise: "bg-blue-100 text-blue-800 border-blue-200",
@@ -65,13 +62,12 @@ function LibraryPage() {
   const queryClient = useQueryClient();
 
   // Search state
-  const [searchMode, setSearchMode] = useState<SearchMode>("structured");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Structured mode filters
+  // Filters
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
-  const [levelFilters, setLevelFilters] = useState<Set<CEFRLevel>>(new Set());
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>("all");
 
   // Fetch all items (we filter client-side for flexibility)
   const libraryQuery = useQuery({
@@ -103,138 +99,70 @@ function LibraryPage() {
     return Array.from(languages).sort();
   }, [libraryQuery.data]);
 
-  // Parse search query for natural mode
-  const parsedQuery = useMemo(
-    () => parseSearchQuery(searchQuery),
-    [searchQuery],
-  );
-
-  // Suggestions for natural mode
-  const suggestions = useMemo(() => {
-    if (searchMode !== "natural" || !searchQuery.trim()) return [];
-    return suggestFiltersFromText(searchQuery);
-  }, [searchMode, searchQuery]);
-
   // Filter items
   const filteredItems = useMemo(() => {
-    let result = (libraryQuery.data ?? []) as LibraryItemWithMetadata[];
+    let result = libraryQuery.data ?? [];
 
-    if (searchMode === "natural") {
-      result = result.filter((item) => matchesSearchQuery(item, parsedQuery));
-    } else {
-      // Structured mode
-      if (typeFilter !== "all") {
-        result = result.filter((item) => item.type === typeFilter);
-      }
+    if (typeFilter !== "all") {
+      result = result.filter((item) => item.type === typeFilter);
+    }
 
-      if (languageFilter !== "all") {
-        result = result.filter(
-          (item) => item.metadata?.language === languageFilter,
-        );
-      }
+    if (languageFilter !== "all") {
+      result = result.filter(
+        (item) => item.metadata?.language === languageFilter,
+      );
+    }
 
-      if (levelFilters.size > 0) {
-        result = result.filter((item) => {
-          const itemLevels = item.metadata?.levels ?? [];
-          return Array.from(levelFilters).some((level) =>
-            itemLevels.includes(level),
-          );
-        });
-      }
+    if (levelFilter !== "all") {
+      result = result.filter((item) => {
+        const itemLevels = item.metadata?.levels ?? [];
+        return itemLevels.includes(levelFilter);
+      });
+    }
 
-      // Text search
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        result = result.filter(
-          (item) =>
-            item.title.toLowerCase().includes(query) ||
-            item.description?.toLowerCase().includes(query) ||
-            item.metadata?.topic?.toLowerCase().includes(query) ||
-            item.metadata?.tags?.some((t) => t.toLowerCase().includes(query)),
-        );
-      }
+    // Text search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.title.toLowerCase().includes(query) ||
+          item.description?.toLowerCase().includes(query) ||
+          item.metadata?.topic?.toLowerCase().includes(query) ||
+          item.metadata?.tags?.some((t) => t.toLowerCase().includes(query)),
+      );
     }
 
     return result;
-  }, [
-    libraryQuery.data,
-    searchMode,
-    parsedQuery,
-    typeFilter,
-    languageFilter,
-    levelFilters,
-    searchQuery,
-  ]);
-
-  const toggleLevelFilter = (level: CEFRLevel) => {
-    const newLevels = new Set(levelFilters);
-    if (newLevels.has(level)) {
-      newLevels.delete(level);
-    } else {
-      newLevels.add(level);
-    }
-    setLevelFilters(newLevels);
-  };
+  }, [libraryQuery.data, typeFilter, languageFilter, levelFilter, searchQuery]);
 
   const clearFilters = () => {
     setSearchQuery("");
     setTypeFilter("all");
     setLanguageFilter("all");
-    setLevelFilters(new Set());
-  };
-
-  const addSuggestionAsFilter = (filter: string, value: string) => {
-    setSearchMode("structured");
-    setSearchQuery("");
-
-    switch (filter) {
-      case "language":
-        setLanguageFilter(value);
-        break;
-      case "level":
-        setLevelFilters((prev) => new Set([...prev, value as CEFRLevel]));
-        break;
-      case "type":
-        setTypeFilter(value as FilterType);
-        break;
-    }
+    setLevelFilter("all");
   };
 
   const hasActiveFilters =
     typeFilter !== "all" ||
     languageFilter !== "all" ||
-    levelFilters.size > 0 ||
+    levelFilter !== "all" ||
     searchQuery.trim().length > 0;
 
   return (
-    <main className="flex-1 bg-muted p-6">
+    <AppShell>
+      <AppHeader>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>Library</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </AppHeader>
+      <AppContent>
         <div className="mx-auto max-w-4xl space-y-4">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold">Library</h1>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setSearchMode((m) =>
-                  m === "structured" ? "natural" : "structured",
-                )
-              }
-              className="text-xs gap-1"
-            >
-              {searchMode === "structured" ? (
-                <>
-                  <ToggleLeftIcon className="size-4" />
-                  Natural Search
-                </>
-              ) : (
-                <>
-                  <ToggleRightIcon className="size-4" />
-                  Structured
-                </>
-              )}
-            </Button>
-          </div>
+          <div className="flex items-center justify-between"></div>
 
           {/* Search and Filters */}
           <div className="rounded-lg border bg-background p-4 space-y-3">
@@ -242,88 +170,66 @@ function LibraryPage() {
             <div className="relative">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder={
-                  searchMode === "natural"
-                    ? "german a1 dative exercises..."
-                    : "Search by title, topic, or tags..."
-                }
+                placeholder="Search by title, topic, or tags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
 
-            {/* Natural Mode Suggestions */}
-            {searchMode === "natural" && suggestions.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 py-1">
-                <span className="text-xs text-muted-foreground">
-                  Suggestions:
-                </span>
-                {suggestions.map((s, i) => (
-                  <Badge
-                    key={i}
-                    variant="outline"
-                    className="cursor-pointer hover:bg-muted text-xs"
-                    onClick={() => addSuggestionAsFilter(s.filter, s.value)}
-                  >
-                    {s.display}
-                  </Badge>
-                ))}
-              </div>
-            )}
+            {/* Filters */}
+            <div className="flex flex-wrap gap-2">
+              <Select
+                value={typeFilter}
+                onValueChange={(v) => setTypeFilter(v as FilterType)}
+              >
+                <SelectTrigger className="w-[120px] h-8 text-xs">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="exercise">Exercise</SelectItem>
+                  <SelectItem value="group">Group</SelectItem>
+                  <SelectItem value="template">Template</SelectItem>
+                </SelectContent>
+              </Select>
 
-            {/* Structured Mode Filters */}
-            {searchMode === "structured" && (
-              <div className="flex flex-wrap gap-2">
+              {uniqueLanguages.length > 0 && (
                 <Select
-                  value={typeFilter}
-                  onValueChange={(v) => setTypeFilter(v as FilterType)}
+                  value={languageFilter}
+                  onValueChange={(v) => setLanguageFilter(v ?? "all")}
                 >
                   <SelectTrigger className="w-[120px] h-8 text-xs">
-                    <SelectValue placeholder="Type" />
+                    <SelectValue placeholder="Language" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="exercise">Exercise</SelectItem>
-                    <SelectItem value="group">Group</SelectItem>
-                    <SelectItem value="template">Template</SelectItem>
+                    <SelectItem value="all">All Languages</SelectItem>
+                    {uniqueLanguages.map((lang) => (
+                      <SelectItem key={lang} value={lang}>
+                        {lang}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+              )}
 
-                {uniqueLanguages.length > 0 && (
-                  <Select
-                    value={languageFilter}
-                    onValueChange={setLanguageFilter}
-                  >
-                    <SelectTrigger className="w-[120px] h-8 text-xs">
-                      <SelectValue placeholder="Language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Languages</SelectItem>
-                      {uniqueLanguages.map((lang) => (
-                        <SelectItem key={lang} value={lang}>
-                          {lang}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {/* Level Chips */}
-                <div className="flex flex-wrap gap-1">
+              <Select
+                value={levelFilter}
+                onValueChange={(v) => setLevelFilter(v as LevelFilter)}
+              >
+                <SelectTrigger className="w-[120px] h-8 text-xs">
+                  <SelectValue placeholder="Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
                   {CEFR_LEVELS.map((level) => (
-                    <Badge
-                      key={level}
-                      variant={levelFilters.has(level) ? "default" : "outline"}
-                      className="cursor-pointer text-xs h-8 px-2"
-                      onClick={() => toggleLevelFilter(level)}
-                    >
+                    <SelectItem key={level} value={level}>
                       {level}
-                    </Badge>
+                    </SelectItem>
                   ))}
-                </div>
-              </div>
-            )}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Active Filters */}
             {hasActiveFilters && (
@@ -347,12 +253,12 @@ function LibraryPage() {
                     />
                   </Badge>
                 )}
-                {levelFilters.size > 0 && (
+                {levelFilter !== "all" && (
                   <Badge variant="secondary" className="text-xs gap-1">
-                    {formatLevelsDisplay(Array.from(levelFilters))}
+                    {levelFilter}
                     <XIcon
                       className="size-3 cursor-pointer"
-                      onClick={() => setLevelFilters(new Set())}
+                      onClick={() => setLevelFilter("all")}
                     />
                   </Badge>
                 )}
@@ -485,6 +391,7 @@ function LibraryPage() {
             )}
           </div>
         </div>
-    </main>
+      </AppContent>
+    </AppShell>
   );
 }

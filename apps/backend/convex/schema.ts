@@ -68,6 +68,7 @@ const document = defineTable({
   owner: v.optional(v.string()), // WorkOS user ID (deprecated - use spaceId)
   title: v.string(),
   content: v.optional(v.bytes()), // Serialized Yjs document state
+  templateId: v.optional(v.id("library")), // Template used to initialize content
   createdAt: v.number(),
   updatedAt: v.number(),
 })

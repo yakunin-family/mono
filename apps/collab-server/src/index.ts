@@ -1,8 +1,10 @@
-import { api } from "@app/backend";
+import { api, type Id } from "@app/backend";
 import { Server } from "@hocuspocus/server";
 import { ConvexHttpClient } from "convex/browser";
 import dotenv from "dotenv";
 import * as Y from "yjs";
+
+import { initializeYDocFromTemplate } from "./json-to-yjs";
 
 // Load environment variables
 dotenv.config({ path: ".env.local" });
@@ -37,7 +39,7 @@ const server = Server.configure({
       // Verify the user can access this document
       // This will throw if auth is invalid or user lacks access
       const document = await authClient.query(api.documents.getDocument, {
-        documentId: documentName,
+        documentId: documentName as Id<"document">,
       });
 
       // Store token for this connection
@@ -127,7 +129,7 @@ const server = Server.configure({
       ) as ArrayBuffer;
 
       await authClient.mutation(api.documents.saveDocumentContent, {
-        documentId: data.documentName,
+        documentId: data.documentName as Id<"document">,
         content: arrayBuffer,
       });
 
@@ -158,7 +160,7 @@ const server = Server.configure({
       const content = await authClient.query(
         api.documents.loadDocumentContent,
         {
-          documentId: data.documentName,
+          documentId: data.documentName as Id<"document">,
         },
       );
 
@@ -170,6 +172,34 @@ const server = Server.configure({
         Y.applyUpdate(data.document, new Uint8Array(content));
       } else {
         console.log("No stored content for document:", data.documentName);
+
+        // Check if this document has a templateId to initialize from
+        const document = await authClient.query(api.documents.getDocument, {
+          documentId: data.documentName as Id<"document">,
+        });
+
+        if (document.templateId) {
+          console.log("Initializing from template:", document.templateId);
+
+          // Fetch the template content
+          const template = await authClient.query(api.exerciseBank.getItem, {
+            itemId: document.templateId,
+          });
+
+          if (template?.content) {
+            console.log("Loading template content:", {
+              templateId: document.templateId,
+              templateTitle: template.title,
+            });
+
+            // Convert template JSON to Yjs and apply
+            initializeYDocFromTemplate(data.document, template.content);
+
+            console.log("Template content applied to document");
+          } else {
+            console.warn("Template not found or has no content:", document.templateId);
+          }
+        }
       }
     } catch (error) {
       console.error("Error loading document:", error);

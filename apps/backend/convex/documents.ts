@@ -292,6 +292,7 @@ export const createLesson = authedMutation({
   args: {
     spaceId: v.id("spaces"),
     title: v.string(),
+    templateId: v.optional(v.id("library")),
   },
   handler: async (ctx, args) => {
     // Verify space exists and user is the teacher
@@ -303,6 +304,15 @@ export const createLesson = authedMutation({
 
     invariant(hasAccess, "Space not found");
     invariant(isTeacher, "Only the teacher can create lessons in this space");
+
+    // If templateId provided, verify it exists and belongs to the user
+    if (args.templateId) {
+      const template = await ctx.db.get(args.templateId);
+      invariant(
+        template && template.ownerId === ctx.user.id,
+        "Template not found or not accessible",
+      );
+    }
 
     // Get the highest lesson number in this space
     const existingLessons = await ctx.db
@@ -322,6 +332,7 @@ export const createLesson = authedMutation({
       spaceId: args.spaceId,
       lessonNumber: maxLessonNumber + 1,
       title: args.title.trim() || "Untitled Lesson",
+      templateId: args.templateId,
       createdAt: now,
       updatedAt: now,
     });

@@ -17,8 +17,8 @@ import { Route as ProtectedAppRouteRouteImport } from './routes/_protected/_app/
 import { Route as ProtectedAppIndexRouteImport } from './routes/_protected/_app/index'
 import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
 import { Route as ProtectedAppLibraryRouteImport } from './routes/_protected/_app/library'
-import { Route as ProtectedSpacesIdNewLessonRouteImport } from './routes/_protected/spaces.$id_.new-lesson'
 import { Route as ProtectedAppSpacesIdRouteImport } from './routes/_protected/_app/spaces.$id'
+import { Route as ProtectedSpacesIdLessonNewRouteImport } from './routes/_protected/spaces.$id_.lesson.new'
 import { Route as ProtectedSpacesIdLessonLessonIdRouteImport } from './routes/_protected/spaces.$id_.lesson.$lessonId'
 
 const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
@@ -58,17 +58,17 @@ const ProtectedAppLibraryRoute = ProtectedAppLibraryRouteImport.update({
   path: '/library',
   getParentRoute: () => ProtectedAppRouteRoute,
 } as any)
-const ProtectedSpacesIdNewLessonRoute =
-  ProtectedSpacesIdNewLessonRouteImport.update({
-    id: '/spaces/$id_/new-lesson',
-    path: '/spaces/$id/new-lesson',
-    getParentRoute: () => ProtectedRouteRoute,
-  } as any)
 const ProtectedAppSpacesIdRoute = ProtectedAppSpacesIdRouteImport.update({
   id: '/spaces/$id',
   path: '/spaces/$id',
   getParentRoute: () => ProtectedAppRouteRoute,
 } as any)
+const ProtectedSpacesIdLessonNewRoute =
+  ProtectedSpacesIdLessonNewRouteImport.update({
+    id: '/spaces/$id_/lesson/new',
+    path: '/spaces/$id/lesson/new',
+    getParentRoute: () => ProtectedRouteRoute,
+  } as any)
 const ProtectedSpacesIdLessonLessonIdRoute =
   ProtectedSpacesIdLessonLessonIdRouteImport.update({
     id: '/spaces/$id_/lesson/$lessonId',
@@ -83,8 +83,8 @@ export interface FileRoutesByFullPath {
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/': typeof ProtectedAppIndexRoute
   '/spaces/$id': typeof ProtectedAppSpacesIdRoute
-  '/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
+  '/spaces/$id/lesson/new': typeof ProtectedSpacesIdLessonNewRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
@@ -93,8 +93,8 @@ export interface FileRoutesByTo {
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/': typeof ProtectedAppIndexRoute
   '/spaces/$id': typeof ProtectedAppSpacesIdRoute
-  '/spaces/$id/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
+  '/spaces/$id/lesson/new': typeof ProtectedSpacesIdLessonNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,8 +107,8 @@ export interface FileRoutesById {
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/_protected/_app/': typeof ProtectedAppIndexRoute
   '/_protected/_app/spaces/$id': typeof ProtectedAppSpacesIdRoute
-  '/_protected/spaces/$id_/new-lesson': typeof ProtectedSpacesIdNewLessonRoute
   '/_protected/spaces/$id_/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
+  '/_protected/spaces/$id_/lesson/new': typeof ProtectedSpacesIdLessonNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,8 +119,8 @@ export interface FileRouteTypes {
     | '/api/auth/callback'
     | '/'
     | '/spaces/$id'
-    | '/spaces/$id/new-lesson'
     | '/spaces/$id/lesson/$lessonId'
+    | '/spaces/$id/lesson/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -129,8 +129,8 @@ export interface FileRouteTypes {
     | '/api/auth/callback'
     | '/'
     | '/spaces/$id'
-    | '/spaces/$id/new-lesson'
     | '/spaces/$id/lesson/$lessonId'
+    | '/spaces/$id/lesson/new'
   id:
     | '__root__'
     | '/_auth'
@@ -142,8 +142,8 @@ export interface FileRouteTypes {
     | '/api/auth/callback'
     | '/_protected/_app/'
     | '/_protected/_app/spaces/$id'
-    | '/_protected/spaces/$id_/new-lesson'
     | '/_protected/spaces/$id_/lesson/$lessonId'
+    | '/_protected/spaces/$id_/lesson/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,19 +210,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedAppLibraryRouteImport
       parentRoute: typeof ProtectedAppRouteRoute
     }
-    '/_protected/spaces/$id_/new-lesson': {
-      id: '/_protected/spaces/$id_/new-lesson'
-      path: '/spaces/$id/new-lesson'
-      fullPath: '/spaces/$id/new-lesson'
-      preLoaderRoute: typeof ProtectedSpacesIdNewLessonRouteImport
-      parentRoute: typeof ProtectedRouteRoute
-    }
     '/_protected/_app/spaces/$id': {
       id: '/_protected/_app/spaces/$id'
       path: '/spaces/$id'
       fullPath: '/spaces/$id'
       preLoaderRoute: typeof ProtectedAppSpacesIdRouteImport
       parentRoute: typeof ProtectedAppRouteRoute
+    }
+    '/_protected/spaces/$id_/lesson/new': {
+      id: '/_protected/spaces/$id_/lesson/new'
+      path: '/spaces/$id/lesson/new'
+      fullPath: '/spaces/$id/lesson/new'
+      preLoaderRoute: typeof ProtectedSpacesIdLessonNewRouteImport
+      parentRoute: typeof ProtectedRouteRoute
     }
     '/_protected/spaces/$id_/lesson/$lessonId': {
       id: '/_protected/spaces/$id_/lesson/$lessonId'
@@ -265,14 +265,14 @@ const ProtectedAppRouteRouteWithChildren =
 
 interface ProtectedRouteRouteChildren {
   ProtectedAppRouteRoute: typeof ProtectedAppRouteRouteWithChildren
-  ProtectedSpacesIdNewLessonRoute: typeof ProtectedSpacesIdNewLessonRoute
   ProtectedSpacesIdLessonLessonIdRoute: typeof ProtectedSpacesIdLessonLessonIdRoute
+  ProtectedSpacesIdLessonNewRoute: typeof ProtectedSpacesIdLessonNewRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
   ProtectedAppRouteRoute: ProtectedAppRouteRouteWithChildren,
-  ProtectedSpacesIdNewLessonRoute: ProtectedSpacesIdNewLessonRoute,
   ProtectedSpacesIdLessonLessonIdRoute: ProtectedSpacesIdLessonLessonIdRoute,
+  ProtectedSpacesIdLessonNewRoute: ProtectedSpacesIdLessonNewRoute,
 }
 
 const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(

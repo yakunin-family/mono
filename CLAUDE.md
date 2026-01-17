@@ -28,6 +28,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - This applies to all files: components, utilities, hooks, types, tests, etc.
    - Exception: Framework-required files (e.g., `README.md`, `package.json`, config files like `tsconfig.json`)
 
+5. **TanStack Form for All Forms** - All forms must use TanStack Form (`@tanstack/react-form`).
+   - Never use uncontrolled forms or other form libraries (Formik, React Hook Form, etc.)
+   - Leverage TanStack Form's built-in validation and type safety
+
+6. **TanStack Table for All Tables** - All data tables must use TanStack Table (`@tanstack/react-table`).
+   - Never use plain HTML tables or other table libraries for data display
+   - Leverage TanStack Table's built-in sorting, filtering, and pagination features
+
 ## Repository Structure
 
 This is a **pnpm monorepo** managed by **Turborepo** with the following workspace structure:
@@ -182,6 +190,39 @@ This is a **pnpm monorepo** managed by **Turborepo**. All commands should be run
 - **Path Aliases**: `@/` references `src/`
 
 **Role Switching**: When users have both teacher and student roles active, they can switch between apps. The RoleSwitcher component updates the user's `activeRole` in Convex and redirects to the appropriate app URL.
+
+**Component Organization** (applies to both teacher and student apps):
+
+Components are organized by their scope:
+
+- **`src/components/`** - Shared components used across multiple routes (e.g., `app-shell.tsx`, `AuthGate.tsx`, `user-avatar.tsx`, sidebar components)
+- **`src/spaces/<route-name>/`** - Route-specific components that are only used by a particular route
+
+Route-specific components should be placed in a folder under `src/spaces/` that matches the route name:
+- `src/routes/_protected/_app/index.tsx` → `src/spaces/home/`
+- `src/routes/_protected/_app/spaces.$id.tsx` → `src/spaces/space-detail/`
+- `src/routes/_protected/_app/library.tsx` → `src/spaces/library/`
+
+Example structure:
+```
+src/
+├── components/           # Shared across routes
+│   ├── app-shell.tsx
+│   ├── AuthGate.tsx
+│   └── sidebar/
+├── spaces/               # Route-specific components
+│   ├── home/
+│   │   ├── spaces-list.tsx
+│   │   └── invites-list.tsx
+│   └── space-detail/
+│       └── create-lesson-dialog.tsx
+└── routes/
+    └── _protected/_app/
+        ├── index.tsx     # Uses components from spaces/home/
+        └── spaces.$id.tsx # Uses components from spaces/space-detail/
+```
+
+**Rule**: If a component is only used by one route, it belongs in `src/spaces/<route-name>/`. Only truly shared components belong in `src/components/`.
 
 ### Backend (`apps/backend`)
 

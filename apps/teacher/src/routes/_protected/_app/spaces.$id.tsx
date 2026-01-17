@@ -28,7 +28,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
-  Link,
   notFound,
   useNavigate,
 } from "@tanstack/react-router";
@@ -52,6 +51,7 @@ import {
 import { useMemo, useState } from "react";
 
 import { AppContent, AppHeader, AppShell } from "@/components/app-shell";
+import { CreateLessonDialog } from "@/spaces/space-detail/create-lesson-dialog";
 
 interface LessonWithHomework {
   _id: Id<"document">;
@@ -151,6 +151,11 @@ function SpaceDetailPageContent() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
+  const [createLessonDialogOpen, setCreateLessonDialogOpen] = useState(false);
+
+  const templatesQuery = useQuery({
+    ...convexQuery(api.exerciseBank.getMyItems, { type: "template" }),
+  });
 
   const spaceQuery = useQuery({
     ...convexQuery(api.spaces.getSpace, {
@@ -190,6 +195,20 @@ function SpaceDetailPageContent() {
       setDeletingLessonId(null);
     },
   });
+
+  const handleCreateLesson = () => {
+    const hasTemplates =
+      templatesQuery.data && templatesQuery.data.length > 0;
+    if (hasTemplates) {
+      setCreateLessonDialogOpen(true);
+    } else {
+      navigate({
+        to: "/spaces/$id/lesson/new",
+        params: { id: spaceId },
+        search: { template: undefined, title: undefined },
+      });
+    }
+  };
 
   const columnHelper = createColumnHelper<LessonWithHomework>();
 
@@ -273,12 +292,10 @@ function SpaceDetailPageContent() {
           {/* Lessons Section */}
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Lessons</h2>
-            <Link to="/spaces/$id/new-lesson" params={{ id: spaceId }}>
-              <Button size="sm">
-                <PlusIcon className="size-4" />
-                New Lesson
-              </Button>
-            </Link>
+            <Button size="sm" onClick={handleCreateLesson}>
+              <PlusIcon className="size-4" />
+              New Lesson
+            </Button>
           </div>
 
           {lessonsQuery.isLoading ? (
@@ -291,12 +308,10 @@ function SpaceDetailPageContent() {
               <p className="mb-4 text-sm text-muted-foreground">
                 No lessons yet. Create your first lesson to get started.
               </p>
-              <Link to="/spaces/$id/new-lesson" params={{ id: spaceId }}>
-                <Button>
-                  <PlusIcon className="size-4" />
-                  Create First Lesson
-                </Button>
-              </Link>
+              <Button onClick={handleCreateLesson}>
+                <PlusIcon className="size-4" />
+                Create First Lesson
+              </Button>
             </div>
           ) : (
             <div className="rounded-md border">
@@ -408,6 +423,13 @@ function SpaceDetailPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Lesson Dialog */}
+      <CreateLessonDialog
+        open={createLessonDialogOpen}
+        onOpenChange={setCreateLessonDialogOpen}
+        spaceId={spaceId}
+      />
     </div>
   );
 }

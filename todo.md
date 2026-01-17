@@ -1,4 +1,3 @@
 - https://github.com/toon-format/spec
 - https://jamiemason.github.io/syncpack/
-- smooth cursor movement
-- exercise bank
+- https://github.com/vercel-labs/agent-skills
