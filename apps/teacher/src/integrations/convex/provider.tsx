@@ -18,12 +18,21 @@ export function useConvexAuthState() {
   return useContext(ConvexAuthContext);
 }
 
-export const getContext = () => {
-  const convexQueryClient = new ConvexQueryClient(env.VITE_CONVEX_URL, {
-    unsavedChangesWarning: false,
-    expectAuth: true,
-  });
+// Singleton client that persists across hot reloads
+let convexQueryClientSingleton: ConvexQueryClient | null = null;
 
+function getOrCreateConvexQueryClient(): ConvexQueryClient {
+  if (!convexQueryClientSingleton) {
+    convexQueryClientSingleton = new ConvexQueryClient(env.VITE_CONVEX_URL, {
+      unsavedChangesWarning: false,
+      expectAuth: true,
+    });
+  }
+  return convexQueryClientSingleton;
+}
+
+export const getContext = () => {
+  const convexQueryClient = getOrCreateConvexQueryClient();
   return {
     convexQueryClient,
   };

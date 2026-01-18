@@ -8,6 +8,11 @@ interface TiptapNode {
   marks?: Array<{ type: string; attrs?: Record<string, unknown> }>;
 }
 
+interface TiptapDocument {
+  type: "doc";
+  content: TiptapNode[];
+}
+
 /**
  * Convert a Tiptap JSON node to a Yjs XmlElement or XmlText
  */
@@ -77,16 +82,16 @@ export function tiptapJsonToYFragment(
  * Uses the "default" fragment name that Tiptap Collaboration expects.
  *
  * @param ydoc - The Yjs document to initialize
- * @param jsonContent - The Tiptap JSON content string
+ * @param jsonContent - The full Tiptap JSON document string ({ type: "doc", content: [...] })
  */
 export function initializeYDocFromTemplate(
   ydoc: Y.Doc,
   jsonContent: string,
 ): void {
-  const content = JSON.parse(jsonContent) as TiptapNode[];
+  const doc = JSON.parse(jsonContent) as TiptapDocument;
 
   // Tiptap Collaboration uses "default" as the fragment name
   const fragment = ydoc.getXmlFragment("default");
 
-  tiptapJsonToYFragment(content, fragment);
+  tiptapJsonToYFragment(doc.content, fragment);
 }

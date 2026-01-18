@@ -35,9 +35,7 @@ export function CreateLessonDialog({
 }: CreateLessonDialogProps) {
   const navigate = useNavigate();
   const [title, setTitle] = useState(DEFAULT_LESSON_TITLE);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
-    null,
-  );
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
   const nextNumberQuery = useQuery({
     ...convexQuery(api.documents.getNextLessonNumber, {
@@ -62,14 +60,14 @@ export function CreateLessonDialog({
           trimmedTitle && trimmedTitle !== DEFAULT_LESSON_TITLE
             ? trimmedTitle
             : undefined,
-        template: selectedTemplateId ?? undefined,
+        template: selectedTemplateId || undefined,
       },
     });
   };
 
   const handleClose = () => {
     setTitle(DEFAULT_LESSON_TITLE);
-    setSelectedTemplateId(null);
+    setSelectedTemplateId("");
     onOpenChange(false);
   };
 
@@ -104,7 +102,7 @@ export function CreateLessonDialog({
           <div className="space-y-2">
             <Label>Start from template</Label>
             <Select
-              value={selectedTemplateId ?? undefined}
+              value={selectedTemplateId}
               onValueChange={setSelectedTemplateId}
             >
               <SelectTrigger className="w-full">
