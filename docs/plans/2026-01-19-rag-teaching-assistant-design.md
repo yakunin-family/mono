@@ -303,7 +303,7 @@ export const searchLibrary = internalAction({
 
 **Document Operations:**
 - `create_lesson` - Create new lesson in a space
-- `add_content_to_lesson` - Insert exercises/content into existing lesson
+- `insert_content_to_document` - Insert content at specific position (via Hocuspocus HTTP API)
 - `insert_library_item` - Add library exercise to current lesson
 
 **Space Management:**
@@ -820,6 +820,249 @@ Agent operates with **Global Knowledge + Current Focus** (Option C):
 - Teacher can explicitly request broader analysis
 
 Similar to Claude Code: sees current file but can navigate entire codebase.
+
+## Document Editing via Hocuspocus
+
+### Problem: Convex Cannot Maintain WebSocket Connections
+
+Convex actions are ephemeral (serverless functions) and cannot maintain persistent WebSocket connections to the Hocuspocus collaboration server. This rules out making the agent a true collaborative client.
+
+### Solution: HTTP API with Stable Node References
+
+Add HTTP endpoints to Hocuspocus server for agent-driven edits:
+
+```typescript
+// POST /document/:docId/insert-content
+{
+  "afterNodeId": "exercise-abc-123", // Stable Tiptap node ID
+  "content": {...}, // Tiptap JSON to insert
+  "position": "after" // or "before", "inside"
+}
+```
+
+**Conflict Avoidance:**
+- Use **Tiptap node IDs** (stable) instead of positions (drift as document changes)
+- Hocuspocus loads current Yjs state, finds node by ID, inserts content
+- Changes propagate through normal Yjs collaboration
+- If node doesn't exist → return error, agent retries with different anchor
+
+**Agent Tool:**
+```typescript
+export const insertContentToDocument = internalAction({
+  args: {
+    documentId: v.id("document"),
+    afterNodeId: v.string(), // Stable Tiptap node ID
+    content: v.any(), // Tiptap JSON
+  },
+  handler: async (ctx, args) => {
+    const response = await fetch(
+      `${HOCUSPOCUS_URL}/document/${args.documentId}/insert-content`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          afterNodeId: args.afterNodeId,
+          content: args.content,
+          position: "after",
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new ConvexError("Failed to insert content");
+    }
+
+    return await response.json();
+  },
+});
+```
+
+### Streaming Agent Responses
+
+Use Vercel AI SDK's `streamText` instead of `generateText` to stream chat responses:
+
+```typescript
+export const sendMessageStream = action({
+  handler: async (ctx, args) => {
+    const { textStream } = await streamText({
+      model: "openai/gpt-4o",
+      system: systemPrompt,
+      messages: history,
+      tools: TOOL_REGISTRY,
+      maxSteps: 5,
+    });
+
+    return textStream; // Streams to client
+  },
+});
+```
+
+**User Experience:**
+1. Agent streams explanation: "I'm searching your library for food exercises..."
+2. Tool calls execute (HTTP to Hocuspocus for document edits)
+3. Document changes appear immediately via Yjs sync to all users
+4. Agent continues streaming: "I've added 3 exercises to your lesson."
+
+Result: Real-time chat + real-time document collaboration without conflicts.
+
+## Error Handling & Edge Cases
+
+### LLM Failures
+
+**Scenarios:**
+- Tool calls with invalid parameters
+- Model timeouts or rate limits
+- Malformed JSON responses
+
+**Handling:**
+```typescript
+export const sendMessage = action({
+  handler: async (ctx, args) => {
+    try {
+      const response = await streamText({...});
+      return response.textStream;
+    } catch (error) {
+      // Store error message for user
+      await ctx.runMutation(internal.agent.storeMessage, {
+        sessionId: args.sessionId,
+        role: "assistant",
+        content: "I encountered an error processing your request. Please try rephrasing or try again in a moment.",
+      });
+
+      // Log for debugging
+      console.error("Agent error:", error);
+
+      throw new ConvexError("Error processing request");
+    }
+  },
+});
+```
+
+### Tool Execution Failures
+
+**Scenarios:**
+- Permission denied (teacher doesn't own resource)
+- Resource not found (invalid IDs)
+- Convex mutation errors
+- Hocuspocus HTTP API failures
+
+**Handling:**
+```typescript
+export const executeToolCall = internalAction({
+  handler: async (ctx, args) => {
+    const tool = TOOL_REGISTRY.find(t => t.name === args.toolName);
+
+    try {
+      const result = await tool.handler(ctx, toolArgs);
+      return { success: true, result };
+    } catch (error) {
+      // Return error to agent so it can explain to user
+      return {
+        success: false,
+        error: error.message,
+        shouldRetry: error instanceof ConvexError,
+      };
+    }
+  },
+});
+```
+
+### Edge Cases
+
+**1. Empty Library**
+- Agent searches but finds nothing
+- Agent should acknowledge: "I couldn't find relevant exercises in your library. Would you like me to create new ones?"
+
+**2. Ambiguous Context**
+- Multiple spaces with same student name
+- Include space language in context description: "German with Maria"
+
+**3. Concurrent Modifications**
+- User edits lesson while agent is working
+- Tools use stable node IDs (handled by Yjs CRDT)
+
+**4. Very Long Conversations**
+- Token limits exceeded (context window)
+- Truncate history, keep recent 10 messages + system prompt
+
+**5. Vector Search Returns No Results**
+- Agent should fall back to creating new content
+- Or ask user for clarification: "I couldn't find exercises about X. Could you describe what you're looking for?"
+
+**6. Node ID Not Found**
+- Agent tries to insert after deleted node
+- Hocuspocus returns error
+- Agent retries with different anchor (e.g., end of document)
+
+## Cost & Performance Considerations
+
+### Embedding Costs
+
+**OpenAI text-embedding-3-small:**
+- $0.02 per 1M tokens
+- Average library item: ~200 tokens (title + metadata + description)
+- 1,000 library items = ~200K tokens = **$0.004**
+- Very cheap - one-time cost per item
+
+### Vector Search Costs
+
+**Convex vector search:**
+- Included in standard Convex pricing
+- No additional per-query cost
+- Limited by Convex compute units (sufficient for small-medium scale)
+
+### LLM Inference Costs (Main Expense)
+
+**OpenAI GPT-4o pricing:**
+- Input: $2.50 per 1M tokens
+- Output: $10.00 per 1M tokens
+
+**Estimated per conversation:**
+- System prompt: ~500 tokens
+- Conversation history (10 messages): ~2,000 tokens
+- Library search results (5 items): ~1,000 tokens
+- Total input: ~3,500 tokens = $0.00875
+- Response output: ~500 tokens = $0.005
+- **Total per message: ~$0.014**
+
+**Monthly cost estimate:**
+- 50 active teachers
+- 20 messages per teacher per month
+- 50 × 20 × $0.014 = **~$14/month for LLM**
+- Convex usage: ~$20-40/month (database + compute)
+- **Total: ~$35-55/month**
+
+### Performance
+
+**Latency breakdown:**
+- Embedding generation (background): 200-500ms (non-blocking)
+- Vector search: 50-100ms (Convex native)
+- LLM inference: 2-5 seconds (streaming makes it feel faster)
+- Tool execution: 100-500ms per tool
+- Hocuspocus HTTP call: 50-200ms
+- **Total response time: 2-6 seconds** for typical interaction
+
+**Optimization Strategies:**
+
+1. **Cheaper models for simple queries**
+   - Use GPT-4o-mini for basic searches/questions
+   - Reserve GPT-4o for complex multi-tool operations
+
+2. **Limit conversation history**
+   - Keep only last 10 messages
+   - Summarize older context if needed
+
+3. **Cache frequent searches**
+   - Cache popular queries like "food vocabulary A2"
+   - Invalidate on library updates
+
+4. **Parallel tool execution**
+   - Execute independent tools concurrently
+   - Example: search library + list spaces in parallel
+
+5. **Streaming responses**
+   - Users perceive faster response with streaming
+   - Show partial results as they arrive
 
 ## Design Decisions Summary
 
