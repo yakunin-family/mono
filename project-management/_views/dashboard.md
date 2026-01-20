@@ -1,23 +1,21 @@
 # Project Dashboard
 
-**Last Updated:** 2026-01-20T20:53:05.676Z
+**Last Updated:** 2026-01-20T20:57:17.617Z
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Tasks** | 2 |
-| ├─ Todo | 1 |
-| ├─ In Progress | 1 |
+| **Total Tasks** | 0 |
+| ├─ Todo | 0 |
+| ├─ In Progress | 0 |
 | ├─ Blocked | 0 |
 | └─ Done | 0 |
-| **High Priority** | 1 |
+| **High Priority** | 0 |
 
 ## In Progress
 
-| Task | Priority | Initiative |
-|------|----------|------------|
-| [t-2](../initiatives/[i-1]-sample-initiative/[t-2]-initiative-task.md) | 🟠 | i-1 |
+_No tasks in progress_
 
 ## High Priority Todo
 
@@ -29,9 +27,7 @@ _No blocked tasks_
 
 ## Initiatives
 
-| Initiative | Status | Progress | Priority |
-|------------|--------|----------|----------|
-| [i-1](../initiatives/[i-1]-sample-initiative/README.md) | ⏳ | 0% (0/1) | 🟠 |
+_No initiatives_
 
 ## Recently Completed (Last 7 Days)
 
@@ -39,8 +35,4 @@ _No recently completed items_
 
 ## Other Tasks
 
-### Medium
-
-| Task | Initiative |
-|------|------------|
-| [t-1](../tasks/[t-1]-sample-task.md) | — |
+_No other tasks_
