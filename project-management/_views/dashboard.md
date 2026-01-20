@@ -1,13 +1,13 @@
 # Project Dashboard
 
-**Last Updated:** 2026-01-20T21:23:51.252Z
+**Last Updated:** 2026-01-20T21:29:27.910Z
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Tasks** | 0 |
-| ├─ Todo | 0 |
+| **Total Tasks** | 1 |
+| ├─ Todo | 1 |
 | ├─ In Progress | 0 |
 | ├─ Blocked | 0 |
 | └─ Done | 0 |
@@ -35,4 +35,8 @@ _No recently completed items_
 
 ## Other Tasks
 
-_No other tasks_
+### Low
+
+| Task | Initiative |
+|------|------------|
+| [t-38](../tasks/[t-38]-reconsider-reference-syntax.md) | — |
