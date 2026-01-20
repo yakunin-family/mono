@@ -1,13 +1,13 @@
 # Project Dashboard
 
-**Last Updated:** 2026-01-20T08:51:46.618Z
+**Last Updated:** 2026-01-20T20:53:05.676Z
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Tasks** | 3 |
-| ├─ Todo | 2 |
+| **Total Tasks** | 2 |
+| ├─ Todo | 1 |
 | ├─ In Progress | 1 |
 | ├─ Blocked | 0 |
 | └─ Done | 0 |
@@ -15,9 +15,9 @@
 
 ## In Progress
 
-| Task | Priority | Assignee | Initiative |
-|------|----------|----------|------------|
-| [Updated Example Task](../tasks/example-task-1.md) | 🟠 | — | — |
+| Task | Priority | Initiative |
+|------|----------|------------|
+| [t-2](../initiatives/[i-1]-sample-initiative/[t-2]-initiative-task.md) | 🟠 | i-1 |
 
 ## High Priority Todo
 
@@ -29,9 +29,9 @@ _No blocked tasks_
 
 ## Initiatives
 
-| Initiative | Status | Progress | Priority | Owner |
-|------------|--------|----------|----------|-------|
-| [Example Initiative](../initiatives/example-initiative/README.md) | ⏳ | 0% (0/1) | 🟡 | — |
+| Initiative | Status | Progress | Priority |
+|------------|--------|----------|----------|
+| [i-1](../initiatives/[i-1]-sample-initiative/README.md) | ⏳ | 0% (0/1) | 🟠 |
 
 ## Recently Completed (Last 7 Days)
 
@@ -41,7 +41,6 @@ _No recently completed items_
 
 ### Medium
 
-| Task | Assignee | Initiative |
-|------|----------|------------|
-| [Example Task](../tasks/example-task.md) | — | — |
-| [Example Task 0](../initiatives/example-initiative/task-0-example.md) | — | example-initiative |
+| Task | Initiative |
+|------|------------|
+| [t-1](../tasks/[t-1]-sample-task.md) | — |

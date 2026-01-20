@@ -4,12 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx src/index.ts watch --source ../../project-management",
-    "build": "tsx src/index.ts build --source ../../project-management",
+    "compile": "tsx src/index.ts compile --source ../../project-management",
     "generate-agents-guide": "tsx src/index.ts generate-agents-guide --source ../../project-management"
   },
   "dependencies": {
-    "chokidar": "^4.0.3",
     "glob": "^11.0.0",
     "gray-matter": "^4.0.3",
     "zod": "^3.24.1"

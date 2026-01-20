@@ -684,9 +684,6 @@ importers:
 
   tooling/project-management:
     dependencies:
-      chokidar:
-        specifier: ^4.0.3
-        version: 4.0.3
       glob:
         specifier: ^11.0.0
         version: 11.1.0

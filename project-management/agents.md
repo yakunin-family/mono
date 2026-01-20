@@ -2,7 +2,34 @@
 
 ## Overview
 
-This is a **markdown-first project management system** that uses plain markdown files with YAML frontmatter to track tasks and initiatives. All data lives in markdown files — there's no separate database or API.
+This is a **markdown-first project management system** that uses plain markdown files with YAML frontmatter to track tasks, documents, and initiatives. All data lives in markdown files — there's no separate database or API.
+
+**This folder is the canonical place for:**
+- Project plans and designs
+- Implementation details
+- Task tracking
+- Reference documentation
+
+**Key Features:**
+- Unified file naming convention: `[prefix-id]-title` pattern
+- ID and title derived from filename (not stored in frontmatter)
+- Global counter system for sequential IDs
+- Universal reference syntax for linking between entities
+
+## CRITICAL: Compile After Every Change
+
+After making **any changes** to files in `project-management/`, you **MUST**:
+
+1. Run the compile command:
+   ```bash
+   pnpm --filter @tooling/project-management compile
+   ```
+
+2. Check `_views/errors.md` for validation errors
+
+3. **If errors exist, fix them immediately** — continue working until `errors.md` shows "All Clear"
+
+The compile command exits with code 1 if there are errors, making it easy to detect failures.
 
 ## Important: Start with the Dashboard
 
@@ -15,120 +42,208 @@ This is a **markdown-first project management system** that uses plain markdown 
 Reading the dashboard helps you understand the project context before modifying any files.
 
 **Check `_views/errors.md`** if there are validation issues. This file shows:
-- Files with invalid frontmatter
-- Specific field errors with received vs expected values
-- Valid values reference for all enum fields
+- Files with invalid filename format
+- Duplicate IDs across files
+- Invalid or missing references
+- Invalid enum values (status, priority)
+- Counter mismatches
 
 ## File Structure
 
 ```
 project-management/
-├── tasks/                  # Individual task files
-│   ├── task-001-feature.md
-│   ├── task-002-bugfix.md
-│   └── ...
-├── initiatives/            # Initiative folders (epics/projects)
-│   ├── feature-x/
-│   │   ├── README.md      # Initiative overview
-│   │   └── ...
-│   └── ...
-├── archive/                # Completed items
+├── tasks/                      # Active tasks
+│   └── [t-1]-implement-auth.md
+├── docs/                       # Active documents
+│   └── [d-1]-auth-design.md
+├── initiatives/                # Active initiatives
+│   └── [i-1]-user-management/
+│       ├── README.md
+│       └── [t-2]-setup-db.md   # Tasks can live inside initiatives
+├── archive/                    # Completed/deprecated items
 │   ├── tasks/
+│   ├── docs/
 │   └── initiatives/
-└── _views/                 # Generated reports (auto-generated)
-    ├── dashboard.md       # Main project overview
-    └── errors.md          # Validation errors report
+├── _meta/                      # System files
+│   └── counters.json
+├── _views/                     # Auto-generated (never edit)
+│   ├── dashboard.md
+│   ├── documents.md
+│   └── errors.md
+└── agents.md                   # AI agent instructions
 ```
 
 **Key Principles:**
 - **tasks/**: Standalone tasks not tied to initiatives
+- **docs/**: Documents (design docs, references, guides)
 - **initiatives/**: Folders containing related tasks and README
-- **archive/**: Move completed work here
+- **archive/**: Move completed work here (maintains original filename)
+- **_meta/**: System files like counters.json
 - **_views/**: Never edit manually — regenerated on every build
 
-## Task Frontmatter Schema
+## File Naming Convention
 
-Every task is a markdown file with YAML frontmatter at the top:
+All entities use a consistent `[prefix-id]-title` pattern:
+
+| Entity | Pattern | Example |
+|--------|---------|---------|
+| Task | `[t-x]-title.md` | `[t-1]-implement-auth.md` |
+| Document | `[d-x]-title.md` | `[d-1]-auth-design.md` |
+| Initiative | `[i-x]-title/README.md` | `[i-1]-user-management/README.md` |
+
+**Rules:**
+- Prefix: `t-` for tasks, `d-` for documents, `i-` for initiatives
+- ID: Sequential integer managed by counter file
+- Title: kebab-case, descriptive
+- **No `id` or `title` in frontmatter** — derived from filename
+- Tooling converts kebab-case to title case for display (e.g., `implement-auth` → "Implement Auth")
+
+## Frontmatter Schemas
+
+### Task (`[t-x]-title.md`)
 
 ```yaml
 ---
-id: task-001                    # REQUIRED: Unique task identifier
-title: Implement feature X      # REQUIRED: Short descriptive title
-status: todo                    # REQUIRED: todo | in-progress | done | blocked
-priority: high                  # OPTIONAL: low | medium | high | critical
-assignee: john@example.com      # OPTIONAL: Who's responsible
-dueDate: 2026-01-31            # OPTIONAL: ISO date format (YYYY-MM-DD)
-tags: [frontend, react]        # OPTIONAL: Categorization tags
-blockedBy: [task-000]          # OPTIONAL: Array of task IDs blocking this task
-blocks: [task-002]             # OPTIONAL: Array of task IDs this task blocks
-relatedTo: [task-003]          # OPTIONAL: Array of related task IDs
-initiative: feature-x          # OPTIONAL: Initiative ID this task belongs to
+status: todo              # required: todo | in-progress | done | blocked
+priority: medium          # optional: low | medium | high | critical
+description: Short text   # optional: for dashboard display
+tags: [auth, backend]     # optional: categorization
+references: blocked-by:t-2, d-1  # optional: relationships
 ---
-
-## Description
-
-Task details, acceptance criteria, implementation notes, etc.
 ```
 
 **Field Details:**
-
-- **id**: Unique identifier (e.g., `task-001`, `feat-login`). Used for cross-references.
-- **title**: Concise summary shown in dashboards and lists.
-- **status**:
+- **status** (required): Current state of the task
   - `todo`: Not started yet
   - `in-progress`: Currently being worked on
   - `done`: Completed (move to `archive/` when done)
-  - `blocked`: Waiting on dependencies or external factors
-- **priority**: Urgency level. High/critical tasks appear in dedicated dashboard sections.
-- **assignee**: Email or username of responsible person.
-- **dueDate**: ISO 8601 date format (`YYYY-MM-DD`).
-- **tags**: Free-form categorization (e.g., `[backend, api, database]`).
-- **blockedBy**: List of task IDs that must complete before this task can proceed.
-- **blocks**: List of task IDs that depend on this task completing.
-- **relatedTo**: Informational links to related tasks.
-- **initiative**: Links task to an initiative folder (use initiative ID).
+  - `blocked`: Waiting on dependencies
+- **priority** (optional): Urgency level. High/critical tasks appear in dedicated dashboard sections.
+- **description** (optional): Brief summary shown in dashboard tables.
+- **tags** (optional): Free-form categorization (e.g., `[backend, api, database]`).
+- **references** (optional): Links to other entities and blocking relationships.
 
-## Initiative Frontmatter Schema
-
-Initiatives group related tasks into epics or projects:
+### Document (`[d-x]-title.md`)
 
 ```yaml
 ---
-id: init-001                     # REQUIRED: Unique initiative identifier
-title: Feature X Initiative      # REQUIRED: Initiative name
-description: Short summary       # OPTIONAL: Brief description
-status: in-progress              # OPTIONAL: Same as task status
-priority: high                   # OPTIONAL: Same as task priority
-owner: john@example.com          # OPTIONAL: Initiative lead
-startDate: 2026-01-01           # OPTIONAL: ISO date format
-targetDate: 2026-02-28          # OPTIONAL: Target completion date
-tags: [frontend]                # OPTIONAL: Categorization tags
+description: Short text   # optional: for documents view
+tags: [design, api]       # optional: categorization
+references: t-1, i-2      # optional: relationships
 ---
-
-## Overview
-
-Detailed initiative description, goals, and success criteria.
 ```
 
-## How to Create Tasks
+**Note:** All frontmatter is optional for documents.
 
-**Just create a markdown file with frontmatter:**
+### Initiative (`[i-x]-title/README.md`)
 
-1. Create a new `.md` file in `tasks/` or `initiatives/<name>/`
-2. Add YAML frontmatter at the top (between `---` markers)
-3. Include at minimum: `id`, `title`, and `status`
-4. Add task description below the frontmatter
-5. Save the file
+```yaml
+---
+status: in-progress       # optional: todo | in-progress | done | blocked
+priority: high            # optional: low | medium | high | critical
+description: Short text   # optional: for dashboard display
+tags: [frontend]          # optional: categorization
+references: d-1, t-5      # optional: relationships
+---
+```
+
+**Note:** All frontmatter is optional for initiatives.
+
+## References System
+
+### Syntax
+
+```yaml
+references: blocked-by:i-1/t-3, t-1, d-2, i-1
+```
+
+### Reference Types
+
+| Reference | Resolves To |
+|-----------|-------------|
+| `t-x` | Task in `tasks/[t-x]-title.md` |
+| `i-x/t-y` | Task in `initiatives/[i-x]-name/[t-y]-title.md` |
+| `d-x` | Document in `docs/[d-x]-title.md` |
+| `i-x` | Initiative at `initiatives/[i-x]-name/README.md` |
+
+### Relationship Prefixes
+
+- `blocked-by:t-x` or `blocked-by:i-x/t-y` — This task is blocked by another task (only valid for tasks)
+- No prefix — Informational link (any entity can reference any other)
+
+### Behavior
+
+- References are unidirectional (no automatic back-links)
+- Validation checks all referenced IDs exist
+- Invalid references reported in `errors.md`
+- Dashboard shows blockers for blocked tasks with their status
+- `i-x/t-y` validates that task `t-y` actually exists inside initiative `i-x`'s folder
+
+### Examples
+
+```yaml
+# Referencing a standalone task
+references: t-5
+
+# Referencing a task inside an initiative
+references: blocked-by:i-1/t-3, d-1
+
+# Mixed references
+references: t-1, i-2/t-7, d-2, i-3
+```
+
+## Counter File
+
+### Location
+
+`_meta/counters.json`
+
+### Format
+
+```json
+{
+  "t": 12,
+  "d": 5,
+  "i": 3
+}
+```
+
+### Behavior
+
+- Each value represents the **last assigned ID** for that prefix
+- When creating a new entity: read counter, increment appropriate value, use new value, write back
+- **Counters only go up** — never reuse IDs even after deletion
+- Validation flags if any file ID exceeds its counter (indicates manual file creation without updating counter)
+
+### Initialization
+
+For a new project:
+
+```json
+{
+  "t": 0,
+  "d": 0,
+  "i": 0
+}
+```
+
+## How to Create Entities
+
+### Creating a New Task
+
+1. Read `_meta/counters.json`
+2. Increment the `t` counter (e.g., 5 → 6)
+3. Create file: `tasks/[t-6]-your-task-title.md` or `initiatives/[i-x]-name/[t-6]-title.md`
+4. Add frontmatter with at minimum `status`
+5. Write updated `counters.json`
+6. Check `_views/errors.md` after build
 
 **Example:**
 
 ```markdown
 ---
-id: task-123
-title: Add dark mode toggle
 status: todo
 priority: medium
-assignee: alice@example.com
 tags: [ui, accessibility]
 ---
 
@@ -143,7 +258,67 @@ Implement a dark mode toggle in the settings page.
 - [ ] Applies theme across all pages
 ```
 
-The next time the dashboard builds, this task will appear automatically.
+### Creating a New Document
+
+1. Read `_meta/counters.json`
+2. Increment the `d` counter
+3. Create file: `docs/[d-x]-your-document-title.md`
+4. Add optional frontmatter
+5. Write updated `counters.json`
+6. Check `_views/errors.md` after build
+
+**Example:**
+
+```markdown
+---
+description: REST API endpoint documentation
+tags: [api, reference]
+references: t-3, i-1
+---
+
+## Overview
+
+This document describes the REST API endpoints...
+```
+
+### Creating a New Initiative
+
+1. Read `_meta/counters.json`
+2. Increment the `i` counter
+3. Create folder: `initiatives/[i-x]-your-initiative-name/`
+4. Create file: `initiatives/[i-x]-your-initiative-name/README.md`
+5. Write updated `counters.json`
+6. Check `_views/errors.md` after build
+
+**Example README.md:**
+
+```markdown
+---
+status: in-progress
+priority: high
+description: Add comprehensive user profile management
+tags: [frontend, profile, settings]
+references: d-1
+---
+
+## Overview
+
+This initiative adds full user profile management including viewing, editing, and avatar uploads.
+
+## Goals
+
+- Allow users to view and edit profile information
+- Support avatar uploads
+- Add privacy settings
+
+## Success Criteria
+
+- [ ] Profile viewing works
+- [ ] Profile editing works
+- [ ] Avatar upload works
+- [ ] Privacy settings implemented
+- [ ] Tests passing
+```
 
 ## How to Update Tasks
 
@@ -165,6 +340,7 @@ status: in-progress → status: done
 
 # Getting blocked
 status: in-progress → status: blocked
+references: blocked-by:t-5
 ```
 
 ## How to Complete Work
@@ -172,15 +348,19 @@ status: in-progress → status: blocked
 **When a task is done:**
 
 1. Set `status: done` in the frontmatter
-2. Move the file to `archive/tasks/`
+2. Move the file to `archive/tasks/` (maintain original filename)
 3. The dashboard will show it in "Recently Completed" (last 7 days)
 
 **Example:**
 
 ```bash
 # Move completed task to archive
-mv tasks/task-123-feature.md archive/tasks/
+mv tasks/[t-6]-dark-mode-toggle.md archive/tasks/
 ```
+
+**When a document is no longer needed:**
+
+1. Move the file to `archive/docs/`
 
 **When an initiative is done:**
 
@@ -192,55 +372,58 @@ mv tasks/task-123-feature.md archive/tasks/
 
 **How blocks work:**
 
-- `blockedBy`: "I'm blocked by these tasks"
-- `blocks`: "I'm blocking these tasks"
+- Use `blocked-by:t-x` in references to indicate this task is blocked
+- Set `status: blocked` to show the task is waiting
 - Tasks with `status: blocked` appear in "Blocked Tasks" section of dashboard
 
 **Example:**
 
-```yaml
-# Task A (task-001)
+```markdown
+<!-- Task A: [t-1]-design-api-schema.md -->
 ---
-id: task-001
-title: Design API schema
 status: in-progress
-blocks: [task-002, task-003]
+priority: high
 ---
 
-# Task B (task-002)
+## Description
+Design the API schema for the new feature.
+
+
+<!-- Task B: [t-2]-implement-api.md -->
 ---
-id: task-002
-title: Implement API endpoints
 status: blocked
-blockedBy: [task-001]
+references: blocked-by:t-1
 ---
 
-# Task C (task-003)
+## Description
+Implement API endpoints based on the schema.
+
+
+<!-- Task C: [t-3]-create-api-docs.md -->
 ---
-id: task-003
-title: Create API documentation
 status: blocked
-blockedBy: [task-001]
+references: blocked-by:t-1, d-2
 ---
+
+## Description
+Create API documentation based on the schema.
 ```
 
-When Task A completes:
-1. Set `task-001` to `status: done`
-2. Update `task-002` and `task-003` to `status: todo`
-3. Remove `blockedBy` from dependent tasks (or keep for historical tracking)
+When Task A (t-1) completes:
+1. Set `[t-1]-design-api-schema.md` to `status: done`
+2. Update `[t-2]-implement-api.md` and `[t-3]-create-api-docs.md` to `status: todo`
+3. Optionally remove the `blocked-by` reference or keep for historical tracking
 
-## Example Task Files
+## Example Files
 
 **Standalone Task:**
 
 ```markdown
+<!-- File: tasks/[t-42]-fix-login-redirect.md -->
 ---
-id: task-042
-title: Fix login redirect bug
 status: in-progress
 priority: critical
-assignee: bob@example.com
-dueDate: 2026-01-20
+description: Users redirected to 404 after login
 tags: [bug, auth, frontend]
 ---
 
@@ -260,15 +443,12 @@ Update `AuthGuard.tsx` to await auth check before redirecting.
 **Task in Initiative:**
 
 ```markdown
+<!-- File: initiatives/[i-1]-user-profiles/[t-43]-create-profile-component.md -->
 ---
-id: feat-x-001
-title: Create user profile component
 status: todo
 priority: high
-assignee: alice@example.com
-initiative: feature-x
 tags: [frontend, react, profile]
-blockedBy: [feat-x-000]
+references: blocked-by:i-1/t-42
 ---
 
 ## Description
@@ -283,95 +463,83 @@ Build reusable profile component for displaying user info.
 - Responsive design
 ```
 
-## Example Initiative README
+**Document:**
 
 ```markdown
+<!-- File: docs/[d-1]-auth-design.md -->
 ---
-id: feature-x
-title: Feature X Initiative
-description: Add comprehensive user profile management
-status: in-progress
-priority: high
-owner: alice@example.com
-startDate: 2026-01-10
-targetDate: 2026-02-15
-tags: [frontend, profile, settings]
+description: Authentication flow design
+tags: [design, auth, security]
+references: t-1, i-1
 ---
 
 ## Overview
 
-This initiative adds full user profile management including viewing, editing, and avatar uploads.
+This document describes the authentication architecture...
 
-## Goals
+## Flow Diagram
 
-- Allow users to view and edit profile information
-- Support avatar uploads
-- Add privacy settings
-
-## Tasks
-
-See dashboard for linked tasks with `initiative: feature-x`
-
-## Success Criteria
-
-- [ ] Profile viewing works
-- [ ] Profile editing works
-- [ ] Avatar upload works
-- [ ] Privacy settings implemented
-- [ ] Tests passing
+...
 ```
 
 ## Tips for AI Agents
 
-1. **Always read dashboard first** (`_views/dashboard.md`)
-2. **Check errors.md** for validation issues (`_views/errors.md`)
-3. **Don't edit generated files** in `_views/`
-4. **Use consistent IDs** (e.g., `task-001`, `feat-login-002`)
-5. **Keep titles concise** (shown in tables)
-6. **Update status frequently** to reflect current state
-7. **Use `blockedBy`** to track dependencies
-8. **Archive completed work** to keep active views clean
-9. **Set priorities** to help with triage and planning
-10. **Link related tasks** via `relatedTo` for context
-11. **Use initiatives** for multi-task features
+1. **Run compile after every change** — this is mandatory, not optional
+2. **Fix all errors before moving on** — keep working until errors.md shows "All Clear"
+3. **Always read dashboard first** (`_views/dashboard.md`)
+4. **Don't edit generated files** in `_views/`
+5. **Always update counters.json** when creating new entities
+6. **Keep titles descriptive** in filenames (converted to title case for display)
+7. **Update status frequently** to reflect current state
+8. **Use `blocked-by:`** prefix in references to track dependencies
+9. **Archive completed work** to keep active views clean
+10. **Set priorities** to help with triage and planning
+11. **Use references** to link related entities for context
+12. **Use initiatives** for multi-task features
 
 ## Common Workflows
 
 **Starting new work:**
 1. Read dashboard to understand current priorities
-2. Create task file with `status: todo`
-3. Update status to `in-progress` when starting
-4. Update dashboard to see new task appear
+2. Read `_meta/counters.json`
+3. Increment appropriate counter
+4. Create file with new ID and `status: todo`
+5. Write updated `counters.json`
+6. Update status to `in-progress` when starting
+7. Run compile and verify no errors
 
 **Completing work:**
-1. Update task to `status: done`
-2. Move file to `archive/tasks/`
+1. Update entity to `status: done`
+2. Move file to appropriate `archive/` subfolder
 3. If task was blocking others, update their status
-4. Rebuild dashboard to reflect changes
+4. Run compile and verify no errors
 
 **Managing blocked tasks:**
 1. Set task to `status: blocked`
-2. Add `blockedBy: [task-id]` with blocker IDs
-3. Check dashboard's "Blocked Tasks" section
-4. When blocker completes, update status to `todo`
+2. Add `blocked-by:t-x` to references
+3. Run compile
+4. Check dashboard's "Blocked Tasks" section
+5. When blocker completes, update status to `todo`
 
 **Working with initiatives:**
 1. Create initiative folder with README
-2. Create tasks with `initiative: <id>` field
-3. Track progress via dashboard's "Initiatives" section
-4. When complete, archive both tasks and initiative folder
+2. Create tasks inside the initiative folder
+3. Reference initiative tasks using `i-x/t-y` syntax
+4. Run compile and verify no errors
+5. Track progress via dashboard's "Initiatives" section
+6. When complete, archive both tasks and initiative folder
 
 **Fixing validation errors:**
-1. Check `_views/errors.md` for current issues
-2. Open the file with errors
-3. Fix the frontmatter fields as indicated
-4. Rebuild to verify the fix
+1. Run compile to see current issues
+2. Check `_views/errors.md` for details
+3. Fix the issue as indicated (filename format, missing field, invalid reference, etc.)
+4. Run compile again — repeat until "All Clear"
 
 ## System Behavior
 
-- **Auto-generation**: Dashboard and errors.md regenerate on every build/watch
-- **File watching**: Changes trigger automatic rebuild in watch mode
-- **Validation**: Frontmatter is validated with detailed error messages
+- **Auto-generation**: Dashboard, documents.md, and errors.md regenerate on every compile
+- **Validation**: Filenames and frontmatter are validated with detailed error messages
+- **Exit codes**: Compile exits with code 1 if there are validation errors
 - **Sorting**: Tasks sorted by priority, then title
 - **Filtering**: Archived items excluded from active views
 - **Progress tracking**: Initiatives show completion percentage
@@ -384,6 +552,12 @@ See dashboard for linked tasks with `initiative: feature-x`
 ### priority
 `low` | `medium` | `high` | `critical`
 
+### Reference Prefixes
+`blocked-by:` (tasks only) | (no prefix for informational links)
+
+### Reference Formats
+`t-x` | `d-x` | `i-x` | `i-x/t-y`
+
 ## Questions?
 
-Refer to the generated dashboard and explore existing tasks/initiatives as examples.
+Refer to the generated dashboard and explore existing tasks/initiatives/documents as examples.
