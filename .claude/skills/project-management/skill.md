@@ -16,19 +16,37 @@ A markdown-first task tracking system with YAML frontmatter validation.
 
 For complete documentation, see `project-management/agents.md`.
 
+## File Naming Convention
+
+ID and title are derived from filename — not stored in frontmatter:
+
+| Entity     | Pattern                      | Example                              |
+| ---------- | ---------------------------- | ------------------------------------ |
+| Task       | `[t-x]-title.md`             | `[t-1]-implement-auth.md`            |
+| Document   | `[d-x]-title.md`             | `[d-1]-auth-design.md`               |
+| Initiative | `[i-x]-title/README.md`      | `[i-1]-user-management/README.md`    |
+
+When creating new entities, increment the counter in `_meta/counters.json`.
+
 ## Task Frontmatter Schema
 
 ```yaml
 ---
-id: task-001 # REQUIRED: Unique identifier
-title: Implement feature X # REQUIRED: Short descriptive title
-status: todo # REQUIRED: todo | in-progress | done | blocked
-priority: high # OPTIONAL: low | medium | high | critical
-assignee: john@example.com # OPTIONAL: Who's responsible
-dueDate: 2026-01-31 # OPTIONAL: ISO date (YYYY-MM-DD)
-tags: [frontend, react] # OPTIONAL: Categorization tags
-blockedBy: [task-000] # OPTIONAL: Task IDs blocking this
-initiative: feature-x # OPTIONAL: Initiative ID this belongs to
+status: todo              # REQUIRED: todo | in-progress | done | blocked
+priority: medium          # optional: low | medium | high | critical
+description: Short text   # optional: for dashboard display
+tags: [auth, backend]     # optional: categorization
+references: blocked-by:t-2, d-1  # optional: relationships
+---
+```
+
+## Document Frontmatter Schema
+
+```yaml
+---
+description: Short text   # optional: for documents view
+tags: [design, api]       # optional: categorization
+references: t-1, i-2      # optional: relationships
 ---
 ```
 
@@ -36,13 +54,25 @@ initiative: feature-x # OPTIONAL: Initiative ID this belongs to
 
 ```yaml
 ---
-id: feature-x # REQUIRED: Unique identifier
-title: Feature X Initiative # REQUIRED: Initiative name
-status: in-progress # OPTIONAL: todo | in-progress | done | blocked
-priority: high # OPTIONAL: low | medium | high | critical
-owner: john@example.com # OPTIONAL: Initiative lead
+status: in-progress       # optional: todo | in-progress | done | blocked
+priority: high            # optional: low | medium | high | critical
+description: Short text   # optional: for dashboard display
+tags: [frontend]          # optional: categorization
+references: d-1, t-5      # optional: relationships
 ---
 ```
+
+## References Syntax
+
+```yaml
+references: blocked-by:t-1, t-2, d-1, i-1, i-1/t-3
+```
+
+- `t-x` — Task in `tasks/`
+- `d-x` — Document in `docs/`
+- `i-x` — Initiative
+- `i-x/t-y` — Task inside initiative folder
+- `blocked-by:` prefix — Marks blocking dependency (tasks only)
 
 ## Valid Values
 
@@ -55,16 +85,17 @@ owner: john@example.com # OPTIONAL: Initiative lead
 
 **Creating a task:**
 
-1. Create `.md` file in `project-management/tasks/` or `project-management/initiatives/<name>/`
-2. Add frontmatter with required fields: `id`, `title`, `status`
-3. Run `pnpm build` in `tooling/project-management` to validate and update dashboard
+1. Read and increment counter in `_meta/counters.json`
+2. Create file: `tasks/[t-x]-your-title.md` (or in `initiatives/[i-x]-name/`)
+3. Add frontmatter with `status` (required)
+4. Run `pnpm --filter @tooling/project-management compile`
 
 **Completing a task:**
 
 1. Set `status: done`
-2. Move file to `project-management/archive/tasks/`
+2. Move file to `archive/tasks/`
 
 **When blocked:**
 
 1. Set `status: blocked`
-2. Add `blockedBy: [task-id]` listing blocker IDs
+2. Add `references: blocked-by:t-x` with blocker IDs
