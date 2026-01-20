@@ -12,7 +12,7 @@ export function EditorStatusBar({ status, editor }: EditorStatusBarProps) {
   const [debugOpen, setDebugOpen] = useState(false);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex h-6 items-center justify-between border-t bg-background px-3 text-xs">
+    <div className="z-10 flex h-6 shrink-0 items-center justify-between border-t bg-background px-3 text-xs">
       <div className="flex items-center gap-2">
         <div
           className={cn("size-2 rounded-full", {

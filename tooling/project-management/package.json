@@ -1,0 +1,23 @@
+{
+  "name": "@tooling/project-management",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts watch --source ../../project-management",
+    "build": "tsx src/index.ts build --source ../../project-management",
+    "generate-agents-guide": "tsx src/index.ts generate-agents-guide --source ../../project-management"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "glob": "^11.0.0",
+    "gray-matter": "^4.0.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tooling/typescript-config": "workspace:*",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

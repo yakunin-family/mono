@@ -66,6 +66,14 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "@tooling/project-management#dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "@tooling/project-management#build": {
+      "cache": false,
+      "outputs": ["../../project-management/_views/dashboard.md"]
     }
   }
 }

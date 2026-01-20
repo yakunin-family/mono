@@ -7,6 +7,7 @@ import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableRow } from "@tiptap/extension-table-row";
+import Underline from "@tiptap/extension-underline";
 import UniqueID from "@tiptap/extension-unique-id";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -40,6 +41,7 @@ import { SelectionSave } from "../extensions/SelectionSave";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { WritingArea } from "../extensions/WritingArea";
 import { EditorStatusBar } from "./EditorStatusBar";
+import { EditorToolbar } from "./editor-toolbar";
 import { LibraryDrawer, type LibraryItemWithMetadata } from "./LibraryDrawer";
 import { MarqueeOverlay } from "./MarqueeOverlay";
 import { MouseTracker } from "./MouseTracker";
@@ -109,6 +111,7 @@ export function DocumentEditorInternal({
         inline: true,
         allowBase64: true,
       }),
+      Underline,
       Blank,
       Exercise,
       UniqueID.configure({
@@ -245,11 +248,15 @@ export function DocumentEditorInternal({
   }
 
   return (
-    <div ref={containerRef} className="relative flex flex-col">
-      <EditorContent
-        editor={editor}
-        className="[&_.tiptap]:min-h-[400px] [&_.tiptap]:outline-none"
-      />
+    <div ref={containerRef} className="relative flex min-h-0 flex-1 flex-col">
+      {canEdit && <EditorToolbar editor={editor} />}
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <EditorContent
+          editor={editor}
+          className="[&_.tiptap]:min-h-[400px] [&_.tiptap]:outline-none [&_.tiptap]:py-8"
+        />
+      </div>
 
       <MouseTracker provider={provider} containerRef={containerRef} />
       <RemoteCursors provider={provider} />

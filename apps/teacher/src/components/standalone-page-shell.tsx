@@ -9,10 +9,7 @@ export function StandalonePageShell({
   ...props
 }: ComponentProps<"div">) {
   return (
-    <div
-      className={cn("flex min-h-svh w-full bg-sidebar", className)}
-      {...props}
-    >
+    <div className={cn("flex h-svh w-full bg-sidebar", className)} {...props}>
       <main className="bg-background relative flex w-full flex-1 flex-col overflow-hidden md:m-2 md:rounded-xl md:shadow-sm">
         {children}
       </main>
@@ -58,7 +55,10 @@ export function StandalonePageContent({
   ...props
 }: ComponentProps<"div">) {
   return (
-    <div className={cn("flex-1", className)} {...props}>
+    <div
+      className={cn("flex flex-1 flex-col overflow-hidden", className)}
+      {...props}
+    >
       {children}
     </div>
   );

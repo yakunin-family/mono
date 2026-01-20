@@ -4,6 +4,7 @@
     { "path": "./packages/ui" },
     { "path": "./packages/editor" },
     { "path": "./apps/teacher" },
-    { "path": "./apps/student" }
+    { "path": "./apps/student" },
+    { "path": "./tooling/project-management" }
   ]
 }

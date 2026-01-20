@@ -5,7 +5,7 @@
 
 /* Tiptap Editor Styles */
 .tiptap {
-  @apply text-foreground;
+  @apply text-foreground px-4 sm:px-6 md:px-8;
 
   >* {
     @apply max-w-4xl mx-auto;
