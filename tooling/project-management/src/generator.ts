@@ -20,6 +20,7 @@ const __dirname = dirname(__filename);
  */
 export class Generator {
   private sourcePath?: string;
+  private initiativesById: Map<string, Initiative> = new Map();
 
   /**
    * Set the source path for generating relative links
@@ -41,6 +42,8 @@ export class Generator {
     const activeTasks = this.filterNonArchived(tasks);
     const activeInitiatives = this.filterNonArchivedInitiatives(initiatives);
 
+    this.initiativesById = new Map(initiatives.map((i) => [i.id, i]));
+
     const sections: string[] = [];
 
     sections.push(this.generateHeader());
@@ -61,10 +64,9 @@ export class Generator {
    * Generate an errors report showing all validation errors with detailed messages
    */
   generateErrors(validationErrors: ValidationError[]): string {
-    const timestamp = new Date().toISOString();
     const sections: string[] = [];
 
-    sections.push(`# Validation Errors\n\n**Last Updated:** ${timestamp}`);
+    sections.push(`# Validation Errors`);
 
     if (validationErrors.length === 0) {
       sections.push(
@@ -158,10 +160,9 @@ export class Generator {
    * Generate a documents view showing all documents
    */
   generateDocumentsView(documents: Document[]): string {
-    const timestamp = new Date().toISOString();
     const sections: string[] = [];
 
-    sections.push(`# Documents\n\n**Last Updated:** ${timestamp}`);
+    sections.push(`# Documents`);
 
     if (documents.length === 0) {
       sections.push(`_No documents found_`);
@@ -170,14 +171,13 @@ export class Generator {
 
     const rows = documents.map((doc) => {
       const link = this.formatDocumentLink(doc);
-      const title = doc.title;
       const description = doc.description || "—";
       const tags = doc.tags && doc.tags.length > 0 ? doc.tags.join(", ") : "—";
-      return `| ${link} | ${title} | ${description} | ${tags} |`;
+      return `| ${link} | ${description} | ${tags} |`;
     });
 
-    sections.push(`| ID | Title | Description | Tags |
-|----|-------|-------------|------|
+    sections.push(`| Document | Description | Tags |
+|----------|-------------|------|
 ${rows.join("\n")}`);
 
     return sections.join("\n\n");
@@ -281,8 +281,7 @@ ${rows.join("\n")}`);
     return readFileSync(templatePath, "utf-8");
   }
   private generateHeader(): string {
-    const timestamp = new Date().toISOString();
-    return `# Project Dashboard\n\n**Last Updated:** ${timestamp}`;
+    return `# Project Dashboard`;
   }
 
   private generateSummary(tasks: Task[]): string {
@@ -317,7 +316,7 @@ _No tasks in progress_`;
 
     const rows = inProgressTasks.map((task) => {
       const priority = this.formatPriority(task.priority);
-      const initiative = task.initiative || "—";
+      const initiative = this.formatInitiativeRef(task.initiative);
       const link = this.formatTaskLink(task);
 
       return `| ${link} | ${priority} | ${initiative} |`;
@@ -347,7 +346,7 @@ _No high priority tasks waiting_`;
 
     const rows = highPriorityTodos.map((task) => {
       const priority = this.formatPriority(task.priority);
-      const initiative = task.initiative || "—";
+      const initiative = this.formatInitiativeRef(task.initiative);
       const link = this.formatTaskLink(task);
 
       return `| ${link} | ${priority} | ${initiative} |`;
@@ -470,7 +469,7 @@ ${initRows.join("\n")}`);
     if (recentTasks.length > 0) {
       const taskRows = recentTasks.map((task) => {
         const link = this.formatTaskLink(task);
-        const initiative = task.initiative || "—";
+        const initiative = this.formatInitiativeRef(task.initiative);
         return `| ${link} | ${initiative} |`;
       });
 
@@ -518,7 +517,7 @@ _No other tasks_`;
             : this.capitalizeFirst(priority);
         const rows = tasksInPriority.map((task) => {
           const link = this.formatTaskLink(task);
-          const initiative = task.initiative || "—";
+          const initiative = this.formatInitiativeRef(task.initiative);
           return `| ${link} | ${initiative} |`;
         });
 
@@ -638,17 +637,25 @@ ${sections.join("\n\n")}`;
 
   private formatTaskLink(task: Task): string {
     const linkPath = this.makeRelativeLink(task.filePath);
-    return `[${task.id}](${linkPath})`;
+    return `[[${task.id}] ${task.title}](${linkPath})`;
+  }
+
+  private formatInitiativeRef(initiativeId: string | undefined): string {
+    if (!initiativeId) return "—";
+    const initiative = this.initiativesById.get(initiativeId);
+    if (!initiative) return initiativeId;
+    const linkPath = this.makeRelativeLink(initiative.filePath);
+    return `[[${initiative.id}] ${initiative.title}](${linkPath})`;
   }
 
   private formatInitiativeLink(initiative: Initiative): string {
     const linkPath = this.makeRelativeLink(initiative.filePath);
-    return `[${initiative.id}](${linkPath})`;
+    return `[[${initiative.id}] ${initiative.title}](${linkPath})`;
   }
 
   private formatDocumentLink(document: Document): string {
     const linkPath = this.makeRelativeLink(document.filePath);
-    return `[${document.id}](${linkPath})`;
+    return `[[${document.id}] ${document.title}](${linkPath})`;
   }
 
   /**
