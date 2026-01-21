@@ -1,101 +1,51 @@
 ---
 name: project-management
-description: "Use when working with tasks in project-management/ folder. Provides frontmatter schema, workflow rules, and dashboard guidance."
+description: "Manage project tasks, documents, and initiatives in the project-management/ folder. Use when Claude needs to: (1) create, update, or complete tasks, (2) track blocking dependencies, (3) manage initiatives and documents, (4) check project status via dashboard, or (5) fix validation errors. Triggers: 'create task', 'update status', 'what's blocking', 'project dashboard', working with [t-x]/[d-x]/[i-x] files."
 ---
 
-# Project Management System
+# Project Management
 
-A markdown-first task tracking system with YAML frontmatter validation.
+## Quick Start
 
-## Before Any Changes
+1. **Read** `project-management/_views/dashboard.md` first
+2. **Check** `project-management/_views/errors.md` for issues
+3. **After changes** run: `pnpm --filter @tooling/project-management compile`
 
-**ALWAYS do these first:**
+## Essential Patterns
 
-1. Read `project-management/_views/dashboard.md` to understand current state
-2. Check `project-management/_views/errors.md` if there are validation issues
+**File naming**:
+- Task: `[t-x]-title.md`
+- Document: `[d-x]-title.md`
+- Initiative: `[i-x]-title/README.md`
 
-For complete documentation, see `project-management/agents.md`.
+**Task status flow**: `todo` → `in-progress` → `done` (or `blocked`)
 
-## File Naming Convention
+**Valid values**:
+- status: `todo`, `in-progress`, `done`, `blocked`
+- priority: `low`, `medium`, `high`, `critical`
 
-ID and title are derived from filename — not stored in frontmatter:
+**References syntax**: `t-1, d-2, i-3, i-1/t-4, blocked-by:t-5`
 
-| Entity     | Pattern                      | Example                              |
-| ---------- | ---------------------------- | ------------------------------------ |
-| Task       | `[t-x]-title.md`             | `[t-1]-implement-auth.md`            |
-| Document   | `[d-x]-title.md`             | `[d-1]-auth-design.md`               |
-| Initiative | `[i-x]-title/README.md`      | `[i-1]-user-management/README.md`    |
-
-When creating new entities, increment the counter in `_meta/counters.json`.
-
-## Task Frontmatter Schema
-
-```yaml
----
-status: todo              # REQUIRED: todo | in-progress | done | blocked
-priority: medium          # optional: low | medium | high | critical
-description: Short text   # optional: for dashboard display
-tags: [auth, backend]     # optional: categorization
-references: blocked-by:t-2, d-1  # optional: relationships
----
-```
-
-## Document Frontmatter Schema
-
-```yaml
----
-description: Short text   # optional: for documents view
-tags: [design, api]       # optional: categorization
-references: t-1, i-2      # optional: relationships
----
-```
-
-## Initiative Frontmatter Schema
-
-```yaml
----
-status: in-progress       # optional: todo | in-progress | done | blocked
-priority: high            # optional: low | medium | high | critical
-description: Short text   # optional: for dashboard display
-tags: [frontend]          # optional: categorization
-references: d-1, t-5      # optional: relationships
----
-```
-
-## References Syntax
-
-```yaml
-references: blocked-by:t-1, t-2, d-1, i-1, i-1/t-3
-```
-
-- `t-x` — Task in `tasks/`
-- `d-x` — Document in `docs/`
-- `i-x` — Initiative
-- `i-x/t-y` — Task inside initiative folder
-- `blocked-by:` prefix — Marks blocking dependency (tasks only)
-
-## Valid Values
-
-| Field    | Values                                   |
-| -------- | ---------------------------------------- |
-| status   | `todo`, `in-progress`, `done`, `blocked` |
-| priority | `low`, `medium`, `high`, `critical`      |
-
-## Key Workflows
-
-**Creating a task:**
+## Creating Entities
 
 1. Read and increment counter in `_meta/counters.json`
-2. Create file: `tasks/[t-x]-your-title.md` (or in `initiatives/[i-x]-name/`)
-3. Add frontmatter with `status` (required)
-4. Run `pnpm --filter @tooling/project-management compile`
+2. Create file using naming pattern above
+3. Add frontmatter (tasks require `status`)
+4. Run compile command
 
-**Completing a task:**
+**Task frontmatter** (minimum):
+```yaml
+---
+status: todo
+---
+```
+
+## Completing Work
 
 1. Set `status: done`
-2. Move file to `archive/tasks/`
+2. Move file to `archive/tasks/` (or `archive/docs/`, `archive/initiatives/`)
+3. If task was blocking others, update their status
 
-**When blocked:**
+## Full Documentation
 
-1. Set `status: blocked`
-2. Add `references: blocked-by:t-x` with blocker IDs
+For complete schemas, workflows, examples, and edge cases, read `project-management/agents.md`.

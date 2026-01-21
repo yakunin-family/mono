@@ -2,9 +2,13 @@
 type: document
 description: Feature spec for importing existing materials and converting them into native editor content
 tags: [ai, features, editor]
+deprecated: true
+superseded-by: d-5
 ---
 
 # Smart Paste
+
+> **DEPRECATED**: This standalone feature has been superseded by [d-5] In-Document AI Chat. The file upload/import functionality will be part of Phase 2 of the chat-based approach, where teachers can upload files as context for AI operations.
 
 ## Overview
 
