@@ -1,8 +1,9 @@
 ---
-status: todo
+status: done
 priority: low
 description: Evaluate if i-xxx/t-xxx syntax is needed or flat IDs are simpler
 tags: [tooling, project-management]
+completed: 2026-01-23
 ---
 
 # Reconsider Reference Syntax
@@ -20,11 +21,13 @@ Should references just use flat IDs (`t-xxx`) that are resolved by searching acr
 ## Considerations
 
 ### Current Approach (Hierarchical)
+
 - `i-1/t-3` explicitly shows the task belongs to initiative 1
 - Validates that the task actually exists in that initiative's folder
 - More precise but more verbose
 
 ### Alternative (Flat IDs)
+
 - `t-3` is simpler to write and remember
 - Task IDs are already globally unique
 - Tooling can resolve the path automatically
@@ -32,4 +35,11 @@ Should references just use flat IDs (`t-xxx`) that are resolved by searching acr
 
 ## Decision
 
-TBD
+**Flat IDs chosen.** Task IDs are globally unique, so hierarchical references add unnecessary complexity. The tooling was updated to:
+
+- Simplify `REFERENCE_PATTERN` regex in utils.ts
+- Remove `initiative` field from `ParsedReference` type
+- Update `parseReference()` and `validateReference()` functions
+- Update `validateReferences()` in collector.ts
+- Update documentation in generator.ts and templates/agents-guide.md
+- Regenerate agents.md

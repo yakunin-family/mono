@@ -19,7 +19,12 @@ import type {
 /**
  * Allowed values for task/initiative status
  */
-export const TASK_STATUSES = ["todo", "in-progress", "done", "blocked"] as const;
+export const TASK_STATUSES = [
+  "todo",
+  "in-progress",
+  "done",
+  "blocked",
+] as const;
 
 /**
  * Allowed values for task/initiative priority
@@ -71,7 +76,7 @@ export function parseFilename(filename: string): ParsedFilename | null {
  * Parse an initiative folder name like "[i-1]-user-management"
  */
 export function parseInitiativeFolderName(
-  folderName: string
+  folderName: string,
 ): { id: number; fullId: string; title: string; displayTitle: string } | null {
   const match = folderName.match(INITIATIVE_FOLDER_PATTERN);
   if (!match) return null;
@@ -105,7 +110,7 @@ export function toDisplayTitle(kebabCase: string): string {
  */
 export function isValidFilename(
   filename: string,
-  expectedPrefix?: EntityPrefix
+  expectedPrefix?: EntityPrefix,
 ): boolean {
   const parsed = parseFilename(filename);
   if (!parsed) return false;
@@ -118,20 +123,20 @@ export function isValidFilename(
 // =============================================================================
 
 /**
- * Regex pattern for parsing references like "blocked-by:i-1/t-3" or "t-1" or "d-2" or "i-1"
+ * Regex pattern for parsing references like "blocked-by:t-3" or "t-1" or "d-2" or "i-1"
+ * Uses flat IDs only - no initiative scoping (i-x/t-y syntax removed)
  */
-const REFERENCE_PATTERN =
-  /^(?:(blocked-by):)?(?:(i-\d+)\/)?([tdi]-\d+)$/;
+const REFERENCE_PATTERN = /^(?:(blocked-by):)?([tdi]-\d+)$/;
 
 /**
- * Parse a single reference string like "blocked-by:i-1/t-3"
+ * Parse a single reference string like "blocked-by:t-3" or "t-1"
  */
 export function parseReference(ref: string): ParsedReference | null {
   const trimmed = ref.trim();
   const match = trimmed.match(REFERENCE_PATTERN);
   if (!match) return null;
 
-  const [, relationship, initiative, targetId] = match;
+  const [, relationship, targetId] = match;
   if (!targetId) return null;
 
   const targetType = targetId.charAt(0) as EntityPrefix;
@@ -140,7 +145,6 @@ export function parseReference(ref: string): ParsedReference | null {
   return {
     raw: trimmed,
     relationship: relationship as "blocked-by" | undefined,
-    initiative: initiative || undefined,
     targetId,
     targetType,
   };
@@ -150,7 +154,7 @@ export function parseReference(ref: string): ParsedReference | null {
  * Parse references array from frontmatter (can be string or array)
  */
 export function parseReferences(
-  refs: string[] | string | undefined
+  refs: string[] | string | undefined,
 ): ParsedReference[] {
   if (!refs) return [];
 
@@ -178,47 +182,21 @@ export function parseReferences(
 export function validateReference(
   ref: ParsedReference,
   context: ValidationContext,
-  filePath: string
+  filePath: string,
 ): ValidationError | null {
   const { taskMap, documentMap, initiativeMap } = context;
 
-  // Check if the referenced entity exists
+  // Check if the referenced entity exists using flat ID lookup
   switch (ref.targetType) {
     case "t": {
-      // If reference includes initiative scope (i-x/t-y), validate task is in that initiative
-      if (ref.initiative) {
-        const initiative = initiativeMap.get(ref.initiative);
-        if (!initiative) {
-          return {
-            filePath,
-            field: "references",
-            message: `Reference not found: Initiative "${ref.initiative}" does not exist`,
-            receivedValue: ref.raw,
-            errorType: "invalid-reference",
-          };
-        }
-        const taskInInitiative = initiative.tasks.find(
-          (t) => t.id === ref.targetId
-        );
-        if (!taskInInitiative) {
-          return {
-            filePath,
-            field: "references",
-            message: `Reference not found: Task "${ref.targetId}" does not exist in initiative "${ref.initiative}"`,
-            receivedValue: ref.raw,
-            errorType: "invalid-reference",
-          };
-        }
-      } else {
-        if (!taskMap.has(ref.targetId)) {
-          return {
-            filePath,
-            field: "references",
-            message: `Reference not found: Task "${ref.targetId}" does not exist`,
-            receivedValue: ref.raw,
-            errorType: "invalid-reference",
-          };
-        }
+      if (!taskMap.has(ref.targetId)) {
+        return {
+          filePath,
+          field: "references",
+          message: `Reference not found: Task "${ref.targetId}" does not exist`,
+          receivedValue: ref.raw,
+          errorType: "invalid-reference",
+        };
       }
       break;
     }
@@ -274,10 +252,14 @@ export async function readCounters(metaPath: string): Promise<Counters> {
  */
 export async function writeCounters(
   metaPath: string,
-  counters: Counters
+  counters: Counters,
 ): Promise<void> {
   const countersPath = join(metaPath, "counters.json");
-  await writeFile(countersPath, JSON.stringify(counters, null, 2) + "\n", "utf-8");
+  await writeFile(
+    countersPath,
+    JSON.stringify(counters, null, 2) + "\n",
+    "utf-8",
+  );
 }
 
 /**
@@ -286,7 +268,7 @@ export async function writeCounters(
 export function validateIdAgainstCounter(
   fullId: string,
   counters: Counters,
-  filePath: string
+  filePath: string,
 ): ValidationError | null {
   const prefix = fullId.charAt(0) as EntityPrefix;
   const idNum = parseInt(fullId.slice(2), 10);
@@ -371,7 +353,7 @@ export const initiativeFrontmatterSchema = z.object({
  */
 function zodErrorsToValidationErrors(
   zodError: z.ZodError,
-  filePath: string
+  filePath: string,
 ): ValidationError[] {
   return zodError.errors.map((error) => {
     const field = error.path.join(".");
@@ -404,7 +386,7 @@ function zodErrorsToValidationErrors(
  */
 export function validateTaskFrontmatterWithErrors(
   data: unknown,
-  filePath: string
+  filePath: string,
 ): ValidationResult<TaskFrontmatter> {
   const result = taskFrontmatterSchema.safeParse(data);
 
@@ -427,7 +409,7 @@ export function validateTaskFrontmatterWithErrors(
  */
 export function validateDocumentFrontmatterWithErrors(
   data: unknown,
-  filePath: string
+  filePath: string,
 ): ValidationResult<DocumentFrontmatter> {
   const result = documentFrontmatterSchema.safeParse(data);
 
@@ -450,7 +432,7 @@ export function validateDocumentFrontmatterWithErrors(
  */
 export function validateInitiativeFrontmatterWithErrors(
   data: unknown,
-  filePath: string
+  filePath: string,
 ): ValidationResult<InitiativeFrontmatter> {
   const result = initiativeFrontmatterSchema.safeParse(data);
 
@@ -535,13 +517,12 @@ export function calculateProgress(tasks: Task[]): number {
 /**
  * Check if a task is blocked based on references
  */
-export function isBlocked(
-  task: Task,
-  taskMap: Map<string, Task>
-): boolean {
+export function isBlocked(task: Task, taskMap: Map<string, Task>): boolean {
   if (!task.references || task.references.length === 0) return false;
 
-  const blockers = task.references.filter((r) => r.relationship === "blocked-by");
+  const blockers = task.references.filter(
+    (r) => r.relationship === "blocked-by",
+  );
   if (blockers.length === 0) return false;
 
   for (const blocker of blockers) {

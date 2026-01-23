@@ -34,7 +34,7 @@ export class Generator {
   generateDashboard(
     tasks: Task[],
     initiatives: Initiative[],
-    _documents: Document[] = []
+    _documents: Document[] = [],
   ): string {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -53,7 +53,11 @@ export class Generator {
     sections.push(this.generateBlockedTasks(activeTasks));
     sections.push(this.generateInitiativesTable(activeInitiatives));
     sections.push(
-      this.generateRecentlyCompleted(activeTasks, activeInitiatives, sevenDaysAgo)
+      this.generateRecentlyCompleted(
+        activeTasks,
+        activeInitiatives,
+        sevenDaysAgo,
+      ),
     );
     sections.push(this.generateOtherTasks(activeTasks));
 
@@ -70,13 +74,13 @@ export class Generator {
 
     if (validationErrors.length === 0) {
       sections.push(
-        `## Status: All Clear ✅\n\nNo validation errors found. All task, document, and initiative files are valid.`
+        `## Status: All Clear ✅\n\nNo validation errors found. All task, document, and initiative files are valid.`,
       );
       return sections.join("\n\n");
     }
 
     sections.push(
-      `## Status: ${validationErrors.length} Error(s) Found ❌\n\nThe following files have validation errors that need to be fixed.`
+      `## Status: ${validationErrors.length} Error(s) Found ❌\n\nThe following files have validation errors that need to be fixed.`,
     );
 
     // Group errors by type first
@@ -185,7 +189,7 @@ ${rows.join("\n")}`);
 
   private generateFileErrorSection(
     relativePath: string,
-    errors: ValidationError[]
+    errors: ValidationError[],
   ): string {
     const lines: string[] = [];
     lines.push(`### [${relativePath}](${relativePath})`);
@@ -204,7 +208,9 @@ ${rows.join("\n")}`);
       }
 
       if (error.expectedValues && error.expectedValues.length > 0) {
-        lines.push(`**Expected:** One of: \`${error.expectedValues.join("`, `")}\``);
+        lines.push(
+          `**Expected:** One of: \`${error.expectedValues.join("`, `")}\``,
+        );
       }
 
       lines.push("");
@@ -233,8 +239,7 @@ ${rows.join("\n")}`);
 ### Reference Format
 
 - Simple: \`t-1\`, \`d-2\`, \`i-3\`
-- Scoped: \`i-1/t-2\` (task within initiative)
-- Blocking: \`blocked-by:t-1\`, \`blocked-by:i-1/t-2\`
+- Blocking: \`blocked-by:t-1\`
 
 ### Required Fields
 
@@ -288,7 +293,7 @@ ${rows.join("\n")}`);
     const statusCounts = this.countByStatus(tasks);
     const total = tasks.length;
     const highPriority = tasks.filter(
-      (t) => t.priority === "high" || t.priority === "critical"
+      (t) => t.priority === "high" || t.priority === "critical",
     ).length;
 
     return `## Summary
@@ -334,7 +339,7 @@ ${rows.join("\n")}`;
       .filter(
         (t) =>
           t.status === "todo" &&
-          (t.priority === "high" || t.priority === "critical")
+          (t.priority === "high" || t.priority === "critical"),
       )
       .sort(this.sortByPriorityThenTitle.bind(this));
 
@@ -382,12 +387,11 @@ _No blocked tasks_`;
         .map((ref) => {
           const blocker = tasksById.get(ref.targetId);
           if (!blocker) {
-            const context = ref.initiative ? ` (in ${ref.initiative})` : "";
-            return `⚠️ ${ref.targetId}${context} (missing)`;
+            return `${ref.targetId} (missing)`;
           }
-          const status = this.formatBlockerStatus(blocker.status);
-          const context = ref.initiative ? ` (${ref.initiative})` : "";
-          return `${status} ${this.formatTaskLink(blocker)}${context}`;
+          const status = this.formatStatus(blocker.status);
+          const archivedSuffix = blocker.isArchived ? " (archived)" : "";
+          return `${status} ${this.formatTaskLink(blocker)}${archivedSuffix}`;
         })
         .join("<br>");
 
@@ -411,8 +415,7 @@ _No initiatives_`;
     }
 
     const sortedInitiatives = [...initiatives].sort(
-      (a, b) =>
-        this.priorityOrder(b.priority) - this.priorityOrder(a.priority)
+      (a, b) => this.priorityOrder(b.priority) - this.priorityOrder(a.priority),
     );
 
     const rows = sortedInitiatives.map((init) => {
@@ -434,7 +437,7 @@ ${rows.join("\n")}`;
   private generateRecentlyCompleted(
     tasks: Task[],
     initiatives: Initiative[],
-    _since: Date
+    _since: Date,
   ): string {
     const recentTasks = tasks
       .filter((t) => t.status === "done")
@@ -490,7 +493,7 @@ ${sections.join("\n\n")}`;
       (t) =>
         t.status === "todo" &&
         t.priority !== "high" &&
-        t.priority !== "critical"
+        t.priority !== "critical",
     );
 
     if (otherTasks.length === 0) {
@@ -538,7 +541,9 @@ ${sections.join("\n\n")}`;
     return tasks.filter((t) => !t.filePath.includes("/archive/"));
   }
 
-  private filterNonArchivedInitiatives(initiatives: Initiative[]): Initiative[] {
+  private filterNonArchivedInitiatives(
+    initiatives: Initiative[],
+  ): Initiative[] {
     return initiatives.filter((i) => !i.filePath.includes("/archive/"));
   }
 
@@ -606,33 +611,11 @@ ${sections.join("\n\n")}`;
   }
 
   private formatPriority(priority?: TaskPriority): string {
-    const icons: Record<TaskPriority, string> = {
-      critical: "🔴",
-      high: "🟠",
-      medium: "🟡",
-      low: "🟢",
-    };
-    return priority ? icons[priority] : "—";
+    return priority ?? "—";
   }
 
   private formatStatus(status?: TaskStatus): string {
-    const icons: Record<TaskStatus, string> = {
-      todo: "📋",
-      "in-progress": "⏳",
-      blocked: "🚫",
-      done: "✅",
-    };
-    return status ? icons[status] : "—";
-  }
-
-  private formatBlockerStatus(status: TaskStatus): string {
-    const icons: Record<TaskStatus, string> = {
-      todo: "⚠️",
-      "in-progress": "⏳",
-      blocked: "🚫",
-      done: "✅",
-    };
-    return icons[status];
+    return status ?? "—";
   }
 
   private formatTaskLink(task: Task): string {

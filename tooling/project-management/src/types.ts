@@ -28,9 +28,8 @@ export interface ParsedFilename {
  * Parsed reference information
  */
 export interface ParsedReference {
-  raw: string; // Original string, e.g., "blocked-by:i-1/t-3"
+  raw: string; // Original string, e.g., "blocked-by:t-3"
   relationship?: "blocked-by"; // Only blocking supported for now
-  initiative?: string; // e.g., "i-1" if scoped to initiative
   targetId: string; // e.g., "t-3", "d-1", "i-1"
   targetType: EntityPrefix;
 }
@@ -58,6 +57,7 @@ export interface Task {
   filePath: string;
   content: string;
   initiative?: string; // Extracted from path, e.g., "i-1"
+  isArchived: boolean; // Whether the task is in the archive folder
 }
 
 /**
@@ -71,6 +71,7 @@ export interface Document {
   references?: ParsedReference[];
   filePath: string;
   content: string;
+  isArchived: boolean; // Whether the document is in the archive folder
 }
 
 /**
@@ -86,6 +87,7 @@ export interface Initiative {
   references?: ParsedReference[];
   tasks: Task[];
   filePath: string;
+  isArchived: boolean; // Whether the initiative is in the archive folder
 }
 
 /**

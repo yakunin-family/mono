@@ -68,8 +68,7 @@ export class Collector {
           validationErrors.push(...result.errors);
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : String(error);
+        const message = error instanceof Error ? error.message : String(error);
         warnings.push(`Error parsing task file ${filePath}: ${message}`);
       }
     }
@@ -84,8 +83,7 @@ export class Collector {
           validationErrors.push(...result.errors);
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : String(error);
+        const message = error instanceof Error ? error.message : String(error);
         warnings.push(`Error parsing document file ${filePath}: ${message}`);
       }
     }
@@ -100,19 +98,29 @@ export class Collector {
           validationErrors.push(...result.errors);
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : String(error);
+        const message = error instanceof Error ? error.message : String(error);
         warnings.push(`Error parsing initiative file ${filePath}: ${message}`);
       }
     }
 
     const taskMap = this.buildTaskMap(tasks, validationErrors);
     const documentMap = this.buildDocumentMap(documents, validationErrors);
-    const initiativeMap = this.buildInitiativeMap(initiatives, validationErrors);
+    const initiativeMap = this.buildInitiativeMap(
+      initiatives,
+      validationErrors,
+    );
 
     this.linkInitiativeTasks(tasks, initiativeMap);
 
-    this.validateReferences(tasks, documents, initiatives, taskMap, documentMap, initiativeMap, validationErrors);
+    this.validateReferences(
+      tasks,
+      documents,
+      initiatives,
+      taskMap,
+      documentMap,
+      initiativeMap,
+      validationErrors,
+    );
 
     return {
       tasks,
@@ -153,11 +161,21 @@ export class Collector {
 
   /**
    * Find all task markdown files matching [t-x]-*.md pattern
+   * Includes both active and archived tasks
    */
   private async findTaskFiles(): Promise<string[]> {
     const patterns = [
       join(this.sourcePath, "tasks", "\\[t-*\\]-*.md"),
       join(this.sourcePath, "initiatives", "\\[i-*\\]-*", "\\[t-*\\]-*.md"),
+      // Archive patterns
+      join(this.sourcePath, "archive", "tasks", "\\[t-*\\]-*.md"),
+      join(
+        this.sourcePath,
+        "archive",
+        "initiatives",
+        "\\[i-*\\]-*",
+        "\\[t-*\\]-*.md",
+      ),
     ];
 
     const files: string[] = [];
@@ -171,18 +189,46 @@ export class Collector {
 
   /**
    * Find all document markdown files matching [d-x]-*.md pattern
+   * Includes both active and archived documents
    */
   private async findDocumentFiles(): Promise<string[]> {
-    const pattern = join(this.sourcePath, "docs", "\\[d-*\\]-*.md");
-    return glob(pattern, { absolute: true });
+    const patterns = [
+      join(this.sourcePath, "docs", "\\[d-*\\]-*.md"),
+      join(this.sourcePath, "archive", "docs", "\\[d-*\\]-*.md"),
+    ];
+
+    const files: string[] = [];
+    for (const pattern of patterns) {
+      const matches = await glob(pattern, { absolute: true });
+      files.push(...matches);
+    }
+
+    return files;
   }
 
   /**
    * Find all initiative README files in [i-x]-* folders
+   * Includes both active and archived initiatives
    */
   private async findInitiativeFiles(): Promise<string[]> {
-    const pattern = join(this.sourcePath, "initiatives", "\\[i-*\\]-*", "README.md");
-    return glob(pattern, { absolute: true });
+    const patterns = [
+      join(this.sourcePath, "initiatives", "\\[i-*\\]-*", "README.md"),
+      join(
+        this.sourcePath,
+        "archive",
+        "initiatives",
+        "\\[i-*\\]-*",
+        "README.md",
+      ),
+    ];
+
+    const files: string[] = [];
+    for (const pattern of patterns) {
+      const matches = await glob(pattern, { absolute: true });
+      files.push(...matches);
+    }
+
+    return files;
   }
 
   /**
@@ -190,7 +236,7 @@ export class Collector {
    */
   private async parseTaskFile(
     filePath: string,
-    counters: Counters
+    counters: Counters,
   ): Promise<{ task: Task | null; errors: ValidationError[] }> {
     const errors: ValidationError[] = [];
     const filename = basename(filePath);
@@ -207,7 +253,11 @@ export class Collector {
       return { task: null, errors };
     }
 
-    const counterError = validateIdAgainstCounter(parsed.fullId, counters, filePath);
+    const counterError = validateIdAgainstCounter(
+      parsed.fullId,
+      counters,
+      filePath,
+    );
     if (counterError) {
       errors.push(counterError);
     }
@@ -221,7 +271,9 @@ export class Collector {
       const errorMessages = validationResult.errors
         .map((e) => `  - ${e.field}: ${e.message}`)
         .join("\n");
-      console.warn(`Warning: Invalid task frontmatter in ${filePath}:\n${errorMessages}`);
+      console.warn(
+        `Warning: Invalid task frontmatter in ${filePath}:\n${errorMessages}`,
+      );
       return { task: null, errors: [...errors, ...validationResult.errors] };
     }
 
@@ -242,6 +294,7 @@ export class Collector {
         filePath,
         content: markdownContent.trim(),
         initiative: initiativeId,
+        isArchived: filePath.includes("/archive/"),
       },
       errors,
     };
@@ -252,7 +305,7 @@ export class Collector {
    */
   private async parseDocumentFile(
     filePath: string,
-    counters: Counters
+    counters: Counters,
   ): Promise<{ document: Document | null; errors: ValidationError[] }> {
     const errors: ValidationError[] = [];
     const filename = basename(filePath);
@@ -269,7 +322,11 @@ export class Collector {
       return { document: null, errors };
     }
 
-    const counterError = validateIdAgainstCounter(parsed.fullId, counters, filePath);
+    const counterError = validateIdAgainstCounter(
+      parsed.fullId,
+      counters,
+      filePath,
+    );
     if (counterError) {
       errors.push(counterError);
     }
@@ -277,14 +334,22 @@ export class Collector {
     const content = await readFile(filePath, "utf-8");
     const { data, content: markdownContent } = matter(content);
 
-    const validationResult = validateDocumentFrontmatterWithErrors(data, filePath);
+    const validationResult = validateDocumentFrontmatterWithErrors(
+      data,
+      filePath,
+    );
 
     if (!validationResult.success) {
       const errorMessages = validationResult.errors
         .map((e) => `  - ${e.field}: ${e.message}`)
         .join("\n");
-      console.warn(`Warning: Invalid document frontmatter in ${filePath}:\n${errorMessages}`);
-      return { document: null, errors: [...errors, ...validationResult.errors] };
+      console.warn(
+        `Warning: Invalid document frontmatter in ${filePath}:\n${errorMessages}`,
+      );
+      return {
+        document: null,
+        errors: [...errors, ...validationResult.errors],
+      };
     }
 
     const frontmatter = validationResult.data as DocumentFrontmatter;
@@ -299,6 +364,7 @@ export class Collector {
         references,
         filePath,
         content: markdownContent.trim(),
+        isArchived: filePath.includes("/archive/"),
       },
       errors,
     };
@@ -309,7 +375,7 @@ export class Collector {
    */
   private async parseInitiativeFile(
     filePath: string,
-    counters: Counters
+    counters: Counters,
   ): Promise<{ initiative: Initiative | null; errors: ValidationError[] }> {
     const errors: ValidationError[] = [];
     const folderName = basename(dirname(filePath));
@@ -326,7 +392,11 @@ export class Collector {
       return { initiative: null, errors };
     }
 
-    const counterError = validateIdAgainstCounter(parsed.fullId, counters, filePath);
+    const counterError = validateIdAgainstCounter(
+      parsed.fullId,
+      counters,
+      filePath,
+    );
     if (counterError) {
       errors.push(counterError);
     }
@@ -334,16 +404,22 @@ export class Collector {
     const content = await readFile(filePath, "utf-8");
     const { data, content: markdownContent } = matter(content);
 
-    const validationResult = validateInitiativeFrontmatterWithErrors(data, filePath);
+    const validationResult = validateInitiativeFrontmatterWithErrors(
+      data,
+      filePath,
+    );
 
     if (!validationResult.success) {
       const errorMessages = validationResult.errors
         .map((e) => `  - ${e.field}: ${e.message}`)
         .join("\n");
       console.warn(
-        `Warning: Invalid initiative frontmatter in ${filePath}:\n${errorMessages}`
+        `Warning: Invalid initiative frontmatter in ${filePath}:\n${errorMessages}`,
       );
-      return { initiative: null, errors: [...errors, ...validationResult.errors] };
+      return {
+        initiative: null,
+        errors: [...errors, ...validationResult.errors],
+      };
     }
 
     const frontmatter = validationResult.data as InitiativeFrontmatter;
@@ -360,6 +436,7 @@ export class Collector {
         references,
         tasks: [],
         filePath,
+        isArchived: filePath.includes("/archive/"),
       },
       errors,
     };
@@ -390,7 +467,7 @@ export class Collector {
    */
   private buildTaskMap(
     tasks: Task[],
-    validationErrors: ValidationError[]
+    validationErrors: ValidationError[],
   ): Map<string, Task> {
     const taskMap = new Map<string, Task>();
 
@@ -415,7 +492,7 @@ export class Collector {
    */
   private buildDocumentMap(
     documents: Document[],
-    validationErrors: ValidationError[]
+    validationErrors: ValidationError[],
   ): Map<string, Document> {
     const documentMap = new Map<string, Document>();
 
@@ -440,7 +517,7 @@ export class Collector {
    */
   private buildInitiativeMap(
     initiatives: Initiative[],
-    validationErrors: ValidationError[]
+    validationErrors: ValidationError[],
   ): Map<string, Initiative> {
     const initiativeMap = new Map<string, Initiative>();
 
@@ -461,7 +538,7 @@ export class Collector {
   }
 
   /**
-   * Validate all references across entities
+   * Validate all references across entities using flat ID lookup
    */
   private validateReferences(
     tasks: Task[],
@@ -470,42 +547,18 @@ export class Collector {
     taskMap: Map<string, Task>,
     documentMap: Map<string, Document>,
     initiativeMap: Map<string, Initiative>,
-    validationErrors: ValidationError[]
+    validationErrors: ValidationError[],
   ): void {
     const validateRefs = (
       refs: ParsedReference[] | undefined,
-      filePath: string
+      filePath: string,
     ) => {
       if (!refs) return;
 
       for (const ref of refs) {
         switch (ref.targetType) {
           case "t": {
-            if (ref.initiative) {
-              const initiative = initiativeMap.get(ref.initiative);
-              if (!initiative) {
-                validationErrors.push({
-                  filePath,
-                  field: "references",
-                  message: `Reference not found: Initiative "${ref.initiative}" does not exist`,
-                  receivedValue: ref.raw,
-                  errorType: "invalid-reference",
-                });
-              } else {
-                const taskInInitiative = initiative.tasks.find(
-                  (t) => t.id === ref.targetId
-                );
-                if (!taskInInitiative) {
-                  validationErrors.push({
-                    filePath,
-                    field: "references",
-                    message: `Reference not found: Task "${ref.targetId}" does not exist in initiative "${ref.initiative}"`,
-                    receivedValue: ref.raw,
-                    errorType: "invalid-reference",
-                  });
-                }
-              }
-            } else if (!taskMap.has(ref.targetId)) {
+            if (!taskMap.has(ref.targetId)) {
               validationErrors.push({
                 filePath,
                 field: "references",
@@ -562,7 +615,7 @@ export class Collector {
    */
   private linkInitiativeTasks(
     tasks: Task[],
-    initiativeMap: Map<string, Initiative>
+    initiativeMap: Map<string, Initiative>,
   ): void {
     for (const task of tasks) {
       if (task.initiative) {
@@ -571,11 +624,10 @@ export class Collector {
           initiative.tasks.push(task);
         } else {
           console.warn(
-            `Warning: Task "${task.id}" references non-existent initiative "${task.initiative}"`
+            `Warning: Task "${task.id}" references non-existent initiative "${task.initiative}"`,
           );
         }
       }
     }
   }
-
 }
