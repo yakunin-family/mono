@@ -15,6 +15,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
   Button,
+  cn,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -46,6 +47,10 @@ import {
   StandalonePageHeader,
   StandalonePageShell,
 } from "@/components/standalone-page-shell";
+import {
+  ChatSidebar,
+  ChatSidebarTrigger,
+} from "@/spaces/document-editor/chat-sidebar";
 
 export const Route = createFileRoute(
   "/_protected/spaces/$id_/lesson/$lessonId",
@@ -65,6 +70,17 @@ function LessonEditorPage() {
   const [isTitleDirty, setIsTitleDirty] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
+  const [chatSidebarOpen, setChatSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("chat-sidebar-open") === "true";
+    }
+    return false;
+  });
+
+  // Persist chat sidebar state to localStorage
+  useEffect(() => {
+    localStorage.setItem("chat-sidebar-open", String(chatSidebarOpen));
+  }, [chatSidebarOpen]);
 
   const userColor = useMemo(() => getRandomUserColor(), []);
   const userName =
@@ -204,7 +220,6 @@ function LessonEditorPage() {
     },
   });
 
-
   useEffect(() => {
     if (lessonQuery.data && !isTitleDirty) {
       setTitle(lessonQuery.data.title);
@@ -310,153 +325,180 @@ function LessonEditorPage() {
   const lesson = lessonQuery.data;
   const space = spaceQuery.data;
 
-  const actionsDropdown = (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button variant="ghost" size="icon-sm">
-            <MoreHorizontalIcon className="size-4" />
-          </Button>
-        }
+  const toggleChatSidebar = () => setChatSidebarOpen((prev) => !prev);
+
+  const headerActions = (
+    <>
+      <ChatSidebarTrigger
+        isOpen={chatSidebarOpen}
+        onClick={toggleChatSidebar}
       />
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setSaveTemplateModalOpen(true)}>
-          <FileTextIcon className="size-4" />
-          Save as Template
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => duplicateLessonMutation.mutate()}
-          disabled={duplicateLessonMutation.isPending}
-        >
-          <CopyIcon className="size-4" />
-          Duplicate Lesson
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => setShowDeleteDialog(true)}
-          className="text-destructive focus:text-destructive"
-        >
-          <Trash2Icon className="size-4" />
-          Delete Lesson
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon-sm">
+              <MoreHorizontalIcon className="size-4" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setSaveTemplateModalOpen(true)}>
+            <FileTextIcon className="size-4" />
+            Save as Template
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => duplicateLessonMutation.mutate()}
+            disabled={duplicateLessonMutation.isPending}
+          >
+            <CopyIcon className="size-4" />
+            Duplicate Lesson
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2Icon className="size-4" />
+            Delete Lesson
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 
   return (
-    <StandalonePageShell>
-      <StandalonePageHeader
-        backTo="/spaces/$id"
-        backParams={{ id: spaceId }}
-        actions={actionsDropdown}
-      >
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink render={<Link to="/" />}>Students</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                render={<Link to="/spaces/$id" params={{ id: spaceId }} />}
+    <div className="flex h-svh w-full">
+      <StandalonePageShell>
+        <StandalonePageHeader
+          backTo="/spaces/$id"
+          backParams={{ id: spaceId }}
+          actions={headerActions}
+        >
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink render={<Link to="/" />}>
+                  Students
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  render={<Link to="/spaces/$id" params={{ id: spaceId }} />}
+                >
+                  {space?.studentName ?? "..."}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="flex items-center gap-1">
+                  <Input
+                    value={title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    onBlur={handleTitleSave}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.currentTarget.blur();
+                      }
+                    }}
+                    className="h-auto border-none bg-transparent p-0 font-normal focus-visible:ring-0"
+                    style={{ width: `${Math.max(title.length, 10)}ch` }}
+                  />
+                  {isTitleDirty && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={handleTitleSave}
+                      disabled={updateLessonMutation.isPending}
+                    >
+                      {updateLessonMutation.isPending ? (
+                        <Loader2Icon className="size-4 animate-spin" />
+                      ) : (
+                        <SaveIcon className="size-4" />
+                      )}
+                    </Button>
+                  )}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </StandalonePageHeader>
+
+        <StandalonePageContent className="relative flex-row">
+          {/* Editor takes remaining space */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            <DocumentEditor
+              documentId={lessonId}
+              spaceId={spaceId}
+              canEdit={true}
+              mode="teacher-editor"
+              token={accessToken ?? undefined}
+              userName={userName}
+              userColor={userColor}
+              websocketUrl={
+                process.env.NODE_ENV === "development"
+                  ? "ws://127.0.0.1:1234"
+                  : "wss://collab.untitled.nikita-yakunin.dev"
+              }
+              convexClient={convex}
+              queryClient={queryClient}
+              onStartExerciseGeneration={handleStartExerciseGeneration}
+              onSaveExerciseToBank={handleSaveExerciseToBank}
+              onSaveGroupToLibrary={handleSaveGroupToLibrary}
+              libraryItems={libraryQuery.data}
+              isLoadingLibraryItems={libraryQuery.isLoading}
+              editorRef={editorRef}
+            />
+
+            <SaveToLibraryDrawer
+              open={saveTemplateModalOpen}
+              onOpenChange={setSaveTemplateModalOpen}
+              type="template"
+              onSave={handleSaveAsTemplate}
+              isSaving={saveTemplateMutation.isPending}
+            />
+          </div>
+        </StandalonePageContent>
+
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete this lesson?</DialogTitle>
+              <DialogDescription>
+                This will permanently delete &quot;{lesson.title}&quot; and all
+                associated homework. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(false)}
               >
-                {space?.studentName ?? "..."}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="flex items-center gap-1">
-                <Input
-                  value={title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  onBlur={handleTitleSave}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.currentTarget.blur();
-                    }
-                  }}
-                  className="h-auto border-none bg-transparent p-0 font-normal focus-visible:ring-0"
-                  style={{ width: `${Math.max(title.length, 10)}ch` }}
-                />
-                {isTitleDirty && (
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={handleTitleSave}
-                    disabled={updateLessonMutation.isPending}
-                  >
-                    {updateLessonMutation.isPending ? (
-                      <Loader2Icon className="size-4 animate-spin" />
-                    ) : (
-                      <SaveIcon className="size-4" />
-                    )}
-                  </Button>
-                )}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </StandalonePageHeader>
-
-      <StandalonePageContent className="relative">
-        <DocumentEditor
-          documentId={lessonId}
-          spaceId={spaceId}
-          canEdit={true}
-          mode="teacher-editor"
-          token={accessToken ?? undefined}
-          userName={userName}
-          userColor={userColor}
-          websocketUrl={
-            process.env.NODE_ENV === "development"
-              ? "ws://127.0.0.1:1234"
-              : "wss://collab.untitled.nikita-yakunin.dev"
-          }
-          convexClient={convex}
-          queryClient={queryClient}
-          onStartExerciseGeneration={handleStartExerciseGeneration}
-          onSaveExerciseToBank={handleSaveExerciseToBank}
-          onSaveGroupToLibrary={handleSaveGroupToLibrary}
-          libraryItems={libraryQuery.data}
-          isLoadingLibraryItems={libraryQuery.isLoading}
-          editorRef={editorRef}
-        />
-
-        <SaveToLibraryDrawer
-          open={saveTemplateModalOpen}
-          onOpenChange={setSaveTemplateModalOpen}
-          type="template"
-          onSave={handleSaveAsTemplate}
-          isSaving={saveTemplateMutation.isPending}
-        />
-      </StandalonePageContent>
-
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete this lesson?</DialogTitle>
-            <DialogDescription>
-              This will permanently delete &quot;{lesson.title}&quot; and all
-              associated homework. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteLessonMutation.mutate()}
-              disabled={deleteLessonMutation.isPending}
-            >
-              {deleteLessonMutation.isPending ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </StandalonePageShell>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteLessonMutation.mutate()}
+                disabled={deleteLessonMutation.isPending}
+              >
+                {deleteLessonMutation.isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </StandalonePageShell>
+      <StandalonePageShell
+        className={cn("overflow-hidden transition-all", {
+          "w-[560px]": chatSidebarOpen,
+          "w-0": !chatSidebarOpen,
+        })}
+      >
+        <ChatSidebar onToggle={toggleChatSidebar}>
+          <div className="flex flex-1 items-center justify-center p-4 text-center text-sm text-muted-foreground">
+            Chat coming soon...
+          </div>
+        </ChatSidebar>
+      </StandalonePageShell>
+    </div>
   );
 }
