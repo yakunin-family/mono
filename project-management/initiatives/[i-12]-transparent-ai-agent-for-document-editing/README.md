@@ -1,4 +1,5 @@
 ---
+status: todo
 priority: high
 description: Redesign AI chat from one-shot document replacement to transparent, tool-based agent
 tags: [ai, editor, architecture, streaming]

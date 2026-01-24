@@ -4,12 +4,12 @@
 
 | Metric | Count |
 |--------|-------|
-| **Total Tasks** | 44 |
+| **Total Tasks** | 37 |
 | ├─ Todo | 37 |
 | ├─ In Progress | 0 |
 | ├─ Blocked | 0 |
-| └─ Done | 7 |
-| **High Priority** | 28 |
+| └─ Done | 0 |
+| **High Priority** | 23 |
 
 ## In Progress
 
@@ -51,25 +51,14 @@ _No blocked tasks_
 
 | Initiative | Status | Progress | Priority |
 |------------|--------|----------|----------|
-| [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) | todo | 88% (7/8) | high |
 | [[i-7] Rag Teaching Assistant](../initiatives/[i-7]-rag-teaching-assistant/README.md) | todo | 0% (0/4) | high |
-| [[i-12] Transparent Ai Agent For Document Editing](../initiatives/[i-12]-transparent-ai-agent-for-document-editing/README.md) | — | 0% (0/12) | high |
+| [[i-12] Transparent Ai Agent For Document Editing](../initiatives/[i-12]-transparent-ai-agent-for-document-editing/README.md) | todo | 0% (0/12) | high |
 | [[i-11] Editor Performance Optimization](../initiatives/[i-11]-editor-performance-optimization/README.md) | todo | 0% (0/7) | high |
 | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) | todo | 0% (0/9) | high |
 
 ## Recently Completed (Last 7 Days)
 
-**Tasks:**
-
-| Task | Initiative |
-|------|------------|
-| [[t-67] Add Chat Session Schema To Convex](../initiatives/[i-9]-in-document-ai-chat/[t-67]-add-chat-session-schema-to-convex.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
-| [[t-69] Build Llm Integration Action](../initiatives/[i-9]-in-document-ai-chat/[t-69]-build-llm-integration-action.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
-| [[t-65] Create Chat Sidebar Component](../initiatives/[i-9]-in-document-ai-chat/[t-65]-create-chat-sidebar-component.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
-| [[t-66] Implement Chat Message Display And Input](../initiatives/[i-9]-in-document-ai-chat/[t-66]-implement-chat-message-display-and-input.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
-| [[t-68] Implement Chat Mutations](../initiatives/[i-9]-in-document-ai-chat/[t-68]-implement-chat-mutations.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
-| [[t-70] Implement Document Replacement From Ai Response](../initiatives/[i-9]-in-document-ai-chat/[t-70]-implement-document-replacement-from-ai-response.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
-| [[t-64] Implement Document Xml Serialization](../initiatives/[i-9]-in-document-ai-chat/[t-64]-implement-document-xml-serialization.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
+_No recently completed items_
 
 ## Other Tasks
 
@@ -92,7 +81,7 @@ _No blocked tasks_
 |------|------------|
 | [[t-78] Add Consistent Error Handling Across Queries](../initiatives/[i-10]-react-best-practices-teacher-app/[t-78]-add-consistent-error-handling-across-queries.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
 | [[t-79] Consider Lazy Loading Document Editor](../initiatives/[i-10]-react-best-practices-teacher-app/[t-79]-consider-lazy-loading-document-editor.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
-| [[t-87] Fix Chat Sidebar Collapse Animation](../initiatives/[i-9]-in-document-ai-chat/[t-87]-fix-chat-sidebar-collapse-animation.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
+| [[t-87] Fix Chat Sidebar Collapse Animation](../tasks/[t-87]-fix-chat-sidebar-collapse-animation.md) | — |
 | [[t-59] Marquee Selection Scroll](../tasks/[t-59]-marquee-selection-scroll.md) | — |
 | [[t-60] Nested Group Highlight Bug](../tasks/[t-60]-nested-group-highlight-bug.md) | — |
 | [[t-88] Rename Document Table To Documents](../tasks/[t-88]-rename-document-table-to-documents.md) | — |
