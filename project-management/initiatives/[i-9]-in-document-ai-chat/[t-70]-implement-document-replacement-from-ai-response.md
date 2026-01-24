@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 priority: high
 description: Apply AI-generated document XML to the Tiptap editor
 tags: [editor, teacher-app]
@@ -9,6 +9,24 @@ references: blocked-by:t-64, blocked-by:t-69
 # Implement Document Replacement from AI Response
 
 Implement the frontend logic that takes AI-generated document XML and applies it to the Tiptap editor.
+
+## Implementation Completed
+
+- Created `apps/teacher/src/spaces/document-editor/use-ai-document-edit.ts`:
+  - Hook that validates XML via `validateXML()` and applies via `fromXML()`
+  - Returns `{success, error}` result
+- Created `apps/teacher/src/spaces/document-editor/use-chat.ts`:
+  - Manages chat session lifecycle (create/get session)
+  - Fetches and maps messages to frontend interface
+  - Serializes document to XML via `toXML()` when sending
+  - Auto-applies `documentXml` from assistant messages
+  - Tracks applied messages to avoid re-applying
+- Updated `apps/teacher/src/spaces/document-editor/chat-messages.tsx`:
+  - Added `documentXml` and `error` fields to Message interface
+- Updated `apps/teacher/src/routes/_protected/spaces.$id_.lesson.$lessonId.tsx`:
+  - Replaced simulated chat with real `useChat` hook
+  - Added editor readiness tracking for proper ref handling
+- Added `Editor` type export from `@package/editor`
 
 ## Flow
 
@@ -85,9 +103,9 @@ Since we're using full document replacement:
 
 ## Acceptance Criteria
 
-- [ ] Valid XML applies successfully to editor
-- [ ] Invalid XML rejected with clear error message
-- [ ] Document unchanged on error
-- [ ] Changes sync via Yjs to collaborators
-- [ ] Error displayed in chat UI
-- [ ] Hook exported for use in chat sidebar
+- [x] Valid XML applies successfully to editor
+- [x] Invalid XML rejected with clear error message
+- [x] Document unchanged on error
+- [x] Changes sync via Yjs to collaborators
+- [x] Error displayed in chat UI
+- [x] Hook exported for use in chat sidebar

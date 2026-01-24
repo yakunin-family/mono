@@ -7,6 +7,10 @@ export interface Message {
   content: string;
   timestamp: number;
   status?: "sending" | "sent" | "error";
+  /** For assistant messages, the document XML to apply */
+  documentXml?: string;
+  /** Error message if the AI response failed */
+  error?: string;
 }
 
 interface ChatMessagesProps {

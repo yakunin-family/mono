@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 priority: high
 description: Define Convex schema tables for chat sessions and messages
 tags: [backend, convex]
@@ -15,8 +15,8 @@ Define the Convex schema tables for storing chat sessions and messages.
 
 ```typescript
 chatSessions: defineTable({
-  documentId: v.id("documents"),
-  userId: v.id("users"),
+  documentId: v.id("document"),
+  userId: v.string(),
   createdAt: v.number(),
   updatedAt: v.number(),
 })
@@ -50,10 +50,12 @@ chatMessages: defineTable({
 - **One session per document per user**: Each user has their own chat history for a document
 - **Store document XML in messages**: Enables "undo" by reapplying previous AI response
 - **Timestamps as numbers**: Standard Convex pattern for dates
+- **`v.string()` for userId**: Matches existing codebase pattern (WorkOS IDs)
+- **`v.id("document")` for documentId**: Matches existing table name (singular)
 
 ## Acceptance Criteria
 
-- [ ] `chatSessions` table defined with indexes
-- [ ] `chatMessages` table defined with indexes
-- [ ] Schema validates successfully
-- [ ] Indexes support efficient queries by document, user, and session
+- [x] `chatSessions` table defined with indexes
+- [x] `chatMessages` table defined with indexes
+- [x] Schema validates successfully (TypeScript passes)
+- [x] Indexes support efficient queries by document, user, and session

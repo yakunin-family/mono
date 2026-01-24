@@ -189,7 +189,7 @@ export type ExerciseGenerationStep = Infer<
 export const libraryItemTypeValidator = v.union(
   v.literal("exercise"),
   v.literal("template"),
-  v.literal("group")
+  v.literal("group"),
 );
 export type LibraryItemType = Infer<typeof libraryItemTypeValidator>;
 
@@ -199,7 +199,7 @@ export const cefrLevelValidator = v.union(
   v.literal("B1"),
   v.literal("B2"),
   v.literal("C1"),
-  v.literal("C2")
+  v.literal("C2"),
 );
 export type CEFRLevel = Infer<typeof cefrLevelValidator>;
 
@@ -229,6 +229,33 @@ const library = defineTable({
   .index("by_owner_date", ["ownerId", "createdAt"]);
 export type LibraryItem = Infer<typeof schemas.tables.library.validator>;
 
+// Chat Sessions - Multiple sessions per document per user for AI chat history
+const chatSessions = defineTable({
+  documentId: v.id("document"),
+  userId: v.string(), // WorkOS user ID
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_document", ["documentId"])
+  .index("by_user", ["userId"])
+  .index("by_document_user", ["documentId", "userId"]);
+export type ChatSession = Infer<typeof schemas.tables.chatSessions.validator>;
+
+// Chat Messages - Individual messages within a chat session
+const chatMessages = defineTable({
+  sessionId: v.id("chatSessions"),
+  role: v.union(v.literal("user"), v.literal("assistant")),
+  content: v.string(),
+  // For assistant messages, track the document state it produced (enables "undo")
+  documentXml: v.optional(v.string()),
+  // Error tracking for failed AI responses
+  error: v.optional(v.string()),
+  createdAt: v.number(),
+})
+  .index("by_session", ["sessionId"])
+  .index("by_session_created", ["sessionId", "createdAt"]);
+export type ChatMessage = Infer<typeof schemas.tables.chatMessages.validator>;
+
 const schemas = defineSchema({
   userProfile,
   aiUsage,
@@ -240,6 +267,8 @@ const schemas = defineSchema({
   exerciseGenerationSession,
   exerciseGenerationStep,
   library,
+  chatSessions,
+  chatMessages,
 });
 
 export default schemas;

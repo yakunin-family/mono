@@ -48,14 +48,12 @@ import {
   StandalonePageShell,
 } from "@/components/standalone-page-shell";
 import { ChatInput } from "@/spaces/document-editor/chat-input";
-import {
-  ChatMessages,
-  type Message,
-} from "@/spaces/document-editor/chat-messages";
+import { ChatMessages } from "@/spaces/document-editor/chat-messages";
 import {
   ChatSidebar,
   ChatSidebarTrigger,
 } from "@/spaces/document-editor/chat-sidebar";
+import { useChat } from "@/spaces/document-editor/use-chat";
 
 export const Route = createFileRoute(
   "/_protected/spaces/$id_/lesson/$lessonId",
@@ -81,8 +79,40 @@ function LessonEditorPage() {
     }
     return false;
   });
-  const [chatMessages, setChatMessages] = useState<Message[]>([]);
-  const [isChatLoading, setIsChatLoading] = useState(false);
+
+  // Track editor readiness - we need state because ref updates don't trigger re-renders
+  const [editorReady, setEditorReady] = useState(false);
+  const editor = editorReady ? (editorRef.current?.getEditor() ?? null) : null;
+
+  // Check for editor availability periodically until it's ready
+  useEffect(() => {
+    if (editorReady) return;
+
+    const checkEditor = () => {
+      if (editorRef.current?.getEditor()) {
+        setEditorReady(true);
+      }
+    };
+
+    // Check immediately and then periodically
+    checkEditor();
+    const interval = setInterval(checkEditor, 100);
+
+    return () => clearInterval(interval);
+  }, [editorReady]);
+
+  // Chat with AI backend
+  const {
+    messages: chatMessages,
+    isLoading: isChatLoading,
+    sendMessage: handleSendMessage,
+    sessionId: chatSessionId,
+    sessions: chatSessions,
+    switchSession: switchChatSession,
+  } = useChat({
+    documentId: lessonId,
+    editor,
+  });
 
   // Persist chat sidebar state to localStorage
   useEffect(() => {
@@ -334,32 +364,6 @@ function LessonEditorPage() {
 
   const toggleChatSidebar = () => setChatSidebarOpen((prev) => !prev);
 
-  const handleSendMessage = (content: string) => {
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content,
-      timestamp: Date.now(),
-      status: "sent",
-    };
-    setChatMessages((prev) => [...prev, userMessage]);
-
-    // Simulate AI response for now (backend integration in t-67/t-68)
-    setIsChatLoading(true);
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content:
-          "I understand you want me to help edit the document. This functionality will be connected to the AI backend soon.",
-        timestamp: Date.now(),
-        status: "sent",
-      };
-      setChatMessages((prev) => [...prev, assistantMessage]);
-      setIsChatLoading(false);
-    }, 1500);
-  };
-
   const headerActions = (
     <>
       <ChatSidebarTrigger
@@ -526,7 +530,12 @@ function LessonEditorPage() {
           "w-0": !chatSidebarOpen,
         })}
       >
-        <ChatSidebar onToggle={toggleChatSidebar}>
+        <ChatSidebar
+          onToggle={toggleChatSidebar}
+          sessions={chatSessions}
+          currentSessionId={chatSessionId}
+          onSessionSelect={switchChatSession}
+        >
           <ChatMessages messages={chatMessages} isLoading={isChatLoading} />
           <ChatInput onSend={handleSendMessage} isLoading={isChatLoading} />
         </ChatSidebar>

@@ -128,6 +128,15 @@ const promptFiles: Array<{
     ),
     vars: [{ name: "content", optional: false }],
   },
+  {
+    name: "buildDocumentEditorChatPrompt",
+    content: readFileSync(join(promptsDir, "document-editor-chat.md"), "utf-8"),
+    vars: [
+      { name: "documentXml", optional: false },
+      { name: "conversationHistory", optional: false },
+      { name: "instruction", optional: false },
+    ],
+  },
 ];
 
 // Generate output

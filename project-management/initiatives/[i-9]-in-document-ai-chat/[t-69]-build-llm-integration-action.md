@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 priority: high
 description: Create Convex action that calls LLM with document context and returns edited XML
 tags: [backend, convex, ai]
@@ -9,6 +9,19 @@ references: blocked-by:t-67, blocked-by:t-64
 # Build LLM Integration Action
 
 Create a Convex action that calls the LLM with document context and user instruction, returning edited document XML.
+
+## Implementation Completed
+
+- Created `apps/backend/prompts/document-editor-chat.md` - system prompt with full XML format reference
+- Created `apps/backend/convex/validators/chat.ts` - Zod schema for response validation
+- Updated `apps/backend/scripts/build-prompts.ts` to register new prompt
+- Implemented `generateResponse` internal action in `chat.ts`:
+  - Uses `anthropic/claude-3-5-sonnet-20241022` model
+  - Builds prompt with document XML, conversation history, and instruction
+  - Calls `generateObject` with structured response schema `{explanation, documentXml}`
+  - Validates XML has `<lesson>` root element
+  - Stores assistant message with documentXml on success
+  - Stores error in message on failure
 
 ## Implementation
 
@@ -68,10 +81,10 @@ Use existing LLM integration pattern from the codebase. Check what's already con
 
 ## Acceptance Criteria
 
-- [ ] Action calls LLM with proper context
-- [ ] System prompt clearly explains XML format
-- [ ] Conversation history included for context
-- [ ] Response parsed and validated
-- [ ] Assistant message stored with documentXml
-- [ ] Errors stored in message record
-- [ ] Works with existing LLM provider setup
+- [x] Action calls LLM with proper context
+- [x] System prompt clearly explains XML format
+- [x] Conversation history included for context
+- [x] Response parsed and validated
+- [x] Assistant message stored with documentXml
+- [x] Errors stored in message record
+- [x] Works with existing LLM provider setup

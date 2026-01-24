@@ -11,6 +11,7 @@
 import type * as _generated_prompts from "../_generated_prompts.js";
 import type * as accessControl from "../accessControl.js";
 import type * as auth from "../auth.js";
+import type * as chat from "../chat.js";
 import type * as documents from "../documents.js";
 import type * as exerciseGeneration from "../exerciseGeneration.js";
 import type * as functions from "../functions.js";
@@ -21,6 +22,7 @@ import type * as spaceInvites from "../spaceInvites.js";
 import type * as spaces from "../spaces.js";
 import type * as teachers from "../teachers.js";
 import type * as userProfiles from "../userProfiles.js";
+import type * as validators_chat from "../validators/chat.js";
 import type * as validators_exerciseGeneration from "../validators/exerciseGeneration.js";
 import type * as validators_libraryAutoTag from "../validators/libraryAutoTag.js";
 
@@ -34,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   _generated_prompts: typeof _generated_prompts;
   accessControl: typeof accessControl;
   auth: typeof auth;
+  chat: typeof chat;
   documents: typeof documents;
   exerciseGeneration: typeof exerciseGeneration;
   functions: typeof functions;
@@ -44,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   spaces: typeof spaces;
   teachers: typeof teachers;
   userProfiles: typeof userProfiles;
+  "validators/chat": typeof validators_chat;
   "validators/exerciseGeneration": typeof validators_exerciseGeneration;
   "validators/libraryAutoTag": typeof validators_libraryAutoTag;
 }>;

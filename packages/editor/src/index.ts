@@ -1,5 +1,8 @@
 import "./styles.css";
 
+// Re-export Editor type from tiptap for consumers
+export type { Editor } from "@tiptap/core";
+
 export type {
   DocumentEditorHandle,
   DocumentEditorProps,
