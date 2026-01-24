@@ -4,11 +4,11 @@
 
 | Metric | Count |
 |--------|-------|
-| **Total Tasks** | 30 |
+| **Total Tasks** | 31 |
 | ├─ Todo | 28 |
 | ├─ In Progress | 0 |
 | ├─ Blocked | 0 |
-| └─ Done | 2 |
+| └─ Done | 3 |
 | **High Priority** | 16 |
 
 ## In Progress
@@ -43,7 +43,7 @@ _No blocked tasks_
 
 | Initiative | Status | Progress | Priority |
 |------------|--------|----------|----------|
-| [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) | todo | 29% (2/7) | high |
+| [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) | todo | 38% (3/8) | high |
 | [[i-7] Rag Teaching Assistant](../initiatives/[i-7]-rag-teaching-assistant/README.md) | todo | 0% (0/4) | high |
 | [[i-11] Editor Performance Optimization](../initiatives/[i-11]-editor-performance-optimization/README.md) | todo | 0% (0/7) | high |
 | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) | todo | 0% (0/9) | high |
@@ -55,6 +55,7 @@ _No blocked tasks_
 | Task | Initiative |
 |------|------------|
 | [[t-65] Create Chat Sidebar Component](../initiatives/[i-9]-in-document-ai-chat/[t-65]-create-chat-sidebar-component.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
+| [[t-66] Implement Chat Message Display And Input](../initiatives/[i-9]-in-document-ai-chat/[t-66]-implement-chat-message-display-and-input.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
 | [[t-64] Implement Document Xml Serialization](../initiatives/[i-9]-in-document-ai-chat/[t-64]-implement-document-xml-serialization.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
 
 ## Other Tasks
@@ -69,7 +70,6 @@ _No blocked tasks_
 | [[t-61] Check Ai Tooling Hypothesis](../tasks/[t-61]-check-ai-tooling-hypothesis.md) | — |
 | [[t-84] Deduplicate Librarystorage Interface](../initiatives/[i-11]-editor-performance-optimization/[t-84]-deduplicate-librarystorage-interface.md) | [[i-11] Editor Performance Optimization](../initiatives/[i-11]-editor-performance-optimization/README.md) |
 | [[t-74] Fix Column Helper Reference Stability](../initiatives/[i-10]-react-best-practices-teacher-app/[t-74]-fix-column-helper-reference-stability.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
-| [[t-66] Implement Chat Message Display And Input](../initiatives/[i-9]-in-document-ai-chat/[t-66]-implement-chat-message-display-and-input.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
 | [[t-76] Migrate Forms To Tanstack Form](../initiatives/[i-10]-react-best-practices-teacher-app/[t-76]-migrate-forms-to-tanstack-form.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
 | [[t-86] Replace Window Event With Editor Command](../initiatives/[i-11]-editor-performance-optimization/[t-86]-replace-window-event-with-editor-command.md) | [[i-11] Editor Performance Optimization](../initiatives/[i-11]-editor-performance-optimization/README.md) |
 
@@ -79,5 +79,6 @@ _No blocked tasks_
 |------|------------|
 | [[t-78] Add Consistent Error Handling Across Queries](../initiatives/[i-10]-react-best-practices-teacher-app/[t-78]-add-consistent-error-handling-across-queries.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
 | [[t-79] Consider Lazy Loading Document Editor](../initiatives/[i-10]-react-best-practices-teacher-app/[t-79]-consider-lazy-loading-document-editor.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
+| [[t-87] Fix Chat Sidebar Collapse Animation](../initiatives/[i-9]-in-document-ai-chat/[t-87]-fix-chat-sidebar-collapse-animation.md) | [[i-9] In Document Ai Chat](../initiatives/[i-9]-in-document-ai-chat/README.md) |
 | [[t-59] Marquee Selection Scroll](../tasks/[t-59]-marquee-selection-scroll.md) | — |
 | [[t-60] Nested Group Highlight Bug](../tasks/[t-60]-nested-group-highlight-bug.md) | — |

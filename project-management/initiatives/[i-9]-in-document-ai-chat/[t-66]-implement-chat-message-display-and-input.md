@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 priority: medium
 description: Build chat message list and input components for AI conversation
 tags: [ui, teacher-app]
@@ -69,3 +69,10 @@ Text input for sending messages to the AI.
 - [ ] Loading state shown while awaiting AI response
 - [ ] Error messages display clearly
 - [ ] Empty input prevents sending
+
+## Completed
+
+- Created `chat-messages.tsx` with scrollable message list, user/assistant message styling, typing indicator, and error states
+- Created `chat-input.tsx` with card-style container, auto-expanding textarea (max 8 lines), circular send button, Enter to send / Shift+Enter for newline
+- Integrated components into lesson editor route with mock AI responses
+- Used `Intl.RelativeTimeFormat` for time formatting (later removed as timestamps weren't needed)

@@ -47,6 +47,11 @@ import {
   StandalonePageHeader,
   StandalonePageShell,
 } from "@/components/standalone-page-shell";
+import { ChatInput } from "@/spaces/document-editor/chat-input";
+import {
+  ChatMessages,
+  type Message,
+} from "@/spaces/document-editor/chat-messages";
 import {
   ChatSidebar,
   ChatSidebarTrigger,
@@ -76,6 +81,8 @@ function LessonEditorPage() {
     }
     return false;
   });
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
 
   // Persist chat sidebar state to localStorage
   useEffect(() => {
@@ -327,6 +334,32 @@ function LessonEditorPage() {
 
   const toggleChatSidebar = () => setChatSidebarOpen((prev) => !prev);
 
+  const handleSendMessage = (content: string) => {
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content,
+      timestamp: Date.now(),
+      status: "sent",
+    };
+    setChatMessages((prev) => [...prev, userMessage]);
+
+    // Simulate AI response for now (backend integration in t-67/t-68)
+    setIsChatLoading(true);
+    setTimeout(() => {
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          "I understand you want me to help edit the document. This functionality will be connected to the AI backend soon.",
+        timestamp: Date.now(),
+        status: "sent",
+      };
+      setChatMessages((prev) => [...prev, assistantMessage]);
+      setIsChatLoading(false);
+    }, 1500);
+  };
+
   const headerActions = (
     <>
       <ChatSidebarTrigger
@@ -488,15 +521,14 @@ function LessonEditorPage() {
         </Dialog>
       </StandalonePageShell>
       <StandalonePageShell
-        className={cn("overflow-hidden transition-all", {
+        className={cn("overflow-hidden transition-all [&>main]:ml-0", {
           "w-[560px]": chatSidebarOpen,
           "w-0": !chatSidebarOpen,
         })}
       >
         <ChatSidebar onToggle={toggleChatSidebar}>
-          <div className="flex flex-1 items-center justify-center p-4 text-center text-sm text-muted-foreground">
-            Chat coming soon...
-          </div>
+          <ChatMessages messages={chatMessages} isLoading={isChatLoading} />
+          <ChatInput onSend={handleSendMessage} isLoading={isChatLoading} />
         </ChatSidebar>
       </StandalonePageShell>
     </div>
