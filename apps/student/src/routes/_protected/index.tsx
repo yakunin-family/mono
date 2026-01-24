@@ -6,14 +6,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
 
 import { SpaceCard } from "@/components/SpaceCard";
-import { useAuth } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/")({
   component: DashboardPage,
 });
 
 function DashboardPage() {
-  const { signOut } = useAuth();
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
+  };
 
   const { data: spaces, isLoading } = useQuery(
     convexQuery(api.spaces.getMySpacesAsStudent, {}),
@@ -26,11 +34,7 @@ function DashboardPage() {
         <div className="flex items-center justify-between px-6 py-4">
           <h1 className="text-2xl font-bold">My Learning</h1>
           <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => signOut({ returnTo: "/login" })}
-            >
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
               Logout
             </Button>
           </div>

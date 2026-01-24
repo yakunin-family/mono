@@ -1,8 +1,8 @@
-import {
-  getAuth,
-  getSignInUrl,
-  getSignUpUrl,
-} from "@workos/authkit-tanstack-react-start";
-import { useAuth } from "@workos/authkit-tanstack-react-start/client";
+import { convexClient } from "@convex-dev/better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
 
-export { getAuth, getSignInUrl, getSignUpUrl, useAuth };
+export const authClient = createAuthClient({
+  plugins: [convexClient()],
+});
+
+export const { signIn, signUp, signOut, useSession } = authClient;

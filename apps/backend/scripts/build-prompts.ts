@@ -1,8 +1,10 @@
-import { readdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
+const promptsDir = join(process.cwd(), "prompts");
+
 // Read all partials
-const partialsDir = join(process.cwd(), "prompts", "partials");
+const partialsDir = join(promptsDir, "partials");
 const partials: Record<string, string> = {};
 
 for (const file of readdirSync(partialsDir)) {
@@ -89,7 +91,6 @@ function toPascalCase(str: string): string {
 }
 
 // Read and process each prompt
-const promptsDir = join(process.cwd(), "prompts");
 const promptFiles: Array<{
   name: string;
   content: string;
@@ -139,6 +140,45 @@ const promptFiles: Array<{
   },
 ];
 
+// Generate simple getter functions for skills (no variables)
+function generateSimpleGetter(name: string, content: string): string {
+  // Escape backticks and ${ for template literals
+  const escaped = content.replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+  return `
+export function ${name}(): string {
+  return \`${escaped}\`;
+}
+`;
+}
+
+// Load chat skills
+const chatSkillsDir = join(promptsDir, "chat", "skills");
+const chatSkills: Array<{ name: string; content: string }> = [];
+
+if (existsSync(chatSkillsDir)) {
+  for (const file of readdirSync(chatSkillsDir)) {
+    if (file.endsWith(".md")) {
+      const skillName = file.replace(".md", "");
+      // Convert kebab-case to camelCase: fill-blanks -> FillBlanks
+      const camelName = skillName
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("");
+      chatSkills.push({
+        name: `getSkill${camelName}`,
+        content: readFileSync(join(chatSkillsDir, file), "utf-8"),
+      });
+    }
+  }
+}
+
+// Load chat base prompt
+const chatBaseFile = join(promptsDir, "chat", "base.md");
+let chatBasePrompt = "";
+if (existsSync(chatBaseFile)) {
+  chatBasePrompt = readFileSync(chatBaseFile, "utf-8");
+}
+
 // Generate output
 let output = `// Auto-generated from markdown files in prompts/
 // Run: pnpm build:prompts
@@ -150,9 +190,38 @@ for (const { name, content, vars } of promptFiles) {
   output += generateFunction(name, content, vars);
 }
 
+// Add chat base prompt
+if (chatBasePrompt) {
+  output += generateSimpleGetter("getChatBasePrompt", chatBasePrompt);
+}
+
+// Add skill getters
+for (const { name, content } of chatSkills) {
+  output += generateSimpleGetter(name, content);
+}
+
+// Add skill names constant for type safety
+if (chatSkills.length > 0) {
+  const skillNames = chatSkills.map((s) => {
+    // Extract original kebab-case name from function name
+    // getSkillFillBlanks -> fill-blanks
+    const withoutPrefix = s.name.replace("getSkill", "");
+    return withoutPrefix
+      .replace(/([A-Z])/g, "-$1")
+      .toLowerCase()
+      .slice(1); // Remove leading dash
+  });
+  output += `
+export const CHAT_SKILL_NAMES = [${skillNames.map((n) => `"${n}"`).join(", ")}] as const;
+export type ChatSkillName = typeof CHAT_SKILL_NAMES[number];
+`;
+}
+
 // Write output
 const outputPath = join(process.cwd(), "convex", "_generated_prompts.ts");
 writeFileSync(outputPath, output, "utf-8");
 
 console.log(`✓ Generated prompts from ${promptFiles.length} markdown files`);
+console.log(`  + ${chatSkills.length} chat skill functions`);
+console.log(`  + getChatBasePrompt function`);
 console.log(`  Output: convex/_generated_prompts.ts`);

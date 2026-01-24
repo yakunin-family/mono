@@ -52,7 +52,7 @@ This is a **pnpm monorepo** managed by **Turborepo** with the following workspac
 
 - **`packages/editor`** - Shared Tiptap-based collaborative document editor
 - **`packages/ui`** - Shared React component library (using shadcn/ui)
-- **`packages/exercises`** - Exercise type taxonomy (16 types across Material, Assessment, Production categories) - *Note: Package defines types but doesn't export them yet*
+- **`packages/exercises`** - Exercise type taxonomy (16 types across Material, Assessment, Production categories) - _Note: Package defines types but doesn't export them yet_
 
 ### Tooling
 
@@ -64,9 +64,10 @@ This is a **pnpm monorepo** managed by **Turborepo** with the following workspac
 
 The **`project-management/`** folder is a markdown-first task tracking system with YAML frontmatter validation.
 
-**When working with `project-management/**/*.md` files, use the `/project-management` skill** which provides frontmatter schemas, valid values, and workflow guidance.
+**When working with `project-management/**/\*.md`files, use the`/project-management` skill\*\* which provides frontmatter schemas, valid values, and workflow guidance.
 
 **Quick reference:**
+
 - Read `project-management/_views/dashboard.md` first to understand current state
 - Check `project-management/_views/errors.md` for validation issues
 - See `project-management/agents.md` for complete documentation
@@ -76,6 +77,7 @@ The **`project-management/`** folder is a markdown-first task tracking system wi
 This is a **pnpm monorepo** managed by **Turborepo**. All commands should be run from the **repository root** unless otherwise specified.
 
 **Running commands**:
+
 - Run `pnpm run` at root to see all available scripts
 - Common patterns: `pnpm dev`, `pnpm build`, `pnpm check-types`, `pnpm lint`
 - Run specific apps: `pnpm dev:teacher`, `pnpm dev:student`, `pnpm dev:backend`
@@ -102,7 +104,7 @@ This is a **pnpm monorepo** managed by **Turborepo**. All commands should be run
 
 - **Routing**: TanStack Router with file-based routes in `src/routes/`
 - **State/Data**: TanStack Query with Convex React Query integration
-- **Authentication**: Better Auth via Convex (shared session across apps)
+- **Authentication**: WorkOS AuthKit via Convex (shared session across apps)
 - **Styling**: Tailwind CSS v4
 - **Forms**: TanStack Form
 - **Editor**: `@package/editor` package (shared collaborative editor)
@@ -119,11 +121,13 @@ Components are organized by their scope:
 - **`src/spaces/<route-name>/`** - Route-specific components that are only used by a particular route
 
 Route-specific components should be placed in a folder under `src/spaces/` that matches the route name:
+
 - `src/routes/_protected/_app/index.tsx` → `src/spaces/home/`
 - `src/routes/_protected/_app/spaces.$id.tsx` → `src/spaces/space-detail/`
 - `src/routes/_protected/_app/library.tsx` → `src/spaces/library/`
 
 Example structure:
+
 ```
 src/
 ├── components/           # Shared across routes
@@ -149,7 +153,7 @@ src/
 - **Platform**: Convex (serverless backend-as-a-service)
 - **Schema**: Defined in `convex/schema.ts` using Convex validators (`v` from `convex/values`)
 - **Functions**: Queries, mutations, and actions in `convex/` directory
-- **Authentication**: Better Auth integration via HTTP endpoints (`convex/http.ts`)
+- **Authentication**: WorkOS AuthKit integration via HTTP endpoints (`convex/http.ts`)
 - **Development Logs**: The dev server logs are automatically saved to `convex-dev.log` for debugging purposes
 
 **Important Convex Patterns**:
@@ -191,6 +195,7 @@ invariant(document, "Document not found"); // Don't do this
 ```
 
 Key points:
+
 - Always use `ConvexError` for expected error conditions (auth, permissions, validation, not found)
 - Use plain `Error` only for unexpected internal errors in actions
 - Error messages should be clear and user-friendly
@@ -385,6 +390,7 @@ export function MyNodeView(props: NodeViewProps) {
 - Components are built with `tsup` and consumed by apps via workspace references
 
 **Adding new components:**
+
 - **ALWAYS use shadcn CLI**: `cd packages/ui && pnpx shadcn@latest add <component>`
 - **NEVER manually create component files** - the CLI generates properly configured components with correct imports and styles
 - Export new components from `packages/ui/src/index.ts` after adding them
@@ -409,16 +415,19 @@ export function MyNodeView(props: NodeViewProps) {
 ## Environment Setup
 
 **Web Apps** (teacher, student, www):
+
 - Environment variables are managed through Vercel
 - Pull environment variables locally using `vercel env pull`
 - See Vercel dashboard for configuration
 
 **Backend** (Convex):
+
 - Local development only requires Convex deployment ID
 - Set up via `npx convex dev` (auto-configures on first run)
 - Code executes on Convex servers - no app-level env vars needed in codebase
 
 **Collab Server**:
+
 - No environment variables configured yet (not deployed)
 
 **Note**: Teacher and student apps share the same Convex backend and authentication system.
@@ -428,11 +437,13 @@ export function MyNodeView(props: NodeViewProps) {
 **Approach**: This repository uses Turborepo's affected detection to optimize CI/CD. Only changed apps are checked, tested, and deployed.
 
 **CI Workflow**:
+
 - Runs lint and type-checking only on affected packages
 - Uses Turborepo remote caching via Vercel for faster builds
 - See `.github/workflows/ci.yml` for implementation
 
 **Deployments**:
+
 - **Web Apps** (teacher, student, www): Vercel Git Integration (automatic on push)
   - Configuration in each app's `vercel.json`
 - **Convex Backend**: GitHub Actions deployment when backend/frontend apps change
@@ -442,11 +453,13 @@ export function MyNodeView(props: NodeViewProps) {
   - See `.github/workflows/deploy-collab-server.yml`
 
 **GitHub Secrets Required**:
+
 - `TURBO_TOKEN`, `TURBO_TEAM` - Remote caching
 - `CONVEX_DEPLOY_KEY` - Backend deployment
 - Platform-specific secrets when collab server deployment is configured
 
 **Benefits of Affected Detection**:
+
 - Faster CI (only check what changed)
 - Reduced costs
 - Quicker PR feedback
@@ -484,12 +497,13 @@ export function MyNodeView(props: NodeViewProps) {
 8. **shadcn Components**: Install using `cd packages/ui && pnpx shadcn@latest add <component>`. Always use the CLI, never manually create shadcn component files.
 
 9. **Authentication**:
-   - Better Auth sessions are shared between apps (same domain in development)
+   - WorkOS AuthKit sessions are shared between apps (same domain in development)
    - Logging in to one app logs you into both
    - User profiles track both `isTeacherActive` and `isStudentActive` roles
 
 10. **Backend Prompts**:
-   - AI prompts are stored as markdown files in `apps/backend/prompts/`
-   - The `pnpm build:prompts` script compiles them for use in Convex functions
-   - This runs automatically during `pnpm dev` - no manual build needed
-   - If you modify prompt files, the backend dev server will rebuild them automatically
+
+- AI prompts are stored as markdown files in `apps/backend/prompts/`
+- The `pnpm build:prompts` script compiles them for use in Convex functions
+- This runs automatically during `pnpm dev` - no manual build needed
+- If you modify prompt files, the backend dev server will rebuild them automatically

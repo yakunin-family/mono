@@ -14,7 +14,7 @@ import {
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
 import { UserAvatar } from "@/components/user-avatar";
-import { useAuth } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 
 interface NavUserProps {
   user: {
@@ -27,7 +27,16 @@ interface NavUserProps {
 
 export function NavUser({ user }: NavUserProps) {
   const { isMobile } = useSidebar();
-  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
+  };
 
   return (
     <SidebarMenu>
@@ -76,7 +85,7 @@ export function NavUser({ user }: NavUserProps) {
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut({ returnTo: "/login" })}>
+            <DropdownMenuItem onClick={handleSignOut}>
               <LogOut />
               Log out
             </DropdownMenuItem>

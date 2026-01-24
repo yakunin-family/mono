@@ -9,10 +9,15 @@ import {
   CardTitle,
 } from "@package/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useParams,
+} from "@tanstack/react-router";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 
+import { useSession } from "@/lib/auth-client";
 import { clearPendingInvite, storePendingInvite } from "@/lib/invite-storage";
 
 export const Route = createFileRoute("/join/$token")({
@@ -22,7 +27,9 @@ export const Route = createFileRoute("/join/$token")({
 function JoinPage() {
   const { token } = useParams({ from: "/join/$token" });
   const navigate = useNavigate();
-  const { user } = Route.useRouteContext();
+  Route.useRouteContext(); // ensures auth context is loaded
+  const { data: session } = useSession();
+  const user = session?.user;
   const [joinSuccess, setJoinSuccess] = useState(false);
 
   // Fetch invite details (no auth required for this query)
@@ -98,8 +105,8 @@ function JoinPage() {
               You&apos;ve joined{" "}
               {invite && "valid" in invite ? (
                 <>
-                  <strong>{invite.teacherName}</strong>&apos;s{" "}
-                  {invite.language} course.
+                  <strong>{invite.teacherName}</strong>&apos;s {invite.language}{" "}
+                  course.
                 </>
               ) : (
                 "the course."
@@ -150,7 +157,8 @@ function JoinPage() {
                 <h3 className="mb-2 font-medium">What happens next?</h3>
                 <ul className="space-y-1 text-sm text-muted-foreground">
                   <li>
-                    - You&apos;ll get access to lessons from {invite.teacherName}
+                    - You&apos;ll get access to lessons from{" "}
+                    {invite.teacherName}
                   </li>
                   <li>- You can collaborate on exercises in real-time</li>
                   <li>- Track your homework and progress</li>

@@ -1,7 +1,6 @@
 ---
-status: todo
 priority: high
-description: Redesign AI chat from one-shot document replacement to transparent, tool-based agent
+description: Redesign AI chat from one-shot document replacement to transparent, tool-based agent using Convex Agent component
 tags: [ai, editor, architecture, streaming]
 ---
 
@@ -29,13 +28,13 @@ User sends message
     -> Frontend applies documentXml to editor
 ```
 
-**Key files being replaced:**
+**Key files being deprecated:**
 
-- `apps/backend/convex/chat.ts` - queries, mutations, generateResponse action
+- `apps/backend/convex/chat.ts` - old queries, mutations, generateResponse action
 - `apps/backend/convex/validators/chat.ts` - chatResponseSchema
 - `apps/backend/prompts/document-editor-chat.md` - monolithic prompt
 - `apps/teacher/src/spaces/document-editor/use-chat.ts` - polling-based hook
-- `apps/teacher/src/spaces/document-editor/chat-messages.tsx` - simple message display
+- Schema tables: `chatSessions`, `chatMessages`
 
 ## Goals
 
@@ -54,6 +53,29 @@ User sends message
 
 ---
 
+## Solution: Convex Agent Component
+
+We use the official **Convex Agent Component** (`@convex-dev/agent`) which provides:
+
+- Built-in streaming via `saveStreamDeltas` with Convex subscriptions
+- Tool calling with full Convex context via `createTool`
+- Thread/message persistence
+- React hooks (`useUIMessages`) for consuming streams
+- `UIMessage` type with `parts` array containing `toolCall`, `toolResult`, `text`
+
+### Why Convex Agent vs Custom Implementation
+
+| Aspect           | Custom (Original Plan)      | Convex Agent (New)                             |
+| ---------------- | --------------------------- | ---------------------------------------------- |
+| Streaming        | HTTP SSE endpoint           | DB-persisted deltas + Convex subscriptions     |
+| Messages         | Custom `chatMessages` table | Agent's built-in storage                       |
+| Sessions         | `chatSessions` table        | Agent's `threads`                              |
+| Frontend hook    | Custom SSE parsing          | `useUIMessages` from `@convex-dev/agent/react` |
+| Tool definitions | Custom tool execution       | `createTool` with Convex context               |
+| Reliability      | Custom reconnection logic   | Convex handles it                              |
+
+---
+
 ## Architecture Overview
 
 ```
@@ -62,172 +84,138 @@ User sends message
 |                                                                              |
 |  +----------------------------------------------------------------------+   |
 |  |  ChatSidebar                                                          |   |
-|  |    +- ChatMessages                                                    |   |
-|  |    |    +- UserMessage (simple bubble)                                |   |
+|  |    +- ChatMessages (renders UIMessage.parts)                          |   |
+|  |    |    +- UserMessage                                                |   |
 |  |    |    +- AssistantMessage                                           |   |
-|  |    |         +- ToolCallsSection                                      |   |
-|  |    |         |    +- ToolCallItem ("Checking fill-blanks rules")      |   |
-|  |    |         |    +- ToolCallItem ("Editing document")                |   |
-|  |    |         |    +- CollapsedSummary ("Done 2 steps") [when done]    |   |
-|  |    |         +- ResponseText (streamed markdown)                      |   |
+|  |    |         +- ToolCallParts (from UIMessage.parts)                  |   |
+|  |    |         |    +- "Checking fill-blanks rules" (toolCall)          |   |
+|  |    |         |    +- "Editing document" (toolCall)                    |   |
+|  |    |         +- TextParts (streamed text)                             |   |
 |  |    +- ChatInput                                                       |   |
 |  +----------------------------------------------------------------------+   |
+|                                                                              |
+|  Hooks:                                                                      |
+|    - useUIMessages(api.chat.listMessages, { threadId }, { stream: true })   |
+|    - useMutation(api.chat.sendMessage)                                      |
 +-----------------------------------------------------------------------------+
                                       |
-                                      | HTTP POST + SSE streaming
+                                      | Convex subscriptions (real-time)
                                       v
 +-----------------------------------------------------------------------------+
-|                              BACKEND (Convex)                                |
+|                              BACKEND (Convex + Agent Component)              |
 |                                                                              |
-|  HTTP Action: POST /api/chat/stream                                          |
-|    +- Authenticate user (via session token)                                  |
-|    +- Validate document access                                               |
-|    +- Load conversation history (last 20 messages)                           |
-|    +- Build system prompt (base prompt only)                                 |
-|    +- Call LLM with streamText() + tools                                     |
-|    |    +- Stream text chunks -> SSE "text" events                           |
-|    |    +- Tool calls -> execute, stream "tool_start"/"tool_end"             |
-|    |    +- Agent loop continues until no more tool calls                     |
-|    +- Persist final message to DB (via internal mutation)                    |
-|    +- Send SSE "done" event                                                  |
+|  Agent Definition (convex/agents/document-editor.ts):                        |
+|    const documentEditorAgent = new Agent(components.agent, {                |
+|      name: "Document Editor",                                                |
+|      chat: openai("gpt-4o-mini"),                                           |
+|      instructions: buildChatBasePrompt(),                                    |
+|      tools: { loadSkill, editDocument },                                    |
+|      maxSteps: 10,                                                          |
+|    })                                                                        |
 |                                                                              |
-|  Tools executed by LLM:                                                      |
-|    +- load_skill(skillName) -> Appends skill content to context              |
-|    +- edit_document(xml) -> Validates XML, returns success/error             |
+|  Actions:                                                                    |
+|    - createThread(documentId) -> threadId                                   |
+|    - sendMessage(threadId, content, documentXml) -> streams response        |
+|                                                                              |
+|  Queries:                                                                    |
+|    - listMessages(threadId) -> UIMessage[] with streaming support           |
+|                                                                              |
+|  Tools:                                                                      |
+|    - loadSkill(skill) -> Returns skill markdown content                     |
+|    - editDocument(xml, summary) -> Validates XML, returns for frontend      |
 +-----------------------------------------------------------------------------+
 ```
-
-## Agent Loop
-
-The AI operates in an **agentic loop**: it can call tools, observe results, and continue reasoning until it decides to respond to the user.
-
-```
-User message arrives
-         |
-         v
-+------------------+
-|  LLM Reasoning   |<-----------------------+
-+--------+---------+                        |
-         |                                  |
-         v                                  |
-    Tool call?                              |
-    +----+----+                             |
-   Yes       No                             |
-    |         |                             |
-    v         v                             |
-Execute    Stream                           |
-  tool     response                         |
-    |         |                             |
-    v         v                             |
-Stream     Done                             |
-"tool_start"                                |
-"tool_end"                                  |
-    |                                       |
-    +---------------------------------------+
-         (tool result added to context)
-```
-
-**Vercel AI SDK implements this via `maxSteps`:**
-
-```typescript
-const result = streamText({
-  model: openai("gpt-4o-mini"),
-  messages,
-  tools,
-  maxSteps: 10, // Allow up to 10 tool call rounds
-});
-```
-
----
 
 ## Tools
 
-### `load_skill`
+### `loadSkill`
 
 Loads additional instructions into the conversation context.
 
 ```typescript
-load_skill: tool({
-  description: "Load specialized instructions for a specific task. Use this when you need detailed rules for creating exercises or other specialized content.",
-  parameters: z.object({
-    skill: z.enum([
-      "fill-blanks",
-      "multiple-choice",
-      "true-false",
-      "sequencing",
-      "short-answer",
-      "writing-exercises",
-    ]).describe("The skill to load"),
+const loadSkill = createTool({
+  description:
+    "Load detailed instructions for creating specific types of exercises. Always use this before creating exercises.",
+  args: z.object({
+    skill: z
+      .enum([
+        "fill-blanks",
+        "multiple-choice",
+        "true-false",
+        "sequencing",
+        "short-answer",
+        "writing-exercises",
+      ])
+      .describe("The skill to load"),
   }),
-  execute: async ({ skill }) => {
-    const content = await loadSkillContent(skill);
-    return {
-      success: true,
-      instructions: content
-    };
+  handler: async (
+    ctx,
+    { skill },
+  ): Promise<{ success: boolean; instructions: string }> => {
+    const content = SKILLS[skill](); // From generated prompts
+    return { success: true, instructions: content };
   },
-}),
+});
 ```
 
 **User sees:** "Checking fill-blanks rules"
 
-**What happens:** The skill's markdown content is returned as the tool result, which becomes part of the conversation context for the LLM's next reasoning step.
-
-### `edit_document`
+### `editDocument`
 
 Applies XML changes to the document.
 
 ```typescript
-edit_document: tool({
-  description: "Replace the document content with new XML. Only use this when the user has requested changes to the document.",
-  parameters: z.object({
-    documentXml: z.string().describe("Complete document XML wrapped in <lesson> tags"),
-    summary: z.string().describe("Brief description of what changed (1 sentence)"),
+const editDocument = createTool({
+  description:
+    "Replace the document content with new XML. Only use when user explicitly requests changes.",
+  args: z.object({
+    documentXml: z
+      .string()
+      .describe("Complete document XML wrapped in <lesson> tags"),
+    summary: z.string().describe("One-sentence summary of changes"),
   }),
-  execute: async ({ documentXml, summary }) => {
-    // Validate XML structure
-    if (!documentXml.trim().startsWith("<lesson>") ||
-        !documentXml.trim().endsWith("</lesson>")) {
+  handler: async (
+    ctx,
+    { documentXml, summary },
+  ): Promise<{ success: boolean; documentXml?: string; error?: string }> => {
+    const trimmed = documentXml.trim();
+    if (!trimmed.startsWith("<lesson>") || !trimmed.endsWith("</lesson>")) {
       return {
         success: false,
-        error: "Document must be wrapped in <lesson> tags"
+        error: "Document must be wrapped in <lesson> tags",
       };
     }
-
-    // Additional XML validation could go here
-
-    return {
-      success: true,
-      summary,
-      documentXml, // Passed back to frontend via stream
-    };
+    return { success: true, documentXml, summary };
   },
-}),
+});
 ```
 
 **User sees:** "Editing document"
 
-**What happens:**
-
-1. Backend validates the XML
-2. Streams `tool_start` and `tool_end` events with the documentXml
-3. Frontend immediately applies the XML to the editor
-4. Yjs syncs to other collaborators
+**Frontend behavior:** When `toolResult` with `editDocument` arrives, apply `documentXml` to the editor.
 
 ---
 
 ## Skills System
 
-Skills are **markdown files** containing specialized instructions. They live in `apps/backend/prompts/chat/skills/`.
+Skills are **markdown files** compiled at build time via `build-prompts.ts`.
+
+### Directory Structure
+
+```
+apps/backend/prompts/
+  chat/
+    base.md                    # Base system prompt
+    skills/
+      fill-blanks.md           # Fill-in-the-blank exercise rules
+      multiple-choice.md       # Multiple choice rules
+      true-false.md            # True/false rules
+      sequencing.md            # Sequencing rules
+      short-answer.md          # Short answer rules
+      writing-exercises.md     # Writing exercise rules
+```
 
 ### Base Prompt (`prompts/chat/base.md`)
-
-Minimal prompt that explains:
-
-- Who the AI is (document editing assistant for teachers)
-- Available tools and when to use them
-- Basic XML element names (not full specs)
-- Behavioral rules (be conversational, only edit when asked)
 
 ```markdown
 # Document Editor Assistant
@@ -238,28 +226,28 @@ You are an AI assistant helping language teachers create educational documents.
 
 You have access to these tools:
 
-- **load_skill**: Load detailed instructions for specialized tasks (exercise creation, etc.)
-- **edit_document**: Modify the document content
+- **loadSkill**: Load detailed instructions for specialized tasks (exercise creation, etc.). Always use this before creating exercises.
+- **editDocument**: Modify the document content. Only use when the user explicitly requests changes.
 
 ## When to Use Tools
 
-- **Conversation**: If the user is asking questions, chatting, or doesn't need document changes, just respond conversationally. Don't call any tools.
-- **Document editing**: If the user wants to modify the document, use `edit_document`.
-- **Specialized content**: If creating exercises or complex content, first use `load_skill` to get the detailed rules.
+- **Conversation**: If the user is asking questions or chatting, just respond conversationally. Don't call any tools.
+- **Document editing**: If the user wants to modify the document, use `editDocument`.
+- **Exercises**: If creating exercises, ALWAYS call `loadSkill` first to get the correct format.
 
-## XML Format (Quick Reference)
+## XML Format Quick Reference
 
-The document uses XML format. Basic elements:
+The document uses XML format with these elements:
 
 - `<lesson>` - Root element (required)
 - `<h1>`, `<h2>`, `<h3>` - Headings
 - `<p>` - Paragraphs
-- `<exercise>` - Exercise container
-- `<blank>` - Fill-in-the-blank (inline)
-- `<writing-area>` - Student writing space
+- `<exercise id="...">` - Exercise container
+- `<blank answer="..." hint="..." student-answer="" />` - Fill-in-the-blank
+- `<writing-area id="..." lines="..." placeholder="...">` - Student writing space
 - `<note>` - Teacher-only notes
 
-For detailed exercise creation rules, use `load_skill` first.
+For detailed exercise creation rules, use `loadSkill` first.
 
 ## Important Rules
 
@@ -270,507 +258,138 @@ For detailed exercise creation rules, use `load_skill` first.
 5. Keep responses concise
 ```
 
-### Skill Example (`prompts/chat/skills/fill-blanks.md`)
-
-```markdown
-# Fill-in-the-Blank Exercise Rules
-
-## XML Structure
-
-Fill-in-the-blank exercises use the `<blank>` element inside paragraphs:
-
-\`\`\`xml
-<exercise id="ex-123">
-
-  <h3>Complete the sentences</h3>
-  <p>The cat <blank answer="sleeps" hint="present tense verb" student-answer="" /> on the sofa.</p>
-  <p>She <blank answer="went" alts="traveled,drove" student-answer="" /> to Paris last summer.</p>
-</exercise>
-\`\`\`
-
-## Blank Attributes
-
-- `answer` (required): The correct answer
-- `alts` (optional): Comma-separated alternative correct answers
-- `hint` (optional): Hint shown to students
-- `student-answer`: Always set to empty string "" for new blanks
-
-## Guidelines
-
-1. **Context**: Ensure surrounding text provides enough context to determine the answer
-2. **Difficulty**: Match blanks to the specified CEFR level
-3. **Variety**: Mix grammar points when appropriate
-4. **Hints**: Provide hints for harder blanks (grammar category, first letter, etc.)
-
-## Common Mistakes to Avoid
-
-- Don't create blanks where multiple unrelated answers could be correct
-- Don't put blanks at the very start of a sentence (no context)
-- Don't forget the `student-answer=""` attribute
-```
-
-### Available Skills
-
-| Skill Name          | File                   | Content                                            |
-| ------------------- | ---------------------- | -------------------------------------------------- |
-| `fill-blanks`       | `fill-blanks.md`       | Fill-in-the-blank XML format, guidelines, examples |
-| `multiple-choice`   | `multiple-choice.md`   | Multiple choice structure, distractor guidelines   |
-| `true-false`        | `true-false.md`        | True/false statement guidelines                    |
-| `sequencing`        | `sequencing.md`        | Ordering exercise format                           |
-| `short-answer`      | `short-answer.md`      | Open-ended questions with rubrics                  |
-| `writing-exercises` | `writing-exercises.md` | Writing prompts, word counts, assessment           |
-
----
-
-## Streaming Protocol
-
-### HTTP Endpoint
-
-```
-POST /api/chat/stream
-Content-Type: application/json
-Authorization: Bearer <session-token>
-
-{
-  "sessionId": "j57...",       // Chat session ID
-  "content": "Add a fill...",  // User message
-  "documentXml": "<lesson>..." // Current document state
-}
-```
-
-### Response: Server-Sent Events (SSE)
-
-```
-Content-Type: text/event-stream
-Cache-Control: no-cache
-Connection: keep-alive
-```
-
-### Event Types
-
-```typescript
-// Tool execution started
-event: tool_start
-data: {"id":"tc_1","tool":"load_skill","args":{"skill":"fill-blanks"},"displayText":"Checking fill-blanks rules"}
-
-// Tool execution completed
-event: tool_end
-data: {"id":"tc_1","status":"success"}
-
-// Tool execution with document edit (special case)
-event: tool_end
-data: {"id":"tc_2","status":"success","documentXml":"<lesson>...</lesson>"}
-
-// Streamed response text (may be many of these)
-event: text
-data: {"content":"I've added"}
-
-event: text
-data: {"content":" a fill-in-the-blank exercise"}
-
-event: text
-data: {"content":" about verb conjugation."}
-
-// Stream complete
-event: done
-data: {"messageId":"msg_abc123"}
-
-// Error (fatal)
-event: error
-data: {"message":"Failed to generate response","code":"LLM_ERROR"}
-```
-
-### Display Text Mapping
-
-Tool calls are shown to users with friendly labels:
-
-| Tool            | Args                         | Display Text                     |
-| --------------- | ---------------------------- | -------------------------------- |
-| `load_skill`    | `{skill: "fill-blanks"}`     | "Checking fill-blanks rules"     |
-| `load_skill`    | `{skill: "multiple-choice"}` | "Checking multiple-choice rules" |
-| `edit_document` | `*`                          | "Editing document"               |
-
 ---
 
 ## Data Model
 
-### Updated Schema
+### Thread-Document Relationship
+
+A single document can have multiple threads (chat sessions). We store threads via the Agent component and track document association.
 
 ```typescript
-// apps/backend/convex/schema.ts
-
-// Keep existing chatSessions table unchanged
-
-chatMessages: defineTable({
-  sessionId: v.id("chatSessions"),
-  role: v.union(v.literal("user"), v.literal("assistant")),
-  createdAt: v.number(),
-
-  // User messages
-  content: v.optional(v.string()),
-
-  // Assistant messages
-  response: v.optional(v.object({
-    // Final response text
-    text: v.string(),
-
-    // Tool calls made during this response
-    toolCalls: v.array(v.object({
-      id: v.string(),
-      tool: v.string(),
-      args: v.any(),
-      displayText: v.string(),
-      status: v.union(v.literal("success"), v.literal("error")),
-      error: v.optional(v.string()),
-    })),
-
-    // Final document state (if edit_document was called)
-    documentXml: v.optional(v.string()),
-  })),
-
-  // Error state (if entire response failed)
-  error: v.optional(v.string()),
-
-  // Model used
-  model: v.optional(v.string()),
-})
-.index("by_session_created", ["sessionId", "createdAt"]),
+// Option: Store threadId references in a separate table or on each thread's metadata
+// The Agent component handles thread/message storage internally
 ```
 
-### Message Examples
+### UIMessage Structure (from Agent component)
 
-**User message:**
-
-```json
-{
-  "_id": "msg_user_1",
-  "sessionId": "ses_123",
-  "role": "user",
-  "content": "Add a fill-in-the-blank exercise about past tense verbs",
-  "createdAt": 1704067200000
+```typescript
+interface UIMessage {
+  key: string;
+  role: "user" | "assistant" | "system";
+  parts: UIMessagePart[];  // text, toolCall, toolResult, file, etc.
+  text: string;            // Convenience: combined text content
+  status: "streaming" | "finished" | "aborted";
+  agentName?: string;
+  order: number;
+  stepOrder: number;
+  _creationTime: number;
 }
-```
 
-**Assistant message (with tool calls):**
-
-```json
-{
-  "_id": "msg_asst_1",
-  "sessionId": "ses_123",
-  "role": "assistant",
-  "response": {
-    "text": "I've added a fill-in-the-blank exercise with 5 sentences practicing regular and irregular past tense verbs.",
-    "toolCalls": [
-      {
-        "id": "tc_1",
-        "tool": "load_skill",
-        "args": { "skill": "fill-blanks" },
-        "displayText": "Checking fill-blanks rules",
-        "status": "success"
-      },
-      {
-        "id": "tc_2",
-        "tool": "edit_document",
-        "args": { "summary": "Added past tense fill-in-the-blank exercise" },
-        "displayText": "Editing document",
-        "status": "success"
-      }
-    ],
-    "documentXml": "<lesson>...</lesson>"
-  },
-  "model": "gpt-4o-mini",
-  "createdAt": 1704067205000
-}
-```
-
-**Assistant message (conversational, no tools):**
-
-```json
-{
-  "_id": "msg_asst_2",
-  "sessionId": "ses_123",
-  "role": "assistant",
-  "response": {
-    "text": "I can help you create several types of exercises:\n\n- **Fill-in-the-blank**: Students complete sentences with missing words\n- **Multiple choice**: Questions with 4 options\n- **True/false**: Evaluate statements\n\nWhat would you like to create?",
-    "toolCalls": []
-  },
-  "model": "gpt-4o-mini",
-  "createdAt": 1704067210000
-}
+type UIMessagePart =
+  | { type: "text"; text: string }
+  | { type: "tool-call"; toolName: string; args: unknown; toolCallId: string }
+  | { type: "tool-result"; toolName: string; result: unknown; toolCallId: string }
+  | { type: "file"; ... }
+  // etc.
 ```
 
 ---
 
 ## Frontend Implementation
 
-### Hook: `useStreamingChat`
-
-Replaces `use-chat.ts` with streaming support.
+### Hook: `useDocumentChat`
 
 ```typescript
-// apps/teacher/src/spaces/document-editor/use-streaming-chat.ts
+// apps/teacher/src/spaces/document-editor/use-document-chat.ts
 
-interface StreamingMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  toolCalls: ToolCall[];
-  isStreaming: boolean;
-  documentXml?: string;
-  error?: string;
-}
+import { useUIMessages } from "@convex-dev/agent/react";
+import { useMutation } from "convex/react";
+import { api } from "@app/backend";
+import { toXML, fromXML, type Editor } from "@package/editor";
+import { useEffect, useRef } from "react";
 
-interface ToolCall {
-  id: string;
-  tool: string;
-  displayText: string;
-  status: "pending" | "success" | "error";
-}
+export function useDocumentChat(
+  threadId: string | null,
+  editor: Editor | null,
+) {
+  const appliedResults = useRef<Set<string>>(new Set());
 
-function useStreamingChat(sessionId: string, editor: Editor) {
-  const [messages, setMessages] = useState<StreamingMessage[]>([]);
-  const [pendingToolCalls, setPendingToolCalls] = useState<ToolCall[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const { results, status, loadMore } = useUIMessages(
+    api.chat.listMessages,
+    threadId ? { threadId } : "skip",
+    { initialNumItems: 50, stream: true },
+  );
 
-  // Load initial messages from Convex
-  const storedMessages = useQuery(api.chat.getSessionMessages, { sessionId });
+  const sendMessageMutation = useMutation(api.chat.sendMessage);
 
   const sendMessage = async (content: string) => {
+    if (!threadId || !editor) return;
     const documentXml = toXML(editor);
+    await sendMessageMutation({ threadId, content, documentXml });
+  };
 
-    // Add user message optimistically
-    const userMsg = { id: crypto.randomUUID(), role: "user", content, ... };
-    setMessages(prev => [...prev, userMsg]);
+  // Watch for editDocument tool results and apply to editor
+  useEffect(() => {
+    if (!editor) return;
 
-    // Start streaming
-    setIsStreaming(true);
-    const assistantMsg = { id: crypto.randomUUID(), role: "assistant", content: "", toolCalls: [], isStreaming: true };
-    setMessages(prev => [...prev, assistantMsg]);
-
-    // Connect to SSE endpoint
-    const response = await fetch("/api/chat/stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, content, documentXml }),
-    });
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    // Process SSE events
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      const events = parseSSE(chunk);
-
-      for (const event of events) {
-        switch (event.type) {
-          case "tool_start":
-            // Add pending tool call
-            setPendingToolCalls(prev => [...prev, {
-              id: event.data.id,
-              tool: event.data.tool,
-              displayText: event.data.displayText,
-              status: "pending",
-            }]);
-            break;
-
-          case "tool_end":
-            // Update tool call status
-            setPendingToolCalls(prev =>
-              prev.map(tc => tc.id === event.data.id
-                ? { ...tc, status: event.data.status }
-                : tc
-              )
-            );
-            // Apply document changes immediately
-            if (event.data.documentXml) {
-              fromXML(editor, event.data.documentXml);
-            }
-            break;
-
-          case "text":
-            // Append to assistant message
-            setMessages(prev => {
-              const last = prev[prev.length - 1];
-              return [...prev.slice(0, -1), {
-                ...last,
-                content: last.content + event.data.content,
-              }];
-            });
-            break;
-
-          case "done":
-            setIsStreaming(false);
-            // Move pending tool calls to message
-            setMessages(prev => {
-              const last = prev[prev.length - 1];
-              return [...prev.slice(0, -1), {
-                ...last,
-                isStreaming: false,
-                toolCalls: pendingToolCalls,
-              }];
-            });
-            setPendingToolCalls([]);
-            break;
-
-          case "error":
-            setIsStreaming(false);
-            // Show error in message
-            break;
+    for (const message of results) {
+      for (const part of message.parts) {
+        if (
+          part.type === "tool-result" &&
+          part.toolName === "editDocument" &&
+          !appliedResults.current.has(part.toolCallId)
+        ) {
+          const result = part.result as {
+            success: boolean;
+            documentXml?: string;
+          };
+          if (result.success && result.documentXml) {
+            appliedResults.current.add(part.toolCallId);
+            fromXML(editor, result.documentXml);
+          }
         }
       }
     }
-  };
+  }, [results, editor]);
 
-  return { messages, pendingToolCalls, isStreaming, sendMessage };
+  return {
+    messages: results,
+    isStreaming: status === "LoadingMore", // or check message.status
+    sendMessage,
+    loadMore,
+  };
 }
 ```
 
-### Component: `AssistantMessage`
+### Message Rendering
 
 ```typescript
-// apps/teacher/src/spaces/document-editor/assistant-message.tsx
+// apps/teacher/src/spaces/document-editor/message-parts.tsx
 
-interface AssistantMessageProps {
-  message: StreamingMessage;
-  pendingToolCalls?: ToolCall[]; // Only for actively streaming message
-}
+import type { UIMessage } from "@convex-dev/agent";
 
-function AssistantMessage({ message, pendingToolCalls }: AssistantMessageProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const toolCalls = message.isStreaming ? pendingToolCalls : message.toolCalls;
-  const hasToolCalls = toolCalls && toolCalls.length > 0;
+function AssistantMessage({ message }: { message: UIMessage }) {
+  const toolParts = message.parts.filter(
+    (p) => p.type === "tool-call" || p.type === "tool-result"
+  );
+  const textParts = message.parts.filter((p) => p.type === "text");
+  const isStreaming = message.status === "streaming";
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Tool calls section */}
-      {hasToolCalls && (
-        <ToolCallsSection
-          toolCalls={toolCalls}
-          isStreaming={message.isStreaming}
-          isExpanded={isExpanded}
-          onToggle={() => setIsExpanded(!isExpanded)}
-        />
+      {toolParts.length > 0 && (
+        <ToolCallsSection parts={toolParts} isStreaming={isStreaming} />
       )}
-
-      {/* Response text */}
-      {message.content && (
+      {textParts.length > 0 && (
         <div className="rounded-2xl bg-muted px-3 py-2 text-sm">
-          <Markdown>{message.content}</Markdown>
-          {message.isStreaming && <span className="animate-pulse">|</span>}
+          {textParts.map((p, i) => p.type === "text" && <span key={i}>{p.text}</span>)}
+          {isStreaming && <span className="animate-pulse">|</span>}
         </div>
       )}
     </div>
   );
 }
-```
-
-### Component: `ToolCallsSection`
-
-```typescript
-// apps/teacher/src/spaces/document-editor/tool-calls-section.tsx
-
-function ToolCallsSection({ toolCalls, isStreaming, isExpanded, onToggle }) {
-  // While streaming: always show expanded
-  // After done: show collapsed by default, expandable
-
-  if (isStreaming) {
-    return (
-      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-        {toolCalls.map(tc => (
-          <ToolCallItem key={tc.id} toolCall={tc} />
-        ))}
-      </div>
-    );
-  }
-
-  // Collapsed state
-  if (!isExpanded) {
-    return (
-      <button
-        onClick={onToggle}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ChevronRight className="h-3 w-3" />
-        <span>Done ({toolCalls.length} steps)</span>
-      </button>
-    );
-  }
-
-  // Expanded state
-  return (
-    <div className="flex flex-col gap-1">
-      <button
-        onClick={onToggle}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ChevronDown className="h-3 w-3" />
-        <span>Done ({toolCalls.length} steps)</span>
-      </button>
-      <div className="ml-4 flex flex-col gap-1 text-sm text-muted-foreground">
-        {toolCalls.map(tc => (
-          <ToolCallItem key={tc.id} toolCall={tc} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ToolCallItem({ toolCall }: { toolCall: ToolCall }) {
-  return (
-    <div className="flex items-center gap-2">
-      {toolCall.status === "pending" && (
-        <Loader2 className="h-3 w-3 animate-spin" />
-      )}
-      {toolCall.status === "success" && (
-        <Check className="h-3 w-3 text-green-500" />
-      )}
-      {toolCall.status === "error" && (
-        <X className="h-3 w-3 text-red-500" />
-      )}
-      <span>{toolCall.displayText}</span>
-    </div>
-  );
-}
-```
-
-### UI States
-
-**While AI is working (tool calls in progress):**
-
-```
-+-------------------------------------------+
-| * Checking fill-blanks rules              |
-| o Editing document                        |  <- spinner on pending
-+-------------------------------------------+
-```
-
-**After AI responds (collapsed):**
-
-```
-+-------------------------------------------+
-| > Done (2 steps)                          |  <- clickable to expand
-+-------------------------------------------+
-| I've added a fill-in-the-blank exercise   |
-| about verb conjugations to your document. |
-+-------------------------------------------+
-```
-
-**After AI responds (expanded):**
-
-```
-+-------------------------------------------+
-| v Done (2 steps)                          |
-|   * Checking fill-blanks rules            |
-|   * Editing document                      |
-+-------------------------------------------+
-| I've added a fill-in-the-blank exercise   |
-| about verb conjugations to your document. |
-+-------------------------------------------+
 ```
 
 ---
@@ -782,339 +401,40 @@ function ToolCallItem({ toolCall }: { toolCall: ToolCall }) {
 **User:** "test"
 
 ```
-LLM thinks: This is just a test message, no document changes needed
-LLM responds: "Hi! I'm here to help you edit your document. What would you like to do?"
+Agent thinks: This is just a test message, no document changes needed
+Agent responds: "Hi! I'm here to help you edit your document. What would you like to do?"
 ```
 
-**Stream events:**
+**UIMessage.parts:**
 
-```
-event: text
-data: {"content":"Hi! I'm here to help"}
-
-event: text
-data: {"content":" you edit your document. What would you like to do?"}
-
-event: done
-data: {"messageId":"msg_123"}
+```json
+[{ "type": "text", "text": "Hi! I'm here to help..." }]
 ```
 
-**UI:** Just the response text, no tool calls section.
-
-### Flow 2: Question about capabilities (no tools)
-
-**User:** "What types of exercises can you create?"
-
-```
-LLM thinks: This is a question, just answer it
-LLM responds: "I can help you create several types of exercises:
-- Fill-in-the-blank
-- Multiple choice
-- True/false
-- Sequencing
-- Short answer
-- Writing prompts
-
-Would you like me to create one?"
-```
-
-**Stream events:** Just `text` events and `done`.
-
-### Flow 3: Create exercise (with tools)
+### Flow 2: Create exercise (with tools)
 
 **User:** "Add a fill-in-the-blank exercise about French verbs"
 
 ```
-LLM thinks: User wants an exercise, I need the fill-blanks rules
-LLM calls: load_skill("fill-blanks")
+Agent calls: loadSkill({ skill: "fill-blanks" })
 Tool returns: { success: true, instructions: "# Fill-in-the-Blank Rules..." }
 
-LLM thinks: Now I know the format, let me create the exercise
-LLM calls: edit_document({ documentXml: "<lesson>...", summary: "Added French verb exercise" })
-Tool returns: { success: true, summary: "Added French verb exercise" }
+Agent calls: editDocument({ documentXml: "<lesson>...", summary: "Added French verb exercise" })
+Tool returns: { success: true, documentXml: "..." }
 
-LLM responds: "I've added a fill-in-the-blank exercise with 5 sentences practicing French verb conjugation in the present tense."
+Agent responds: "I've added a fill-in-the-blank exercise with 5 sentences."
 ```
 
-**Stream events:**
+**UIMessage.parts:**
 
-```
-event: tool_start
-data: {"id":"tc_1","tool":"load_skill","displayText":"Checking fill-blanks rules"}
-
-event: tool_end
-data: {"id":"tc_1","status":"success"}
-
-event: tool_start
-data: {"id":"tc_2","tool":"edit_document","displayText":"Editing document"}
-
-event: tool_end
-data: {"id":"tc_2","status":"success","documentXml":"<lesson>...</lesson>"}
-
-event: text
-data: {"content":"I've added a fill-in-the-blank exercise with 5 sentences..."}
-
-event: done
-data: {"messageId":"msg_456"}
-```
-
-### Flow 4: Error handling
-
-**User:** "Add an exercise" (vague request)
-
-```
-LLM thinks: This is vague, I should ask for clarification instead of guessing
-LLM responds: "I'd be happy to add an exercise! Could you tell me:
-- What type? (fill-in-the-blank, multiple choice, etc.)
-- What topic or grammar point?
-- What level are your students?"
-```
-
-No tools called - AI asks for clarification instead of guessing.
-
----
-
-## Backend Implementation
-
-### HTTP Action: `/api/chat/stream`
-
-```typescript
-// apps/backend/convex/http.ts (add to existing)
-
-http.route({
-  path: "/api/chat/stream",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    // 1. Parse and validate request
-    const body = await request.json();
-    const { sessionId, content, documentXml } = body;
-
-    // 2. Authenticate user
-    const token = request.headers.get("Authorization")?.replace("Bearer ", "");
-    const user = await authenticateUser(ctx, token);
-    if (!user) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-
-    // 3. Validate session access
-    const session = await ctx.runQuery(internal.chat.getSession, { sessionId });
-    if (!session || session.userId !== user._id) {
-      return new Response("Session not found", { status: 404 });
-    }
-
-    // 4. Load conversation history
-    const history = await ctx.runQuery(internal.chat.getRecentMessages, {
-      sessionId,
-      limit: 20,
-    });
-
-    // 5. Build messages array for LLM
-    const messages = buildMessages(history, content, documentXml);
-
-    // 6. Store user message
-    const userMessageId = await ctx.runMutation(
-      internal.chat.createUserMessage,
-      {
-        sessionId,
-        content,
-      },
-    );
-
-    // 7. Create streaming response
-    const stream = new TransformStream();
-    const writer = stream.writable.getWriter();
-    const encoder = new TextEncoder();
-
-    // Helper to send SSE events
-    const sendEvent = (event: string, data: any) => {
-      writer.write(
-        encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
-      );
-    };
-
-    // 8. Start LLM stream in background
-    (async () => {
-      try {
-        const result = await streamText({
-          model: openai("gpt-4o-mini"),
-          system: buildSystemPrompt(),
-          messages,
-          tools: {
-            load_skill: createLoadSkillTool(sendEvent),
-            edit_document: createEditDocumentTool(sendEvent),
-          },
-          maxSteps: 10,
-          onStepFinish: ({ toolCalls, toolResults }) => {
-            // Tool events are sent within the tool execute functions
-          },
-        });
-
-        // Stream text chunks
-        for await (const chunk of result.textStream) {
-          sendEvent("text", { content: chunk });
-        }
-
-        // Get final result
-        const finalResult = await result;
-
-        // Store assistant message
-        const assistantMessageId = await ctx.runMutation(
-          internal.chat.createAssistantMessage,
-          {
-            sessionId,
-            response: {
-              text: finalResult.text,
-              toolCalls: extractToolCalls(finalResult),
-              documentXml: extractFinalDocumentXml(finalResult),
-            },
-            model: "gpt-4o-mini",
-          },
-        );
-
-        sendEvent("done", { messageId: assistantMessageId });
-      } catch (error) {
-        sendEvent("error", {
-          message: error instanceof Error ? error.message : "Unknown error",
-          code: "LLM_ERROR",
-        });
-      } finally {
-        writer.close();
-      }
-    })();
-
-    return new Response(stream.readable, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
-  }),
-});
-```
-
-### Tool Implementations
-
-```typescript
-// apps/backend/convex/chat/tools.ts
-
-import { tool } from "ai";
-import { z } from "zod";
-
-const SKILL_FILES = {
-  "fill-blanks": "fill-blanks.md",
-  "multiple-choice": "multiple-choice.md",
-  "true-false": "true-false.md",
-  sequencing: "sequencing.md",
-  "short-answer": "short-answer.md",
-  "writing-exercises": "writing-exercises.md",
-};
-
-const DISPLAY_TEXT = {
-  "fill-blanks": "Checking fill-blanks rules",
-  "multiple-choice": "Checking multiple-choice rules",
-  "true-false": "Checking true-false rules",
-  sequencing: "Checking sequencing rules",
-  "short-answer": "Checking short-answer rules",
-  "writing-exercises": "Checking writing exercise rules",
-};
-
-export function createLoadSkillTool(
-  sendEvent: (event: string, data: any) => void,
-) {
-  return tool({
-    description:
-      "Load specialized instructions for creating specific types of exercises. Always use this before creating exercises to ensure correct formatting.",
-    parameters: z.object({
-      skill: z
-        .enum([
-          "fill-blanks",
-          "multiple-choice",
-          "true-false",
-          "sequencing",
-          "short-answer",
-          "writing-exercises",
-        ])
-        .describe("The skill to load"),
-    }),
-    execute: async ({ skill }) => {
-      const toolId = `tc_${Date.now()}`;
-      const displayText = DISPLAY_TEXT[skill];
-
-      // Send start event
-      sendEvent("tool_start", {
-        id: toolId,
-        tool: "load_skill",
-        args: { skill },
-        displayText,
-      });
-
-      try {
-        // Load skill content from prompts
-        const content = await loadSkillFile(SKILL_FILES[skill]);
-
-        sendEvent("tool_end", { id: toolId, status: "success" });
-
-        return {
-          success: true,
-          instructions: content,
-        };
-      } catch (error) {
-        sendEvent("tool_end", { id: toolId, status: "error" });
-        return {
-          success: false,
-          error: "Failed to load skill",
-        };
-      }
-    },
-  });
-}
-
-export function createEditDocumentTool(
-  sendEvent: (event: string, data: any) => void,
-) {
-  return tool({
-    description:
-      "Replace the document content with new XML. Only use when the user has explicitly requested document changes.",
-    parameters: z.object({
-      documentXml: z
-        .string()
-        .describe("Complete document XML wrapped in <lesson> tags"),
-      summary: z.string().describe("One-sentence summary of the changes made"),
-    }),
-    execute: async ({ documentXml, summary }) => {
-      const toolId = `tc_${Date.now()}`;
-
-      sendEvent("tool_start", {
-        id: toolId,
-        tool: "edit_document",
-        displayText: "Editing document",
-      });
-
-      // Validate XML structure
-      const trimmed = documentXml.trim();
-      if (!trimmed.startsWith("<lesson>") || !trimmed.endsWith("</lesson>")) {
-        sendEvent("tool_end", { id: toolId, status: "error" });
-        return {
-          success: false,
-          error: "Document must be wrapped in <lesson> tags",
-        };
-      }
-
-      // Send success with documentXml for frontend to apply
-      sendEvent("tool_end", {
-        id: toolId,
-        status: "success",
-        documentXml, // Frontend uses this to update editor
-      });
-
-      return {
-        success: true,
-        summary,
-      };
-    },
-  });
-}
+```json
+[
+  { "type": "tool-call", "toolName": "loadSkill", "args": { "skill": "fill-blanks" }, "toolCallId": "tc1" },
+  { "type": "tool-result", "toolName": "loadSkill", "result": { "success": true }, "toolCallId": "tc1" },
+  { "type": "tool-call", "toolName": "editDocument", "args": { ... }, "toolCallId": "tc2" },
+  { "type": "tool-result", "toolName": "editDocument", "result": { "success": true, "documentXml": "..." }, "toolCallId": "tc2" },
+  { "type": "text", "text": "I've added a fill-in-the-blank exercise..." }
+]
 ```
 
 ---
@@ -1124,129 +444,103 @@ export function createEditDocumentTool(
 ```
 apps/backend/
   convex/
-    chat.ts                    # Updated: queries, mutations (no more generateResponse action)
-    http.ts                    # Updated: add /api/chat/stream route
-    chat/
-      tools.ts                 # NEW: load_skill, edit_document implementations
-      prompt-builder.ts        # NEW: builds system prompt with document context
-    validators/
-      chat.ts                  # Updated: new message schema
+    convex.config.ts           # NEW: Agent component setup
+    agents/
+      document-editor.ts       # NEW: Agent definition + tools
+    chat.ts                    # REPLACE: New Agent-based actions/queries
   prompts/
     chat/
-      base.md                  # NEW: minimal base prompt
+      base.md                  # NEW: Base system prompt
       skills/
-        fill-blanks.md         # NEW: detailed fill-blanks instructions
-        multiple-choice.md     # NEW: multiple choice instructions
-        true-false.md          # NEW: true-false instructions
-        sequencing.md          # NEW: sequencing instructions
-        short-answer.md        # NEW: short answer instructions
-        writing-exercises.md   # NEW: writing exercise instructions
+        fill-blanks.md         # NEW
+        multiple-choice.md     # NEW
+        true-false.md          # NEW
+        sequencing.md          # NEW
+        short-answer.md        # NEW
+        writing-exercises.md   # NEW
+  scripts/
+    build-prompts.ts           # UPDATE: Add skill file processing
 
 apps/teacher/
   src/spaces/document-editor/
-    use-streaming-chat.ts      # NEW: replaces use-chat.ts
-    chat-messages.tsx          # Updated: handle streaming messages
-    assistant-message.tsx      # NEW: assistant message with tool calls
-    tool-calls-section.tsx     # NEW: collapsible tool calls display
-    chat-sidebar.tsx           # Minor updates
-    chat-input.tsx             # Minor updates (disable during streaming)
+    use-document-chat.ts       # NEW: Hook using Agent
+    message-parts.tsx          # NEW: Render UIMessage parts
+    chat-messages.tsx          # UPDATE: Use new message format
+    chat-sidebar.tsx           # UPDATE: Wire up new hook
+```
+
+**Deprecated (to be removed):**
+
+```
+apps/backend/convex/validators/chat.ts
+apps/backend/prompts/document-editor-chat.md
+apps/teacher/src/spaces/document-editor/use-chat.ts
+apps/teacher/src/spaces/document-editor/use-ai-document-edit.ts
 ```
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Streaming Infrastructure
+### Phase 1: Agent Component Setup
 
-**Goal:** Basic streaming working end-to-end without tools.
+1. Install `@convex-dev/agent` and configure in `convex.config.ts`
+2. Create base prompt and skill markdown files
+3. Update `build-prompts.ts` to generate skill functions
+4. Define document editor agent with tools
 
-1. Create HTTP streaming endpoint in Convex (`/api/chat/stream`)
-2. Implement SSE parsing utilities in frontend
-3. Create `useStreamingChat` hook with basic text streaming
-4. Update `ChatMessages` to handle streaming state
-5. Test: Send message, see response stream in character by character
+### Phase 2: Backend Integration
 
-**Deliverable:** Text responses stream to the UI instead of appearing all at once.
+5. Create actions: `createThread`, `sendMessage`
+6. Create query: `listMessages` with streaming support
+7. Implement thread-document association
 
-### Phase 2: Tool System
+### Phase 3: Frontend Integration
 
-**Goal:** AI can call tools and we see them in the UI.
+8. Create `useDocumentChat` hook
+9. Create message part components (tool calls, text)
+10. Wire up to existing chat sidebar
+11. Apply document XML from tool results
 
-1. Implement `edit_document` tool with SSE events
-2. Create base prompt (`prompts/chat/base.md`)
-3. Wire up document editing (validate XML, send to frontend, apply to editor)
-4. Create `ToolCallsSection` component
-5. Update `AssistantMessage` to show tool calls
-6. Test: "Add a heading" should show "Editing document" then stream response
+### Phase 4: Polish
 
-**Deliverable:** Document edits work via tool calls with visible progress.
-
-### Phase 3: Skills Architecture
-
-**Goal:** AI loads specialized knowledge on demand.
-
-1. Implement `load_skill` tool
-2. Create skill files for each exercise type
-3. Update base prompt to instruct AI when to load skills
-4. Test full flow: "Add fill-in-the-blank" loads skill, then edits document
-
-**Deliverable:** AI transparently loads skills before creating exercises.
-
-### Phase 4: UI Polish & Error Handling
-
-**Goal:** Production-ready UX.
-
-1. Collapse/expand behavior for tool calls
-2. Error states (tool failure, stream failure)
-3. Loading states during tool execution
-4. Disable input while streaming
-5. Reconnection handling if stream drops
-6. Update message schema and persistence
-
-**Deliverable:** Polished, error-resilient chat experience.
+12. Collapse/expand for completed tool calls
+13. Error handling and display
+14. Remove deprecated code
 
 ---
 
 ## Configuration
 
-### Model Selection
+### Model
+
+Using Vercel AI SDK's model router:
 
 ```typescript
-// apps/backend/convex/chat/config.ts
+import { openai } from "@ai-sdk/openai";
 
-export const CHAT_CONFIG = {
-  model: "gpt-4o-mini", // Primary model
-  maxSteps: 10, // Max tool call rounds
-  maxHistoryMessages: 20, // Messages to include in context
-  streamChunkSize: 1, // Characters per stream event (1 = character by character)
-};
+// In agent definition
+chat: openai("gpt-4o-mini"),
 ```
 
-### Available Skills
+### Agent Settings
 
-Skills are auto-discovered from `prompts/chat/skills/` directory. To add a new skill:
-
-1. Create `prompts/chat/skills/my-skill.md`
-2. Add to `SKILL_FILES` and `DISPLAY_TEXT` maps in `tools.ts`
-3. Add to Zod enum in `load_skill` tool parameters
-
----
-
-## Open Questions (Resolved)
-
-| Question             | Decision                                  |
-| -------------------- | ----------------------------------------- |
-| Skill caching        | Per-message (not cached across messages)  |
-| Document sync timing | Immediately when `edit_document` succeeds |
-| Conversation context | Last 20 messages                          |
-| Model fallback       | No fallback, just error                   |
+```typescript
+const documentEditorAgent = new Agent(components.agent, {
+  name: "Document Editor",
+  chat: openai("gpt-4o-mini"),
+  instructions: buildChatBasePrompt(),
+  tools: { loadSkill, editDocument },
+  maxSteps: 10, // Max tool call rounds
+});
+```
 
 ---
 
 ## Success Criteria
 
 1. **Conversational:** Typing "test" or "hello" gets a friendly response without document changes
-2. **Transparent:** Creating an exercise shows "Checking X rules" then "Editing document"
-3. **Streaming:** Response text appears progressively, not all at once
-4. **Collapsible:** Completed tool calls collapse to "Done (N steps)"
-5. **Reliable:** Errors are shown clearly, don't crash the UI
+2. **Transparent:** Creating an exercise shows tool calls as they happen
+3. **Streaming:** Response text appears progressively via Convex subscriptions
+4. **Collapsible:** Completed tool calls can be collapsed
+5. **Reliable:** Real-time updates via Convex, not polling

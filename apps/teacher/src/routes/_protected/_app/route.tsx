@@ -14,18 +14,14 @@ import {
   SidebarProvider,
 } from "@package/ui";
 import { useQuery } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  Link,
-  Outlet,
-  useRouteContext,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { HomeIcon, LibraryIcon } from "lucide-react";
 
 import { NavUser } from "@/components/sidebar/nav-user";
 import { UserAvatar } from "@/components/user-avatar";
+import { useSession } from "@/lib/auth-client";
 
 const getSidebarState = createServerFn({ method: "GET" }).handler(async () => {
   const sidebarCookie = getCookie("sidebar_state");
@@ -49,7 +45,7 @@ export const Route = createFileRoute("/_protected/_app")({
 function RouteComponent() {
   const { spaces: preloadedSpaces } = Route.useLoaderData();
   const { sidebarOpen } = Route.useRouteContext();
-  const { user } = useRouteContext({ from: "/_protected" });
+  const { data: session } = useSession();
 
   const spacesQuery = useQuery({
     ...convexQuery(api.spaces.getMySpacesAsTeacher, {}),
@@ -57,8 +53,8 @@ function RouteComponent() {
 
   const spaces = spacesQuery.data ?? preloadedSpaces;
 
-  const displayName =
-    [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User";
+  const user = session?.user;
+  const displayName = user?.name || "User";
 
   return (
     <SidebarProvider defaultOpen={sidebarOpen}>

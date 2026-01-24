@@ -1,48 +1,33 @@
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexQueryClient } from "@convex-dev/react-query";
-import { getAuth } from "@workos/authkit-tanstack-react-start";
-import { AuthKitProvider } from "@workos/authkit-tanstack-react-start/client";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   HeadContent,
+  Outlet,
   Scripts,
   useRouteContext,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { createServerFn } from "@tanstack/react-start";
 
-import ConvexProvider from "../integrations/convex/provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
+import { authClient } from "../lib/auth-client";
+import { getToken } from "../lib/auth-server";
 import appCss from "../styles.css?url";
-
-interface WorkOSUser {
-  id: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-}
 
 interface MyRouterContext {
   queryClient: QueryClient;
   convexQueryClient: ConvexQueryClient;
-  user?: WorkOSUser | null;
-  accessToken?: string | null;
+  // These are populated in beforeLoad
+  isAuthenticated?: boolean;
+  token?: string | null;
 }
 
-const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
-  const auth = await getAuth();
-  return {
-    user: auth.user
-      ? {
-          id: auth.user.id,
-          email: auth.user.email ?? undefined,
-          firstName: auth.user.firstName ?? undefined,
-          lastName: auth.user.lastName ?? undefined,
-        }
-      : null,
-    accessToken: auth.user ? (auth as { accessToken: string }).accessToken : null,
-  };
+// Get auth information for SSR using available cookies
+const getAuth = createServerFn({ method: "GET" }).handler(async () => {
+  return await getToken();
 });
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -68,18 +53,30 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   }),
 
   beforeLoad: async (ctx) => {
-    const { user, accessToken } = await fetchAuth();
+    const token = await getAuth();
 
-    if (accessToken) {
-      ctx.context.convexQueryClient.serverHttpClient?.setAuth(accessToken);
+    // All queries, mutations and actions through TanStack Query will be
+    // authenticated during SSR if we have a valid token
+    if (token) {
+      // During SSR only (the only time serverHttpClient exists),
+      // set the auth token to make HTTP queries with.
+      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
     }
 
-    return { user, accessToken };
+    return {
+      isAuthenticated: !!token,
+      token,
+    };
   },
 
   shellComponent: RootDocument,
+  component: RootComponent,
   notFoundComponent: () => <div>404 Not Found</div>,
 });
+
+function RootComponent() {
+  return <Outlet />;
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const context = useRouteContext({ from: Route.id });
@@ -90,26 +87,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <AuthKitProvider>
-          <ConvexProvider
-            convexQueryClient={context.convexQueryClient}
-            accessToken={context.accessToken}
-          >
-            {children}
-            <TanStackDevtools
-              config={{
-                position: "bottom-right",
-              }}
-              plugins={[
-                {
-                  name: "Tanstack Router",
-                  render: <TanStackRouterDevtoolsPanel />,
-                },
-                TanStackQueryDevtools,
-              ]}
-            />
-          </ConvexProvider>
-        </AuthKitProvider>
+        <ConvexBetterAuthProvider
+          client={context.convexQueryClient.convexClient}
+          authClient={authClient}
+          initialToken={context.token}
+        >
+          {children}
+          <TanStackDevtools
+            config={{
+              position: "bottom-right",
+            }}
+            plugins={[
+              {
+                name: "Tanstack Router",
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+              TanStackQueryDevtools,
+            ]}
+          />
+        </ConvexBetterAuthProvider>
         <Scripts />
       </body>
     </html>

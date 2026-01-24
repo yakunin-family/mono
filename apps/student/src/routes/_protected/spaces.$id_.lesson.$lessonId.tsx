@@ -8,7 +8,7 @@ import { useConvex } from "convex/react";
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
-import { useAuth } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 
 export const Route = createFileRoute(
   "/_protected/spaces/$id_/lesson/$lessonId",
@@ -24,17 +24,24 @@ export const Route = createFileRoute(
 function StudentLessonPage() {
   const { id: spaceId, lessonId } = Route.useParams();
   const { scrollToExercise } = Route.useSearch();
-  const { accessToken, user } = Route.useRouteContext();
+  const { token } = Route.useRouteContext();
+  const { data: session } = useSession();
   const convex = useConvex();
-  const { signOut } = useAuth();
   const queryClient = useQueryClient();
   const scrolledRef = useRef(false);
 
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
+  };
+
   const userColor = useMemo(() => getRandomUserColor(), []);
-  const userName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.email || "Anonymous";
+  const userName = session?.user?.name || session?.user?.email || "Anonymous";
 
   const lessonQuery = useQuery({
     ...convexQuery(api.documents.getLesson, {
@@ -164,11 +171,7 @@ function StudentLessonPage() {
               </Badge>
             )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => signOut({ returnTo: "/login" })}
-            >
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
               Logout
             </Button>
           </div>
@@ -181,7 +184,7 @@ function StudentLessonPage() {
           spaceId={spaceId}
           canEdit={true}
           mode="student"
-          token={accessToken ?? undefined}
+          token={token ?? undefined}
           userName={userName}
           userColor={userColor}
           websocketUrl={

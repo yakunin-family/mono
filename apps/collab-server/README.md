@@ -68,7 +68,7 @@ Currently, documents are stored in memory. To add persistence:
 The default setup allows all connections. To add authentication:
 
 1. Update the `onAuthenticate` hook in `src/index.ts`
-2. Integrate with your Better Auth setup
+2. Integrate with your WorkOS AuthKit setup
 3. Validate tokens and return user data
 
 Example:

@@ -13,7 +13,7 @@ import {
 
 import { HomeworkCard } from "@/components/HomeworkCard";
 import { HomeworkProgress } from "@/components/HomeworkProgress";
-import { useAuth } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_protected/spaces/$id")({
   component: SpaceDetailPage,
@@ -21,8 +21,17 @@ export const Route = createFileRoute("/_protected/spaces/$id")({
 
 function SpaceDetailPage() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
   const { id: spaceId } = Route.useParams();
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
+  };
 
   const { data: space, isLoading } = useQuery(
     convexQuery(api.spaces.getSpace, { spaceId: spaceId as Id<"spaces"> }),
@@ -95,11 +104,7 @@ function SpaceDetailPage() {
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => signOut({ returnTo: "/login" })}
-          >
+          <Button variant="outline" size="sm" onClick={handleSignOut}>
             Logout
           </Button>
         </div>
@@ -121,7 +126,9 @@ function SpaceDetailPage() {
                 <h2 className="text-lg font-semibold">My Homework</h2>
               </div>
               {pendingHomework.length > 0 && (
-                <Badge variant="destructive">{pendingHomework.length} to do</Badge>
+                <Badge variant="destructive">
+                  {pendingHomework.length} to do
+                </Badge>
               )}
             </div>
 

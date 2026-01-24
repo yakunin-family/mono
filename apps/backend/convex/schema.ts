@@ -3,7 +3,7 @@ import { Infer, v } from "convex/values";
 
 // UserProfile - Unified user table for all users
 const userProfile = defineTable({
-  userId: v.string(), // WorkOS user ID (unique)
+  userId: v.string(), // Better Auth user ID (unique)
   name: v.optional(v.string()), // Display name
   pictureUrl: v.optional(v.string()), // Profile picture URL from auth provider
   createdAt: v.number(),
@@ -14,7 +14,7 @@ export type UserProfile = Infer<typeof schemas.tables.userProfile.validator>;
 
 // AI Usage - Separate table for AI token tracking
 const aiUsage = defineTable({
-  userId: v.string(), // WorkOS user ID
+  userId: v.string(), // Better Auth user ID
   aiTokensUsed: v.optional(v.number()), // Total AI tokens consumed
   aiQuotaLimit: v.optional(v.number()), // Monthly quota (not enforced yet)
 }).index("by_userId", ["userId"]);
@@ -22,8 +22,8 @@ export type AIUsage = Infer<typeof schemas.tables.aiUsage.validator>;
 
 // Spaces - Core entity representing a 1:1 teaching relationship for a specific language
 const spaces = defineTable({
-  teacherId: v.string(), // WorkOS user ID of the teacher
-  studentId: v.string(), // WorkOS user ID of the student
+  teacherId: v.string(), // Better Auth user ID of the teacher
+  studentId: v.string(), // Better Auth user ID of the student
   language: v.string(), // Free text language name (e.g., "German", "Business English")
   createdAt: v.number(),
 })
@@ -65,7 +65,7 @@ const document = defineTable({
   spaceId: v.optional(v.id("spaces")), // Which space this lesson belongs to
   lessonNumber: v.optional(v.number()), // Order within space (1, 2, 3...)
   // Existing fields (owner becomes optional for backward compatibility)
-  owner: v.optional(v.string()), // WorkOS user ID (deprecated - use spaceId)
+  owner: v.optional(v.string()), // Better Auth user ID (deprecated - use spaceId)
   title: v.string(),
   content: v.optional(v.bytes()), // Serialized Yjs document state
   templateId: v.optional(v.id("library")), // Template used to initialize content
@@ -79,7 +79,7 @@ export type Document = Infer<typeof schemas.tables.document.validator>;
 
 const aiGeneration = defineTable({
   documentId: v.id("document"),
-  userId: v.string(), // WorkOS user ID (who requested)
+  userId: v.string(), // Better Auth user ID (who requested)
   promptText: v.string(), // User's prompt
   streamId: v.string(), // From persistent-text-streaming component
   generatedContent: v.string(), // AI response (updated progressively)
@@ -103,7 +103,7 @@ export type AIGeneration = Infer<typeof schemas.tables.aiGeneration.validator>;
 
 const exerciseGenerationSession = defineTable({
   documentId: v.id("document"),
-  userId: v.string(), // WorkOS user ID (who requested)
+  userId: v.string(), // Better Auth user ID (who requested)
   initialPrompt: v.string(), // User's original prompt
   model: v.string(), // AI model to use
   currentStep: v.union(
@@ -214,7 +214,7 @@ export const libraryMetadataValidator = v.object({
 export type LibraryMetadata = Infer<typeof libraryMetadataValidator>;
 
 const library = defineTable({
-  ownerId: v.string(), // WorkOS user ID (teacher)
+  ownerId: v.string(), // Better Auth user ID (teacher)
   title: v.string(),
   type: libraryItemTypeValidator,
   content: v.string(), // JSON-stringified Tiptap content array
@@ -232,7 +232,7 @@ export type LibraryItem = Infer<typeof schemas.tables.library.validator>;
 // Chat Sessions - Multiple sessions per document per user for AI chat history
 const chatSessions = defineTable({
   documentId: v.id("document"),
-  userId: v.string(), // WorkOS user ID
+  userId: v.string(), // Better Auth user ID
   createdAt: v.number(),
   updatedAt: v.number(),
 })
@@ -256,6 +256,21 @@ const chatMessages = defineTable({
   .index("by_session_created", ["sessionId", "createdAt"]);
 export type ChatMessage = Infer<typeof schemas.tables.chatMessages.validator>;
 
+// Document Chat Threads - Links agent threads to documents
+// The agent component stores threads/messages internally; this table links them to our documents
+const documentChatThreads = defineTable({
+  documentId: v.id("document"),
+  threadId: v.string(), // Agent component's thread ID
+  userId: v.string(), // Better Auth user ID
+  createdAt: v.number(),
+})
+  .index("by_document", ["documentId"])
+  .index("by_document_user", ["documentId", "userId"])
+  .index("by_thread", ["threadId"]);
+export type DocumentChatThread = Infer<
+  typeof schemas.tables.documentChatThreads.validator
+>;
+
 const schemas = defineSchema({
   userProfile,
   aiUsage,
@@ -269,6 +284,7 @@ const schemas = defineSchema({
   library,
   chatSessions,
   chatMessages,
+  documentChatThreads,
 });
 
 export default schemas;

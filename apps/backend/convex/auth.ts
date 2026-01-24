@@ -1,42 +1,51 @@
-import { ConvexError } from "convex/values";
+import { createClient } from "@convex-dev/better-auth";
+import type { GenericCtx } from "@convex-dev/better-auth";
+import { convex } from "@convex-dev/better-auth/plugins";
+import { betterAuth } from "better-auth/minimal";
 
-import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
+import authConfig from "./auth.config";
+import { components } from "./_generated/api";
+import type { DataModel } from "./_generated/dataModel";
+import { query } from "./_generated/server";
 
-export interface AuthUser {
-  id: string;
-  email?: string;
-  name?: string;
-  pictureUrl?: string;
-}
+const siteUrl = process.env.SITE_URL!;
 
-type Ctx = QueryCtx | MutationCtx | ActionCtx;
+// The component client has methods needed for integrating Convex with Better Auth,
+// as well as helper methods for general use.
+export const authComponent = createClient<DataModel>(components.betterAuth);
 
-/**
- * Get the authenticated user from WorkOS JWT.
- * Returns the user identity if authenticated, null otherwise.
- */
-export async function getAuthUser(ctx: Ctx): Promise<AuthUser | null> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
-    return null;
-  }
+export const createAuth = (ctx: GenericCtx<DataModel>) => {
+  return betterAuth({
+    baseURL: siteUrl,
+    database: authComponent.adapter(ctx),
+    emailAndPassword: {
+      enabled: true,
+      requireEmailVerification: false,
+    },
+    socialProviders: {
+      // Google OAuth - configure in Convex dashboard env vars
+      ...(process.env.GOOGLE_CLIENT_ID && {
+        google: {
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        },
+      }),
+      // Apple Sign In - configure in Convex dashboard env vars
+      ...(process.env.APPLE_CLIENT_ID && {
+        apple: {
+          clientId: process.env.APPLE_CLIENT_ID,
+          clientSecret: process.env.APPLE_CLIENT_SECRET!,
+        },
+      }),
+    },
+    plugins: [convex({ authConfig })],
+  });
+};
 
-  return {
-    id: identity.subject,
-    email: identity.email,
-    name: identity.name,
-    pictureUrl: identity.pictureUrl,
-  };
-}
-
-/**
- * Get the authenticated user or throw if not authenticated.
- * Use this in protected endpoints.
- */
-export async function requireAuth(ctx: Ctx): Promise<AuthUser> {
-  const user = await getAuthUser(ctx);
-  if (!user) {
-    throw new ConvexError("Not authenticated");
-  }
-  return user;
-}
+// Get the current authenticated user
+export const getCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    return await authComponent.getAuthUser(ctx);
+  },
+});

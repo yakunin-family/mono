@@ -15,7 +15,7 @@ import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ProtectedSpacesIdRouteImport } from './routes/_protected/spaces.$id'
 import { Route as ProtectedSpacesIdLessonLessonIdRouteImport } from './routes/_protected/spaces.$id_.lesson.$lessonId'
 
@@ -47,9 +47,9 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRoute,
 } as any)
-const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
-  id: '/api/auth/callback',
-  path: '/api/auth/callback',
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedSpacesIdRoute = ProtectedSpacesIdRouteImport.update({
@@ -70,7 +70,7 @@ export interface FileRoutesByFullPath {
   '/join/$token': typeof JoinTokenRoute
   '/': typeof ProtectedIndexRoute
   '/spaces/$id': typeof ProtectedSpacesIdRoute
-  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
 export interface FileRoutesByTo {
@@ -79,7 +79,7 @@ export interface FileRoutesByTo {
   '/join/$token': typeof JoinTokenRoute
   '/': typeof ProtectedIndexRoute
   '/spaces/$id': typeof ProtectedSpacesIdRoute
-  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/spaces/$id/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
 export interface FileRoutesById {
@@ -91,7 +91,7 @@ export interface FileRoutesById {
   '/join/$token': typeof JoinTokenRoute
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/spaces/$id': typeof ProtectedSpacesIdRoute
-  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/_protected/spaces/$id_/lesson/$lessonId': typeof ProtectedSpacesIdLessonLessonIdRoute
 }
 export interface FileRouteTypes {
@@ -102,7 +102,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/'
     | '/spaces/$id'
-    | '/api/auth/callback'
+    | '/api/auth/$'
     | '/spaces/$id/lesson/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -111,7 +111,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/'
     | '/spaces/$id'
-    | '/api/auth/callback'
+    | '/api/auth/$'
     | '/spaces/$id/lesson/$lessonId'
   id:
     | '__root__'
@@ -122,7 +122,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/_protected/'
     | '/_protected/spaces/$id'
-    | '/api/auth/callback'
+    | '/api/auth/$'
     | '/_protected/spaces/$id_/lesson/$lessonId'
   fileRoutesById: FileRoutesById
 }
@@ -130,7 +130,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   ProtectedRoute: typeof ProtectedRouteWithChildren
   JoinTokenRoute: typeof JoinTokenRoute
-  ApiAuthCallbackRoute: typeof ApiAuthCallbackRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -177,11 +177,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/api/auth/callback': {
-      id: '/api/auth/callback'
-      path: '/api/auth/callback'
-      fullPath: '/api/auth/callback'
-      preLoaderRoute: typeof ApiAuthCallbackRouteImport
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/spaces/$id': {
@@ -233,7 +233,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   ProtectedRoute: ProtectedRouteWithChildren,
   JoinTokenRoute: JoinTokenRoute,
-  ApiAuthCallbackRoute: ApiAuthCallbackRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

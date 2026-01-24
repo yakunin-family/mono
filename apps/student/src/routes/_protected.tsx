@@ -4,13 +4,9 @@ import { AuthGate } from "@/components/AuthGate";
 
 export const Route = createFileRoute("/_protected")({
   beforeLoad: async ({ context }) => {
-    if (!context.user) {
+    if (!context.isAuthenticated) {
       throw redirect({ to: "/login" });
     }
-
-    return {
-      user: context.user,
-    };
   },
   component: ProtectedLayout,
 });

@@ -47,6 +47,7 @@ import {
   StandalonePageHeader,
   StandalonePageShell,
 } from "@/components/standalone-page-shell";
+import { useSession } from "@/lib/auth-client";
 import { ChatInput } from "@/spaces/document-editor/chat-input";
 import { ChatMessages } from "@/spaces/document-editor/chat-messages";
 import {
@@ -64,7 +65,8 @@ export const Route = createFileRoute(
 function LessonEditorPage() {
   const navigate = useNavigate();
   const { id: spaceId, lessonId } = Route.useParams();
-  const { accessToken, user } = Route.useRouteContext();
+  const { token } = Route.useRouteContext();
+  const { data: session } = useSession();
   const convex = useConvex();
   const queryClient = useQueryClient();
   const editorRef = useRef<DocumentEditorHandle | null>(null);
@@ -106,9 +108,6 @@ function LessonEditorPage() {
     messages: chatMessages,
     isLoading: isChatLoading,
     sendMessage: handleSendMessage,
-    sessionId: chatSessionId,
-    sessions: chatSessions,
-    switchSession: switchChatSession,
   } = useChat({
     documentId: lessonId,
     editor,
@@ -120,10 +119,7 @@ function LessonEditorPage() {
   }, [chatSidebarOpen]);
 
   const userColor = useMemo(() => getRandomUserColor(), []);
-  const userName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.email || "Anonymous";
+  const userName = session?.user?.name || session?.user?.email || "Anonymous";
 
   const lessonQuery = useQuery({
     ...convexQuery(api.documents.getLesson, {
@@ -366,10 +362,7 @@ function LessonEditorPage() {
 
   const headerActions = (
     <>
-      <ChatSidebarTrigger
-        isOpen={chatSidebarOpen}
-        onClick={toggleChatSidebar}
-      />
+      <ChatSidebarTrigger onClick={toggleChatSidebar} />
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -469,7 +462,7 @@ function LessonEditorPage() {
               spaceId={spaceId}
               canEdit={true}
               mode="teacher-editor"
-              token={accessToken ?? undefined}
+              token={token ?? undefined}
               userName={userName}
               userColor={userColor}
               websocketUrl={
@@ -530,12 +523,7 @@ function LessonEditorPage() {
           "w-0": !chatSidebarOpen,
         })}
       >
-        <ChatSidebar
-          onToggle={toggleChatSidebar}
-          sessions={chatSessions}
-          currentSessionId={chatSessionId}
-          onSessionSelect={switchChatSession}
-        >
+        <ChatSidebar onToggle={toggleChatSidebar}>
           <ChatMessages messages={chatMessages} isLoading={isChatLoading} />
           <ChatInput onSend={handleSendMessage} isLoading={isChatLoading} />
         </ChatSidebar>

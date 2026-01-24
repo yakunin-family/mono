@@ -1,11 +1,27 @@
+import { useMutation } from "@tanstack/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { Loader2Icon } from "lucide-react";
+import { useEffect, useRef } from "react";
 
-import { useConvexAuthState } from "@/integrations/convex/provider";
+import { api } from "@app/backend";
+import { useSession } from "@/lib/auth-client";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isLoading } = useConvexAuthState();
+  const { data: session, isPending } = useSession();
+  const hasEnsuredRole = useRef(false);
 
-  if (isLoading) {
+  const { mutate: ensureStudentRole } = useMutation({
+    mutationFn: useConvexMutation(api.userProfiles.ensureStudentRole),
+  });
+
+  useEffect(() => {
+    if (session?.user && !hasEnsuredRole.current) {
+      hasEnsuredRole.current = true;
+      ensureStudentRole({});
+    }
+  }, [session?.user, ensureStudentRole]);
+
+  if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2Icon className="size-8 animate-spin text-muted-foreground" />

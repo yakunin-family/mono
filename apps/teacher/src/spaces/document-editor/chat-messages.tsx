@@ -6,7 +6,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
-  status?: "sending" | "sent" | "error";
+  status?: "sending" | "sent" | "error" | "streaming";
   /** For assistant messages, the document XML to apply */
   documentXml?: string;
   /** Error message if the AI response failed */

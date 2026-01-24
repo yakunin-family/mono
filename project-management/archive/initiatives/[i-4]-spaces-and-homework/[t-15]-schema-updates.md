@@ -18,12 +18,14 @@ Add new tables and modify existing tables to support the Spaces and Homework fea
 ## New Tables
 
 ### spaces
-- `teacherId: string` - Better Auth user ID
-- `studentId: string` - Better Auth user ID
+
+- `teacherId: string` - WorkOS user ID
+- `studentId: string` - WorkOS user ID
 - `language: string` - Free text language name
 - `createdAt: number` - Timestamp
 
 ### spaceInvites
+
 - `teacherId: string` - Teacher who created invite
 - `language: string` - Language for the space
 - `token: string` - Unique invite token
@@ -34,6 +36,7 @@ Add new tables and modify existing tables to support the Spaces and Homework fea
 - `resultingSpaceId?: Id<"spaces">` - Created space
 
 ### homeworkItems
+
 - `spaceId: Id<"spaces">` - Which space
 - `documentId: Id<"document">` - Which lesson
 - `exerciseInstanceId: string` - Exercise node ID
@@ -41,6 +44,7 @@ Add new tables and modify existing tables to support the Spaces and Homework fea
 - `completedAt?: number` - When completed
 
 ### document table updates
+
 - Added `spaceId?: Id<"spaces">`
 - Added `lessonNumber?: number`
 - Made `owner` optional for backward compatibility
