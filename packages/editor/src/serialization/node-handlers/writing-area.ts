@@ -3,11 +3,42 @@ import type { JSONContent } from "@tiptap/core";
 import { escapeXml } from "./blocks";
 
 /**
+ * Extract text content from paragraphs for student response
+ */
+function extractTextContent(content: JSONContent[] | undefined): string {
+  if (!content) return "";
+
+  return content
+    .map((node) => {
+      if (node.type === "paragraph" && node.content) {
+        return node.content
+          .map((inline) => {
+            if (inline.type === "text") {
+              return inline.text || "";
+            }
+            if (inline.type === "hardBreak") {
+              return "\n";
+            }
+            return "";
+          })
+          .join("");
+      }
+      return "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+/**
  * Serialize a writingArea node to XML
+ *
+ * For AI context, the student's written response is included as a
+ * `student-response` attribute, abstracting away the internal paragraph
+ * structure. The AI should not modify this content.
  */
 export function serializeWritingArea(
   node: JSONContent,
-  serializeChildren: (children: JSONContent[]) => string,
+  _serializeChildren: (children: JSONContent[]) => string,
 ): string {
   const attrs = node.attrs || {};
   const parts: string[] = ["writing-area"];
@@ -26,11 +57,15 @@ export function serializeWritingArea(
     parts.push(`placeholder="${escapeXml(attrs.placeholder)}"`);
   }
 
-  const openTag = `<${parts.join(" ")}>`;
-  const content = serializeChildren(node.content || []);
-  const closeTag = "</writing-area>";
+  // Extract student's written response from internal paragraphs
+  const studentResponse = extractTextContent(node.content);
+  if (studentResponse) {
+    parts.push(`student-response="${escapeXml(studentResponse)}"`);
+  }
 
-  return `${openTag}${content}${closeTag}`;
+  // WritingArea is serialized as a self-closing tag for AI
+  // The internal paragraph structure is abstracted away
+  return `<${parts.join(" ")} />`;
 }
 
 /**

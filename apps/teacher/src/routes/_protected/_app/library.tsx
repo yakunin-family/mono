@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@package/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import {
@@ -59,7 +59,6 @@ const CEFR_LEVELS: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 function LibraryPage() {
   const convex = useConvex();
-  const queryClient = useQueryClient();
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,9 +81,6 @@ function LibraryPage() {
       await convex.mutation(api.library.deleteItem, {
         itemId: itemId as never,
       });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["library"] });
     },
   });
 

@@ -150,7 +150,7 @@ describe("serializeExercise", () => {
       serializeExercise(
         {
           type: "exercise",
-          attrs: { instanceId: "ex-abc123" },
+          attrs: { id: "ex-abc123" },
           content: [],
         },
         serializeChildren,
@@ -163,7 +163,7 @@ describe("serializeExercise", () => {
     const result = serializeExercise(
       {
         type: "exercise",
-        attrs: { instanceId: "ex-1", index: 5 },
+        attrs: { id: "ex-1", index: 5 },
         content: [],
       },
       serializeChildren,
@@ -178,7 +178,7 @@ describe("serializeExercise", () => {
       serializeExercise(
         {
           type: "exercise",
-          attrs: { instanceId: 'ex-"special"' },
+          attrs: { id: 'ex-"special"' },
           content: [],
         },
         serializeChildren,

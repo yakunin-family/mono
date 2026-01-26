@@ -66,6 +66,13 @@ export function serializeInlineContent(
 }
 
 /**
+ * Helper to generate id attribute string if present
+ */
+function idAttr(node: JSONContent): string {
+  return node.attrs?.id ? ` id="${escapeXml(node.attrs.id)}"` : "";
+}
+
+/**
  * Serialize a heading node to XML
  */
 export function serializeHeading(
@@ -74,7 +81,7 @@ export function serializeHeading(
 ): string {
   const level = Math.min(Math.max(node.attrs?.level || 1, 1), 3); // Clamp to 1-3
   const content = serializeInlineContent(node.content);
-  return `<h${level}>${content}</h${level}>`;
+  return `<h${level}${idAttr(node)}>${content}</h${level}>`;
 }
 
 /**
@@ -85,7 +92,7 @@ export function serializeParagraph(
   _serializeChildren: (children: JSONContent[]) => string,
 ): string {
   const content = serializeInlineContent(node.content);
-  return `<p>${content}</p>`;
+  return `<p${idAttr(node)}>${content}</p>`;
 }
 
 /**
@@ -96,7 +103,7 @@ export function serializeBulletList(
   serializeChildren: (children: JSONContent[]) => string,
 ): string {
   const content = serializeChildren(node.content || []);
-  return `<ul>${content}</ul>`;
+  return `<ul${idAttr(node)}>${content}</ul>`;
 }
 
 /**
@@ -109,7 +116,7 @@ export function serializeOrderedList(
   const start = node.attrs?.start;
   const startAttr = start && start !== 1 ? ` start="${start}"` : "";
   const content = serializeChildren(node.content || []);
-  return `<ol${startAttr}>${content}</ol>`;
+  return `<ol${idAttr(node)}${startAttr}>${content}</ol>`;
 }
 
 /**
@@ -120,7 +127,7 @@ export function serializeListItem(
   serializeChildren: (children: JSONContent[]) => string,
 ): string {
   const content = serializeChildren(node.content || []);
-  return `<li>${content}</li>`;
+  return `<li${idAttr(node)}>${content}</li>`;
 }
 
 /**
@@ -131,17 +138,17 @@ export function serializeBlockquote(
   serializeChildren: (children: JSONContent[]) => string,
 ): string {
   const content = serializeChildren(node.content || []);
-  return `<blockquote>${content}</blockquote>`;
+  return `<blockquote${idAttr(node)}>${content}</blockquote>`;
 }
 
 /**
  * Serialize a horizontal rule to XML
  */
 export function serializeHorizontalRule(
-  _node: JSONContent,
+  node: JSONContent,
   _serializeChildren: (children: JSONContent[]) => string,
 ): string {
-  return "<hr />";
+  return `<hr${idAttr(node)} />`;
 }
 
 /**

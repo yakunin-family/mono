@@ -14,7 +14,6 @@ import type * as agents_documentEditor from "../agents/documentEditor.js";
 import type * as auth from "../auth.js";
 import type * as chat from "../chat.js";
 import type * as documents from "../documents.js";
-import type * as exerciseGeneration from "../exerciseGeneration.js";
 import type * as functions from "../functions.js";
 import type * as homework from "../homework.js";
 import type * as http from "../http.js";
@@ -24,7 +23,6 @@ import type * as spaces from "../spaces.js";
 import type * as teachers from "../teachers.js";
 import type * as userProfiles from "../userProfiles.js";
 import type * as validators_chat from "../validators/chat.js";
-import type * as validators_exerciseGeneration from "../validators/exerciseGeneration.js";
 import type * as validators_libraryAutoTag from "../validators/libraryAutoTag.js";
 
 import type {
@@ -40,7 +38,6 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   chat: typeof chat;
   documents: typeof documents;
-  exerciseGeneration: typeof exerciseGeneration;
   functions: typeof functions;
   homework: typeof homework;
   http: typeof http;
@@ -50,7 +47,6 @@ declare const fullApi: ApiFromModules<{
   teachers: typeof teachers;
   userProfiles: typeof userProfiles;
   "validators/chat": typeof validators_chat;
-  "validators/exerciseGeneration": typeof validators_exerciseGeneration;
   "validators/libraryAutoTag": typeof validators_libraryAutoTag;
 }>;
 
@@ -1743,6 +1739,7 @@ export declare const components: {
                 input?: any;
                 output?: any;
                 providerExecuted?: boolean;
+                providerMetadata?: Record<string, Record<string, any>>;
                 toolCallId: string;
                 toolName: string;
                 type: "tool-result";
@@ -1902,6 +1899,7 @@ export declare const components: {
                   input?: any;
                   output?: any;
                   providerExecuted?: boolean;
+                  providerMetadata?: Record<string, Record<string, any>>;
                   toolCallId: string;
                   toolName: string;
                   type: "tool-result";
@@ -2047,6 +2045,7 @@ export declare const components: {
                 input?: any;
                 output?: any;
                 providerExecuted?: boolean;
+                providerMetadata?: Record<string, Record<string, any>>;
                 toolCallId: string;
                 toolName: string;
                 type: "tool-result";

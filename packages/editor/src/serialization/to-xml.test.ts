@@ -239,7 +239,7 @@ describe("jsonToXML", () => {
           content: [
             {
               type: "exercise",
-              attrs: { instanceId: "ex-123" },
+              attrs: { id: "ex-123" },
               content: [
                 {
                   type: "paragraph",
@@ -420,32 +420,6 @@ describe("jsonToXML", () => {
     });
   });
 
-  describe("excluded nodes", () => {
-    it("skips exerciseGeneration nodes", () => {
-      const result = jsonToXML(
-        {
-          type: "doc",
-          content: [
-            {
-              type: "paragraph",
-              content: [{ type: "text", text: "Before" }],
-            },
-            {
-              type: "exerciseGeneration",
-              attrs: { sessionId: "123", status: "pending" },
-            },
-            {
-              type: "paragraph",
-              content: [{ type: "text", text: "After" }],
-            },
-          ],
-        },
-        { pretty: false },
-      );
-      expect(result).toBe("<lesson><p>Before</p><p>After</p></lesson>");
-    });
-  });
-
   describe("special characters", () => {
     it("escapes special characters in text", () => {
       const result = jsonToXML(
@@ -481,7 +455,7 @@ describe("jsonToXML", () => {
             },
             {
               type: "exercise",
-              attrs: { instanceId: "ex-1" },
+              attrs: { id: "ex-1" },
               content: [
                 {
                   type: "paragraph",

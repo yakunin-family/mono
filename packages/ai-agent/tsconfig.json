@@ -1,8 +1,6 @@
 {
-  "extends": "@tooling/typescript-config/react-library.json",
+  "extends": "@tooling/typescript-config/base.json",
   "compilerOptions": {
-    "strict": true,
-    "noImplicitAny": true,
     "composite": true,
     "incremental": true,
     "outDir": "dist",
@@ -12,11 +10,7 @@
     "emitDeclarationOnly": false,
     "module": "preserve",
     "moduleResolution": "bundler",
-    "noEmit": false,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "noEmit": false
   },
-  "references": [{ "path": "../ui" }, { "path": "../ai-agent" }],
   "include": ["src"]
 }

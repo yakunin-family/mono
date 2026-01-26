@@ -33,10 +33,10 @@ export const Group = Node.create({
     return {
       id: {
         default: null,
-        parseHTML: (element) => element.getAttribute("data-group-id"),
+        parseHTML: (element) => element.getAttribute("data-id"),
         renderHTML: (attributes) => {
           if (!attributes.id) return {};
-          return { "data-group-id": attributes.id };
+          return { "data-id": attributes.id };
         },
       },
     };
@@ -138,16 +138,13 @@ export const Group = Node.create({
           if (!groupType) return false;
 
           if (dispatch) {
-            const groupId = `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            const groupNode = groupType.create(
-              { id: groupId },
-              Fragment.from(blocks)
-            );
+            // UniqueID extension will automatically generate the id attribute
+            const groupNode = groupType.create({}, Fragment.from(blocks));
 
             const tr = state.tr.replaceRange(
               startPos,
               endPos,
-              new Slice(Fragment.from(groupNode), 0, 0)
+              new Slice(Fragment.from(groupNode), 0, 0),
             );
             tr.setSelection(NodeSelection.create(tr.doc, startPos));
             dispatch(tr);

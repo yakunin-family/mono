@@ -1,7 +1,8 @@
-import { defineConfig } from "vite";
-import { resolve } from "path";
+/// <reference types="vitest/config" />
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { resolve } from "path";
+import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
 export default defineConfig({
@@ -30,5 +31,9 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: false,
     cssCodeSplit: false,
+  },
+  test: {
+    environment: "jsdom",
+    include: ["src/**/*.test.ts"],
   },
 });

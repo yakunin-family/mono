@@ -156,7 +156,7 @@ describe("xmlToJSON", () => {
       );
       expect(result.content?.[0]).toEqual({
         type: "exercise",
-        attrs: { instanceId: "ex-123" },
+        attrs: { id: "ex-123" },
         content: [
           {
             type: "paragraph",
@@ -170,7 +170,7 @@ describe("xmlToJSON", () => {
       const result = xmlToJSON(
         "<lesson><exercise><p>Content</p></exercise></lesson>",
       );
-      expect(result.content?.[0]?.attrs).toEqual({ instanceId: null });
+      expect(result.content?.[0]?.attrs).toEqual({ id: null });
     });
   });
 
@@ -330,7 +330,7 @@ describe("xmlToJSON", () => {
 
       // Exercise
       expect(result.content?.[2]?.type).toBe("exercise");
-      expect(result.content?.[2]?.attrs?.instanceId).toBe("ex-1");
+      expect(result.content?.[2]?.attrs?.id).toBe("ex-1");
 
       // Check blank inside exercise
       const exerciseContent = result.content?.[2]?.content?.[0];

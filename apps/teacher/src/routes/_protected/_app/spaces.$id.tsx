@@ -25,12 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from "@package/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  notFound,
-  useNavigate,
-} from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import {
   createColumnHelper,
   flexRender,
@@ -148,7 +144,6 @@ function SpaceDetailPageContent() {
   const { space: spaceLoaderData } = Route.useLoaderData();
   const navigate = useNavigate();
   const convex = useConvex();
-  const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
   const [createLessonDialogOpen, setCreateLessonDialogOpen] = useState(false);
@@ -176,7 +171,6 @@ function SpaceDetailPageContent() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["spaces"] });
       navigate({ to: "/" });
     },
   });
@@ -186,19 +180,12 @@ function SpaceDetailPageContent() {
       await convex.mutation(api.documents.deleteLesson, { documentId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["space", spaceId] });
-      queryClient.invalidateQueries({
-        queryKey: convexQuery(api.documents.getSpaceLessonsWithHomeworkCounts, {
-          spaceId: spaceId as Id<"spaces">,
-        }).queryKey,
-      });
       setDeletingLessonId(null);
     },
   });
 
   const handleCreateLesson = () => {
-    const hasTemplates =
-      templatesQuery.data && templatesQuery.data.length > 0;
+    const hasTemplates = templatesQuery.data && templatesQuery.data.length > 0;
     if (hasTemplates) {
       setCreateLessonDialogOpen(true);
     } else {

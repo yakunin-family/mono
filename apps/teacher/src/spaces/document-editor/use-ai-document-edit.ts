@@ -1,4 +1,11 @@
-import { type Editor, fromXML, validateXML } from "@package/editor";
+import {
+  type Editor,
+  fromXML,
+  validateXML,
+  applyOperations,
+  type DocumentOperation,
+  type OperationResult,
+} from "@package/editor";
 import { useCallback } from "react";
 
 export interface ApplyAIResponseResult {
@@ -6,10 +13,20 @@ export interface ApplyAIResponseResult {
   error?: string;
 }
 
+export interface ApplyOperationsResult {
+  success: boolean;
+  results: OperationResult[];
+  failedCount: number;
+}
+
 /**
- * Hook for applying AI-generated document XML to the Tiptap editor
+ * Hook for applying AI-generated document changes to the Tiptap editor.
+ * Supports both full XML replacement (editDocument) and surgical operations (patchDocument).
  */
 export function useAIDocumentEdit(editor: Editor | null) {
+  /**
+   * Apply full XML replacement (for editDocument tool)
+   */
   const applyAIResponse = useCallback(
     (documentXml: string): ApplyAIResponseResult => {
       if (!editor) {
@@ -37,5 +54,52 @@ export function useAIDocumentEdit(editor: Editor | null) {
     [editor],
   );
 
-  return { applyAIResponse };
+  /**
+   * Apply surgical operations (for patchDocument tool)
+   */
+  const applyDocumentOperations = useCallback(
+    (operations: DocumentOperation[]): ApplyOperationsResult => {
+      if (!editor) {
+        return {
+          success: false,
+          results: [],
+          failedCount: operations.length,
+        };
+      }
+
+      try {
+        const results = applyOperations(editor, operations);
+        const failedCount = results.filter((r) => !r.success).length;
+
+        // Log any failures for debugging
+        results
+          .filter((r) => !r.success)
+          .forEach((r) => {
+            console.error(
+              `Operation failed:`,
+              r.op,
+              "error" in r ? r.error : "unknown error",
+            );
+          });
+
+        return {
+          success: failedCount === 0,
+          results,
+          failedCount,
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to apply operations";
+        console.error("applyDocumentOperations error:", errorMessage);
+        return {
+          success: false,
+          results: [],
+          failedCount: operations.length,
+        };
+      }
+    },
+    [editor],
+  );
+
+  return { applyAIResponse, applyDocumentOperations };
 }

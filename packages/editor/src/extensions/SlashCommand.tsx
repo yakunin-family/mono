@@ -13,7 +13,6 @@ import {
   Image,
   Code,
   FileText,
-  Sparkles,
   FormInput,
   NotebookPen,
   Library,
@@ -53,7 +52,13 @@ export const SlashCommand = Extension.create({
       Suggestion({
         editor: this.editor,
         ...this.options.suggestion,
-        items: ({ query, editor }: { query: string; editor: Editor }): CommandItem[] => {
+        items: ({
+          query,
+          editor,
+        }: {
+          query: string;
+          editor: Editor;
+        }): CommandItem[] => {
           const items: CommandItem[] = [
             {
               title: "Heading 1",
@@ -166,18 +171,6 @@ export const SlashCommand = Extension.create({
                   .run();
               },
             },
-            {
-              title: "Exercise Generation",
-              icon: Sparkles,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .insertExerciseGeneration()
-                  .run();
-              },
-            },
           ];
 
           const editorMode = editor.storage.editorMode;
@@ -193,13 +186,6 @@ export const SlashCommand = Extension.create({
                     .deleteRange(range)
                     .insertContent({
                       type: "blank",
-                      attrs: {
-                        blankIndex: 0,
-                        correctAnswer: "",
-                        alternativeAnswers: [],
-                        hint: null,
-                        studentAnswer: "",
-                      },
                     })
                     .run();
                 },

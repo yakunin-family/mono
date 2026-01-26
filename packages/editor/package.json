@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@app/backend": "workspace:*",
+    "@package/ai-agent": "workspace:*",
     "@convex-dev/react-query": "0.0.0-alpha.11",
     "@floating-ui/dom": "^1.7.4",
     "@hocuspocus/provider": "^3.4.0",
@@ -52,7 +53,8 @@
     "@tiptap/suggestion": "^3.11.1",
     "@tiptap/y-tiptap": "^3.0.0",
     "js-beautify": "^1.15.4",
-    "yjs": "^13.6.21"
+    "yjs": "^13.6.21",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.6",

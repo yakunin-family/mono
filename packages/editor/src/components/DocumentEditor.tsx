@@ -38,10 +38,6 @@ export interface DocumentEditorProps {
   userColor?: string;
   onStatusChange?: (status: ConnectionStatus) => void;
   onConnectedUsersChange?: (count: number) => void;
-  onStartExerciseGeneration?: (
-    promptText: string,
-    model: string,
-  ) => Promise<{ sessionId: string }>;
   onSaveExerciseToBank?: (title: string, content: string) => Promise<void>;
   onSaveGroupToLibrary?: (title: string, content: string) => Promise<void>;
   libraryItems?: LibraryItemWithMetadata[];
@@ -122,7 +118,6 @@ export const DocumentEditor = ({
   userName = "Anonymous",
   userColor = "#999999",
   onStatusChange,
-  onStartExerciseGeneration,
   onConnectedUsersChange,
   onSaveExerciseToBank,
   onSaveGroupToLibrary,
@@ -219,7 +214,6 @@ export const DocumentEditor = ({
         documentId={documentId}
         spaceId={spaceId}
         convexClient={convexClient}
-        onStartExerciseGeneration={onStartExerciseGeneration}
         onSaveExerciseToBank={onSaveExerciseToBank}
         onSaveGroupToLibrary={onSaveGroupToLibrary}
         libraryItems={libraryItems}

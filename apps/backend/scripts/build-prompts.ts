@@ -27,15 +27,7 @@ function replacePartials(content: string): string {
 }
 
 // Special handling for known optional sections
-const OPTIONAL_SECTIONS: Record<string, string> = {
-  previousClarifications: `
-## Previous Clarifications
-
-The user has already provided these answers:
-
-{previousClarifications}
-`,
-};
+const OPTIONAL_SECTIONS: Record<string, string> = {};
 
 // Function to convert markdown to TypeScript function
 function generateFunction(
@@ -96,31 +88,6 @@ const promptFiles: Array<{
   content: string;
   vars: Array<{ name: string; optional: boolean }>;
 }> = [
-  {
-    name: "buildValidationPrompt",
-    content: readFileSync(
-      join(promptsDir, "validate-requirements.md"),
-      "utf-8",
-    ),
-    vars: [
-      { name: "userPrompt", optional: false },
-      { name: "previousClarifications", optional: true },
-    ],
-  },
-  {
-    name: "buildPlanningPrompt",
-    content: readFileSync(join(promptsDir, "plan-exercises.md"), "utf-8"),
-    vars: [{ name: "requirements", optional: false }],
-  },
-  {
-    name: "buildGenerationPrompt",
-    content: readFileSync(join(promptsDir, "generate-exercises.md"), "utf-8"),
-    vars: [
-      { name: "requirements", optional: false },
-      { name: "approvedPlan", optional: false },
-      { name: "exerciseItem", optional: false },
-    ],
-  },
   {
     name: "buildAutoTagPrompt",
     content: readFileSync(

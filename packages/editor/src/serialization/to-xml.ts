@@ -101,11 +101,26 @@ function serializeNode(
 }
 
 /**
+ * Escape special XML characters in text content
+ */
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+/**
  * Serialize a paragraph, handling inline blank nodes
  */
 function serializeParagraphWithBlanks(node: JSONContent): string {
+  const attrs = node.attrs || {};
+  const idAttr = attrs.id ? ` id="${escapeXml(attrs.id)}"` : "";
+
   if (!node.content) {
-    return "<p></p>";
+    return `<p${idAttr}></p>`;
   }
 
   // Process inline content, replacing blank nodes with their XML
@@ -122,7 +137,7 @@ function serializeParagraphWithBlanks(node: JSONContent): string {
     })
     .join("");
 
-  return `<p>${content}</p>`;
+  return `<p${idAttr}>${content}</p>`;
 }
 
 /**

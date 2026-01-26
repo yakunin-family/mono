@@ -28,11 +28,6 @@ export type {
 export { DocumentContext } from "./extensions/DocumentContext";
 export type { ExerciseAttributes } from "./extensions/Exercise";
 export { Exercise } from "./extensions/Exercise";
-export type {
-  ExerciseGenerationAttributes,
-  ExerciseGenerationStorage,
-} from "./extensions/ExerciseGeneration";
-export { ExerciseGeneration } from "./extensions/ExerciseGeneration";
 export type { GroupAttributes } from "./extensions/Group";
 export { Group } from "./extensions/Group";
 export type { MarqueeSelectionStorage } from "./extensions/MarqueeSelection";
@@ -69,3 +64,26 @@ export {
   validateXML,
   xmlToJSON,
 } from "./serialization";
+
+// Document Operations (for AI-driven editing)
+export type {
+  DocumentOperation,
+  BlockNode,
+  InlineContent,
+  ListItem,
+  MarkType,
+  WrapperType,
+  OperationResult,
+  OperationSuccess,
+  OperationFailure,
+} from "./operations";
+export {
+  DocumentOperationSchema,
+  DocumentOperationsSchema,
+  BlockNodeSchema,
+  InlineContentSchema,
+  applyOperations,
+  applySingleOperation,
+  findNodeById,
+  findNodesByIds,
+} from "./operations";

@@ -40,7 +40,7 @@ interface ExerciseNodeViewProps extends NodeViewProps {
 export function ExerciseView(props: NodeViewProps) {
   const { node, getPos, editor, selected } = props as ExerciseNodeViewProps;
   const exerciseNumber = node.attrs.index ?? 1;
-  const instanceId = node.attrs.instanceId;
+  const exerciseId = node.attrs.id;
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -59,7 +59,7 @@ export function ExerciseView(props: NodeViewProps) {
 
   const isStudentMode = mode === "student";
   const isTeacherMode = mode === "teacher-editor" || mode === "teacher-lesson";
-  const homeworkEnabled = !!spaceId && !!documentId && !!instanceId;
+  const homeworkEnabled = !!spaceId && !!documentId && !!exerciseId;
 
   const {
     homeworkStatus,
@@ -68,7 +68,7 @@ export function ExerciseView(props: NodeViewProps) {
     completeHomework,
     uncompleteHomework,
     isCompletionToggling,
-  } = useHomework(documentId, instanceId, homeworkEnabled);
+  } = useHomework(documentId, exerciseId, homeworkEnabled);
 
   const isHomework = !!homeworkStatus?.homeworkId;
   const isCompleted = homeworkStatus?.isCompleted ?? false;
@@ -150,10 +150,7 @@ export function ExerciseView(props: NodeViewProps) {
   };
 
   return (
-    <NodeViewWrapper
-      className="my-4 block group"
-      data-exercise-instance-id={instanceId}
-    >
+    <NodeViewWrapper className="my-4 block group" data-exercise-id={exerciseId}>
       <div
         className={`rounded-lg border bg-accent/5 p-4 transition-all hover:shadow-sm ${getBorderClass()}`}
       >

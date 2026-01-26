@@ -54,6 +54,7 @@ import {
   ChatSidebar,
   ChatSidebarTrigger,
 } from "@/spaces/document-editor/chat-sidebar";
+import type { ThreadInfo } from "@/spaces/document-editor/thread-selector";
 import { useChat } from "@/spaces/document-editor/use-chat";
 
 export const Route = createFileRoute(
@@ -82,6 +83,9 @@ function LessonEditorPage() {
     return false;
   });
 
+  // Track active thread - null means "new conversation" mode
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+
   // Track editor readiness - we need state because ref updates don't trigger re-renders
   const [editorReady, setEditorReady] = useState(false);
   const editor = editorReady ? (editorRef.current?.getEditor() ?? null) : null;
@@ -103,15 +107,88 @@ function LessonEditorPage() {
     return () => clearInterval(interval);
   }, [editorReady]);
 
+  // Query threads for this document
+  const { data: threadsData } = useQuery({
+    ...convexQuery(api.chat.listThreadsForDocument, {
+      documentId: lessonId as Id<"document">,
+    }),
+    enabled: !!lessonId,
+  });
+
+  // Transform to ThreadInfo format
+  const threads: ThreadInfo[] = useMemo(
+    () =>
+      (threadsData ?? []).map((t) => ({
+        threadId: t.threadId,
+        documentId: t.documentId,
+        createdAt: t.createdAt,
+        preview: t.preview,
+        messageCount: t.messageCount,
+      })),
+    [threadsData],
+  );
+
+  // Delete thread mutation
+  const deleteThreadMutation = useMutation({
+    mutationFn: async (threadId: string) => {
+      await convex.mutation(api.chat.deleteThread, { threadId });
+    },
+    onSuccess: (_, deletedThreadId) => {
+      // If we deleted the active thread, switch to new conversation
+      if (activeThreadId === deletedThreadId) {
+        setActiveThreadId(null);
+      }
+    },
+  });
+
   // Chat with AI backend
   const {
     messages: chatMessages,
+    operationResults,
+    editResults,
     isLoading: isChatLoading,
-    sendMessage: handleSendMessage,
+    sendMessage,
+    sendFirstMessage,
+    cancelGeneration,
   } = useChat({
     documentId: lessonId,
     editor,
+    threadId: activeThreadId,
   });
+
+  // Handle sending message - creates thread if needed
+  const handleSendMessage = useCallback(
+    async (
+      content: string,
+      attachments?: { fileId: string; filename: string; mimeType: string }[],
+    ) => {
+      if (activeThreadId) {
+        // Send to existing thread
+        sendMessage(content, attachments);
+      } else {
+        // Create new thread and send first message
+        const newThreadId = await sendFirstMessage(content, attachments);
+        setActiveThreadId(newThreadId);
+      }
+    },
+    [activeThreadId, sendMessage, sendFirstMessage],
+  );
+
+  // Thread management handlers
+  const handleSelectThread = useCallback((threadId: string) => {
+    setActiveThreadId(threadId);
+  }, []);
+
+  const handleNewThread = useCallback(() => {
+    setActiveThreadId(null);
+  }, []);
+
+  const handleDeleteThread = useCallback(
+    (threadId: string) => {
+      deleteThreadMutation.mutate(threadId);
+    },
+    [deleteThreadMutation],
+  );
 
   // Persist chat sidebar state to localStorage
   useEffect(() => {
@@ -153,11 +230,6 @@ function LessonEditorPage() {
     },
     onSuccess: () => {
       setIsTitleDirty(false);
-      queryClient.invalidateQueries({
-        queryKey: convexQuery(api.documents.getLesson, {
-          documentId: lessonId as Id<"document">,
-        }).queryKey,
-      });
     },
   });
 
@@ -196,9 +268,6 @@ function LessonEditorPage() {
     }) => {
       await convex.mutation(api.library.saveExercise, { title, content });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["library"] });
-    },
   });
 
   const saveGroupMutation = useMutation({
@@ -214,9 +283,6 @@ function LessonEditorPage() {
         content,
         type: "group",
       });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["library"] });
     },
   });
 
@@ -248,7 +314,6 @@ function LessonEditorPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["library"] });
       setSaveTemplateModalOpen(false);
     },
   });
@@ -268,21 +333,6 @@ function LessonEditorPage() {
     if (isTitleDirty && title !== lessonQuery.data?.title) {
       updateLessonMutation.mutate(title);
     }
-  };
-
-  const handleStartExerciseGeneration = async (
-    promptText: string,
-    model: string,
-  ): Promise<{ sessionId: string }> => {
-    const result = await convex.mutation(
-      api.exerciseGeneration.startExerciseGeneration,
-      {
-        documentId: lessonId as Id<"document">,
-        promptText,
-        model,
-      },
-    );
-    return { sessionId: result.sessionId };
   };
 
   const handleSaveExerciseToBank = async (title: string, content: string) => {
@@ -472,7 +522,6 @@ function LessonEditorPage() {
               }
               convexClient={convex}
               queryClient={queryClient}
-              onStartExerciseGeneration={handleStartExerciseGeneration}
               onSaveExerciseToBank={handleSaveExerciseToBank}
               onSaveGroupToLibrary={handleSaveGroupToLibrary}
               libraryItems={libraryQuery.data}
@@ -523,9 +572,28 @@ function LessonEditorPage() {
           "w-0": !chatSidebarOpen,
         })}
       >
-        <ChatSidebar onToggle={toggleChatSidebar}>
-          <ChatMessages messages={chatMessages} isLoading={isChatLoading} />
-          <ChatInput onSend={handleSendMessage} isLoading={isChatLoading} />
+        <ChatSidebar
+          onToggle={toggleChatSidebar}
+          threads={threads}
+          activeThreadId={activeThreadId}
+          onSelectThread={handleSelectThread}
+          onNewThread={handleNewThread}
+          onDeleteThread={handleDeleteThread}
+          isLoadingThreads={threadsData === undefined}
+        >
+          <div className="relative flex-1 overflow-hidden">
+            <ChatMessages
+              messages={chatMessages}
+              operationResults={operationResults}
+              editResults={editResults}
+              isLoading={isChatLoading}
+            />
+          </div>
+          <ChatInput
+            onSend={handleSendMessage}
+            onCancel={cancelGeneration}
+            isLoading={isChatLoading}
+          />
         </ChatSidebar>
       </StandalonePageShell>
     </div>

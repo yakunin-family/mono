@@ -1,6 +1,6 @@
 import { api, type Id } from "@app/backend";
 import { Badge, Button, Card, CardContent } from "@package/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useConvex } from "convex/react";
 import { CheckIcon, CopyIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -40,16 +40,12 @@ export function InvitesList({ invites }: InvitesListProps) {
 function InviteCard({ invite }: { invite: Invite }) {
   const convex = useConvex();
   const [copied, setCopied] = useState(false);
-  const queryClient = useQueryClient();
 
   const revokeMutation = useMutation({
     mutationFn: async () => {
       await convex.mutation(api.spaceInvites.revokeInvite, {
         inviteId: invite._id,
       });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["spaceInvites"] });
     },
   });
 

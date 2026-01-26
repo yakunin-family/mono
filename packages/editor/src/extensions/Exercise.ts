@@ -5,14 +5,14 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { ExerciseView } from "./ExerciseView";
 
 export interface ExerciseAttributes {
-  instanceId: string;
+  id: string;
   index: number;
 }
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     exercise: {
-      insertExercise: (attributes?: { instanceId?: string }) => ReturnType;
+      insertExercise: (attributes?: { id?: string }) => ReturnType;
       updateExercise: (attributes: Partial<ExerciseAttributes>) => ReturnType;
     };
   }
@@ -31,14 +31,12 @@ export const Exercise = Node.create({
 
   addAttributes() {
     return {
-      instanceId: {
+      id: {
         default: null,
-        parseHTML: (element) => element.getAttribute("data-instance-id"),
+        parseHTML: (element) => element.getAttribute("data-id"),
         renderHTML: (attributes) => {
-          if (!attributes.instanceId) return {};
-          return {
-            "data-instance-id": attributes.instanceId,
-          };
+          if (!attributes.id) return {};
+          return { "data-id": attributes.id };
         },
       },
       index: {
@@ -77,16 +75,20 @@ export const Exercise = Node.create({
 
   addCommands() {
     return {
-      insertExercise: (attributes) => ({ commands }) => {
-        return commands.insertContent({
-          type: this.name,
-          attrs: attributes,
-          content: [{ type: "paragraph" }],
-        });
-      },
-      updateExercise: (attributes) => ({ commands }) => {
-        return commands.updateAttributes(this.name, attributes);
-      },
+      insertExercise:
+        (attributes) =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: attributes,
+            content: [{ type: "paragraph" }],
+          });
+        },
+      updateExercise:
+        (attributes) =>
+        ({ commands }) => {
+          return commands.updateAttributes(this.name, attributes);
+        },
     };
   },
 

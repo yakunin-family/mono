@@ -5,7 +5,7 @@ import { BlankView } from "./BlankView";
 import type { EditorMode } from "@/types";
 
 export interface BlankAttributes {
-  blankIndex: number;
+  id: string;
   correctAnswer: string;
   alternativeAnswers: string[];
   hint: string | null;
@@ -33,9 +33,6 @@ export const Blank = Node.create({
 
   addAttributes() {
     return {
-      blankIndex: {
-        default: 0,
-      },
       correctAnswer: {
         default: "",
       },

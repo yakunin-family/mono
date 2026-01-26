@@ -36,6 +36,73 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Never use plain HTML tables or other table libraries for data display
    - Leverage TanStack Table's built-in sorting, filtering, and pagination features
 
+7. **TanStack Query for All Convex Data Fetching** - Always use TanStack Query wrappers (`@convex-dev/react-query`) for Convex queries and mutations in all frontend code (apps and packages).
+
+   **Why**: Convex uses WebSocket subscriptions for real-time data. When data changes on the server, Convex automatically pushes updates to all subscribed clients — no polling, no manual cache invalidation needed.
+
+   **For queries**, use `convexQuery` with TanStack Query's `useQuery`:
+
+   ```typescript
+   // ✅ CORRECT
+   import { convexQuery } from "@convex-dev/react-query";
+   import { useQuery } from "@tanstack/react-query";
+
+   const { data, isPending, error } = useQuery(
+     convexQuery(api.documents.getLesson, { lessonId }),
+   );
+
+   // ❌ WRONG - Don't use native Convex useQuery hook
+   import { useQuery } from "convex/react";
+   const data = useQuery(api.documents.getLesson, { lessonId });
+   ```
+
+   **For mutations**, use `useConvexMutation` with TanStack Query's `useMutation`:
+
+   ```typescript
+   // ✅ CORRECT
+   import { useConvexMutation } from "@convex-dev/react-query";
+   import { useMutation } from "@tanstack/react-query";
+
+   const { mutate, isPending } = useMutation({
+     mutationFn: useConvexMutation(api.documents.updateLesson),
+   });
+   ```
+
+   **Alternative mutation pattern** (also acceptable) — using `useConvex()` for the client:
+
+   ```typescript
+   // ✅ ALSO CORRECT - useful when you need more control
+   import { useConvex } from "convex/react";
+   import { useMutation } from "@tanstack/react-query";
+
+   const convex = useConvex();
+   const mutation = useMutation({
+     mutationFn: async (args) => {
+       return await convex.mutation(api.documents.updateLesson, args);
+     },
+   });
+   ```
+
+   **NEVER manually invalidate queries**:
+
+   ```typescript
+   // ❌ WRONG - Convex auto-invalidates affected queries
+   onSuccess: () => {
+     queryClient.invalidateQueries({ queryKey: ["documents"] });
+   };
+
+   // ✅ CORRECT - Just let Convex handle it
+   onSuccess: () => {
+     // No invalidation needed - Convex pushes updates automatically
+   };
+   ```
+
+   **Key behaviors to understand**:
+   - `isPending` is only `true` during initial subscription setup
+   - When Convex pushes updates, `data` is replaced directly (no loading state flicker)
+   - `isStale` is always `false` (data is never stale with real-time subscriptions)
+   - Retry/refetch options are ignored (Convex handles retries over WebSocket)
+
 ## Repository Structure
 
 This is a **pnpm monorepo** managed by **Turborepo** with the following workspace structure:
@@ -382,7 +449,6 @@ export function MyNodeView(props: NodeViewProps) {
 
 - `packages/editor/src/extensions/Blank.ts` - Inline atomic node with storage
 - `packages/editor/src/extensions/Exercise.ts` - Block node with content
-- `packages/editor/src/extensions/ExerciseGeneration.ts` - Storage pattern with module augmentation
 
 ### UI Package (`packages/ui`)
 

@@ -4,8 +4,8 @@
 
 | Metric | Count |
 |--------|-------|
-| **Total Tasks** | 35 |
-| ├─ Todo | 35 |
+| **Total Tasks** | 36 |
+| ├─ Todo | 36 |
 | ├─ In Progress | 0 |
 | ├─ Blocked | 0 |
 | └─ Done | 0 |
@@ -63,6 +63,7 @@ _No recently completed items_
 | Task | Initiative |
 |------|------------|
 | [[t-75] Add Error Boundaries To Critical Components](../initiatives/[i-10]-react-best-practices-teacher-app/[t-75]-add-error-boundaries-to-critical-components.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
+| [[t-111] Ai Chat Stops After Tool Calls](../tasks/[t-111]-ai-chat-stops-after-tool-calls.md) | — |
 | [[t-85] Audit And Remove Legacy Modal Exports](../initiatives/[i-11]-editor-performance-optimization/[t-85]-audit-and-remove-legacy-modal-exports.md) | [[i-11] Editor Performance Optimization](../initiatives/[i-11]-editor-performance-optimization/README.md) |
 | [[t-77] Cache Date Formatters At Module Scope](../initiatives/[i-10]-react-best-practices-teacher-app/[t-77]-cache-date-formatters-at-module-scope.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
 | [[t-61] Check Ai Tooling Hypothesis](../tasks/[t-61]-check-ai-tooling-hypothesis.md) | — |

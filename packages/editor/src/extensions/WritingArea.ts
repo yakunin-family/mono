@@ -17,8 +17,11 @@ export const WritingArea = Node.create({
 
   addAttributes() {
     return {
+      // Note: id attribute is handled by UniqueID extension
+      // We keep parseHTML for backwards compat but don't need renderHTML
+      // since UniqueID renders it as data-id automatically
       id: {
-        default: "",
+        default: null,
         parseHTML: (element) => element.getAttribute("data-id"),
         renderHTML: (attributes) => {
           if (!attributes.id) return {};
@@ -38,7 +41,8 @@ export const WritingArea = Node.create({
       placeholder: {
         default: "Write your answer here...",
         parseHTML: (element) =>
-          element.getAttribute("data-placeholder") || "Write your answer here...",
+          element.getAttribute("data-placeholder") ||
+          "Write your answer here...",
         renderHTML: (attributes) => {
           if (!attributes.placeholder) return {};
           return { "data-placeholder": attributes.placeholder };

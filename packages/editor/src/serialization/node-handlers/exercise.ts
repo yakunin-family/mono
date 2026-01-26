@@ -12,6 +12,11 @@ export function serializeBlank(
   const attrs = node.attrs || {};
   const parts: string[] = ["blank"];
 
+  // Include id if present
+  if (attrs.id) {
+    parts.push(`id="${escapeXml(attrs.id)}"`);
+  }
+
   // Required: answer
   const answer = attrs.correctAnswer || "";
   parts.push(`answer="${escapeXml(answer)}"`);
@@ -44,9 +49,9 @@ export function serializeExercise(
   const attrs = node.attrs || {};
   const parts: string[] = ["exercise"];
 
-  // Include id if present (instanceId)
-  if (attrs.instanceId) {
-    parts.push(`id="${escapeXml(attrs.instanceId)}"`);
+  // Include id if present
+  if (attrs.id) {
+    parts.push(`id="${escapeXml(attrs.id)}"`);
   }
 
   // Note: index is auto-calculated, not serialized
@@ -95,7 +100,7 @@ export function parseExercise(
   return {
     type: "exercise",
     attrs: {
-      instanceId: id || null,
+      id: id || null,
       // index will be auto-calculated by Tiptap
     },
     content: parseChildren(element),

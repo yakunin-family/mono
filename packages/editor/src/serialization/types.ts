@@ -146,7 +146,6 @@ export const TAG_TO_MARK: Record<string, string> = {
  * Nodes that should be excluded from serialization
  */
 export const EXCLUDED_NODES = [
-  "exerciseGeneration",
   "table",
   "tableRow",
   "tableHeader",

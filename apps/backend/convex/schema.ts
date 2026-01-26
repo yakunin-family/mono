@@ -101,91 +101,6 @@ const aiGeneration = defineTable({
   .index("by_streamId", ["streamId"]);
 export type AIGeneration = Infer<typeof schemas.tables.aiGeneration.validator>;
 
-const exerciseGenerationSession = defineTable({
-  documentId: v.id("document"),
-  userId: v.string(), // Better Auth user ID (who requested)
-  initialPrompt: v.string(), // User's original prompt
-  model: v.string(), // AI model to use
-  currentStep: v.union(
-    v.literal("validating"),
-    v.literal("awaiting_clarification"),
-    v.literal("planning"),
-    v.literal("awaiting_approval"),
-    v.literal("generating"),
-    v.literal("completed"),
-    v.literal("failed"),
-  ),
-  // Extracted requirements (populated after validation)
-  requirements: v.optional(
-    v.object({
-      targetLanguage: v.string(),
-      level: v.string(), // CEFR level
-      nativeLanguage: v.optional(v.string()),
-      topic: v.optional(v.string()),
-      duration: v.optional(v.number()),
-      exerciseTypes: v.array(v.string()),
-      additionalContext: v.optional(v.string()),
-    }),
-  ),
-  // Exercise plan (populated after planning step)
-  plan: v.optional(
-    v.object({
-      exercises: v.array(
-        v.object({
-          id: v.string(),
-          type: v.string(),
-          title: v.string(),
-          description: v.string(),
-          estimatedDuration: v.optional(v.number()),
-          parameters: v.optional(v.any()), // Exercise-specific parameters
-          dependencies: v.optional(v.array(v.string())), // IDs of prerequisite exercises
-        }),
-      ),
-      totalDuration: v.optional(v.number()),
-      sequenceRationale: v.optional(v.string()),
-      learningObjectives: v.optional(v.array(v.string())),
-      metadata: v.optional(v.any()), // Additional metadata
-    }),
-  ),
-  tokensUsed: v.optional(v.number()),
-  errorMessage: v.optional(v.string()),
-  createdAt: v.number(),
-  updatedAt: v.number(),
-})
-  .index("by_document", ["documentId"])
-  .index("by_user_date", ["userId", "createdAt"]);
-export type ExerciseGenerationSession = Infer<
-  typeof schemas.tables.exerciseGenerationSession.validator
->;
-
-const exerciseGenerationStep = defineTable({
-  sessionId: v.id("exerciseGenerationSession"),
-  stepType: v.union(
-    v.literal("validation"),
-    v.literal("planning"),
-    v.literal("generation"),
-  ),
-  status: v.union(
-    v.literal("pending"),
-    v.literal("processing"),
-    v.literal("completed"),
-    v.literal("failed"),
-  ),
-  // Input to the step
-  input: v.string(), // JSON string of input data
-  // Output from the step
-  output: v.optional(v.string()), // JSON string of structured output
-  tokensUsed: v.optional(v.number()),
-  errorMessage: v.optional(v.string()),
-  createdAt: v.number(),
-  completedAt: v.optional(v.number()),
-})
-  .index("by_session", ["sessionId"])
-  .index("by_session_and_type", ["sessionId", "stepType"]);
-export type ExerciseGenerationStep = Infer<
-  typeof schemas.tables.exerciseGenerationStep.validator
->;
-
 export const libraryItemTypeValidator = v.union(
   v.literal("exercise"),
   v.literal("template"),
@@ -279,8 +194,6 @@ const schemas = defineSchema({
   homeworkItems,
   document,
   aiGeneration,
-  exerciseGenerationSession,
-  exerciseGenerationStep,
   library,
   chatSessions,
   chatMessages,

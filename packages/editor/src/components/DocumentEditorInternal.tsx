@@ -8,6 +8,7 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableRow } from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
+import { isChangeOrigin } from "@tiptap/extension-collaboration";
 import UniqueID from "@tiptap/extension-unique-id";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -33,7 +34,6 @@ import { BlockHover } from "../extensions/BlockHover";
 import { BlockSelectionCommands } from "../extensions/block-selection-commands";
 import { DocumentContext } from "../extensions/DocumentContext";
 import { Exercise } from "../extensions/Exercise";
-import { ExerciseGeneration } from "../extensions/ExerciseGeneration";
 import { Group } from "../extensions/Group";
 import { MarqueeSelection } from "../extensions/MarqueeSelection";
 import { NoteBlock } from "../extensions/NoteBlock";
@@ -57,10 +57,6 @@ interface DocumentEditorInternalProps {
   documentId: string;
   spaceId?: string;
   convexClient?: ConvexReactClient;
-  onStartExerciseGeneration?: (
-    promptText: string,
-    model: string,
-  ) => Promise<{ sessionId: string }>;
   onSaveExerciseToBank?: (title: string, content: string) => Promise<void>;
   onSaveGroupToLibrary?: (title: string, content: string) => Promise<void>;
   libraryItems?: LibraryItemWithMetadata[];
@@ -81,7 +77,6 @@ export function DocumentEditorInternal({
   documentId,
   spaceId,
   convexClient,
-  onStartExerciseGeneration,
   onSaveExerciseToBank,
   onSaveGroupToLibrary,
   libraryItems = [],
@@ -115,13 +110,43 @@ export function DocumentEditorInternal({
       Blank,
       Exercise,
       UniqueID.configure({
-        types: ["exercise"],
-        attributeName: "instanceId",
+        types: [
+          // Tiptap built-in blocks
+          "paragraph",
+          "heading",
+          "bulletList",
+          "orderedList",
+          "listItem",
+          "blockquote",
+          "codeBlock",
+          "horizontalRule",
+          "table",
+          "tableRow",
+          "tableCell",
+          "tableHeader",
+          // Custom blocks
+          "exercise",
+          "group",
+          "writingArea",
+          "noteBlock",
+          // Inline nodes
+          "blank",
+        ],
+        attributeName: "id",
+        generateID: () => {
+          const chars =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+          let id = "";
+          for (let i = 0; i < 6; i++) {
+            id += chars[Math.floor(Math.random() * chars.length)];
+          }
+          return id;
+        },
+        filterTransaction: (transaction) => !isChangeOrigin(transaction),
       }),
       Group,
       WritingArea,
       NoteBlock,
-      ExerciseGeneration,
       SlashCommand.configure({
         canEdit,
       }),
@@ -154,16 +179,6 @@ export function DocumentEditorInternal({
       onEditorReady?.(editor);
     }
   }, [editor, onEditorReady]);
-
-  // Set exercise generation callback and Convex client in editor storage
-  useEffect(() => {
-    if (editor) {
-      editor.storage.exerciseGeneration = {
-        startGeneration: onStartExerciseGeneration,
-        convexClient: convexClient,
-      };
-    }
-  }, [editor, onStartExerciseGeneration, convexClient]);
 
   // Store mode in editor storage for backward compatibility
   useEffect(() => {
@@ -214,18 +229,16 @@ export function DocumentEditorInternal({
 
         if (item.type === "exercise") {
           // Wrap exercises in an exercise node
-          // UniqueID extension will automatically generate instanceId
+          // UniqueID extension will automatically generate id
           nodes.push({
             type: "exercise",
             content,
           });
         } else if (item.type === "group") {
           // Wrap groups in a group node
+          // UniqueID extension will automatically generate id
           nodes.push({
             type: "group",
-            attrs: {
-              id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            },
             content,
           });
         }
