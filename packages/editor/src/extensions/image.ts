@@ -1,4 +1,5 @@
 import { mergeAttributes, Node } from "@tiptap/core";
+import { Plugin } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { ImageView } from "./ImageView";
@@ -84,5 +85,44 @@ export const Image = Node.create({
           });
         },
     };
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          handlePaste: (view, event) => {
+            const mode = this.editor.storage.editorMode;
+            if (mode !== "teacher-editor") {
+              return false;
+            }
+
+            const files = event.clipboardData?.files;
+            if (!files || files.length === 0) {
+              return false;
+            }
+
+            let hasImage = false;
+            for (let i = 0; i < files.length; i++) {
+              const file = files.item(i);
+              if (!file) continue;
+
+              const isImage = /^image\/(png|jpeg|gif|webp)$/.test(file.type);
+
+              if (isImage) {
+                hasImage = true;
+                window.dispatchEvent(
+                  new CustomEvent("uploadImage", {
+                    detail: { file, editor: this.editor, range: null },
+                  }),
+                );
+              }
+            }
+
+            return hasImage;
+          },
+        },
+      }),
+    ];
   },
 });

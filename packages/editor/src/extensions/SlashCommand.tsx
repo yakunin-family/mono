@@ -161,21 +161,6 @@ export const SlashCommand = Extension.create({
               },
             },
             {
-              title: "Image",
-              icon: Image,
-              command: ({ editor, range }) => {
-                const url = prompt("Enter image URL:");
-                if (url) {
-                  editor
-                    .chain()
-                    .focus()
-                    .deleteRange(range)
-                    .setImage({ src: url })
-                    .run();
-                }
-              },
-            },
-            {
               title: "Exercise",
               icon: FileText,
               command: ({ editor, range }) => {
@@ -192,6 +177,31 @@ export const SlashCommand = Extension.create({
           const editorMode = editor.storage.editorMode;
           if (editorMode === "teacher-editor") {
             items.push(
+              {
+                title: "Image",
+                icon: Image,
+                command: ({ editor, range }) => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = "image/*";
+                  input.onchange = async (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (!file) return;
+
+                    try {
+                      // Dispatch custom event for the app to handle upload
+                      window.dispatchEvent(
+                        new CustomEvent("uploadImage", {
+                          detail: { file, editor, range },
+                        }),
+                      );
+                    } catch (error) {
+                      console.error("Image upload failed:", error);
+                    }
+                  };
+                  input.click();
+                },
+              },
               {
                 title: "Blank",
                 icon: FormInput,
