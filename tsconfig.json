@@ -6,6 +6,8 @@
     { "path": "./packages/editor" },
     { "path": "./apps/teacher" },
     { "path": "./apps/student" },
+    { "path": "./apps/www" },
+    { "path": "./apps/collab-server" },
     { "path": "./tooling/project-management" }
   ]
 }

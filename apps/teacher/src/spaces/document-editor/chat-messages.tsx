@@ -8,8 +8,9 @@ import {
   SparklesIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
+import { ChatMarkdown } from "./chat-markdown";
 import type {
   ApplyAIResponseResult,
   EditResultsMap,
@@ -136,7 +137,11 @@ function MessagePart({
             "bg-muted": !isUser,
           })}
         >
-          <p className="whitespace-pre-wrap">{part.text}</p>
+          {isUser ? (
+            <p className="whitespace-pre-wrap">{part.text}</p>
+          ) : (
+            <ChatMarkdown content={part.text} />
+          )}
         </div>
       );
 
@@ -255,7 +260,7 @@ function FileAttachment({ part, isUser }: FileAttachmentProps) {
 
 interface PatchDocumentOutput {
   success: boolean;
-  operations?: DocumentOperation[];
+  operationsJson?: string;
   summary?: string;
   error?: string;
 }
@@ -335,11 +340,24 @@ function ToolCallPart({
     return getStreamingLabel(toolName);
   };
 
-  // Get operations for patchDocument tool
-  const operations =
-    toolName === "patchDocument" && output && "operations" in output
-      ? output.operations
-      : undefined;
+  // Get operations for patchDocument tool (parse from JSON string to avoid Convex nesting limits)
+  const operations = useMemo((): DocumentOperation[] | undefined => {
+    if (
+      toolName !== "patchDocument" ||
+      !output ||
+      !("operationsJson" in output)
+    ) {
+      return undefined;
+    }
+    const json = output.operationsJson;
+    if (typeof json !== "string") return undefined;
+    try {
+      return JSON.parse(json) as DocumentOperation[];
+    } catch {
+      console.error("Failed to parse operationsJson in chat display");
+      return undefined;
+    }
+  }, [toolName, output]);
 
   // Determine if we should show operation details
   const showOperationDetails =

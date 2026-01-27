@@ -3,7 +3,7 @@ import { Badge, Button, Card, CardContent } from "@package/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useConvex } from "convex/react";
 import { CheckIcon, CopyIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Invite {
   _id: Id<"spaceInvites">;
@@ -55,8 +55,13 @@ function InviteCard({ invite }: { invite: Invite }) {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const handleRevoke = () => {
     if (confirm("Are you sure you want to revoke this invite?")) {

@@ -1,9 +1,9 @@
 import { api } from "@app/backend";
 import { Button } from "@package/ui";
 import { Badge, Card, CardContent } from "@package/ui";
+import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useConvex } from "convex/react";
 import { PlusIcon, UsersIcon } from "lucide-react";
 import {
   BookOpenIcon,
@@ -62,14 +62,9 @@ interface SpacesListProps {
 }
 
 export function SpacesList({ onInviteClick }: SpacesListProps) {
-  const convex = useConvex();
-
-  const spacesQuery = useQuery({
-    queryKey: ["spaces"],
-    queryFn: async () => {
-      return await convex.query(api.spaces.getMySpacesAsTeacher, {});
-    },
-  });
+  const spacesQuery = useQuery(
+    convexQuery(api.spaces.getMySpacesAsTeacher, {}),
+  );
 
   if (spacesQuery.isLoading) {
     return (

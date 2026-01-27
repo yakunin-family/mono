@@ -4,8 +4,8 @@
 
 | Metric | Count |
 |--------|-------|
-| **Total Tasks** | 38 |
-| ├─ Todo | 38 |
+| **Total Tasks** | 37 |
+| ├─ Todo | 37 |
 | ├─ In Progress | 0 |
 | ├─ Blocked | 0 |
 | └─ Done | 0 |
@@ -73,7 +73,6 @@ _No recently completed items_
 | [[t-74] Fix Column Helper Reference Stability](../initiatives/[i-10]-react-best-practices-teacher-app/[t-74]-fix-column-helper-reference-stability.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
 | [[t-76] Migrate Forms To Tanstack Form](../initiatives/[i-10]-react-best-practices-teacher-app/[t-76]-migrate-forms-to-tanstack-form.md) | [[i-10] React Best Practices Teacher App](../initiatives/[i-10]-react-best-practices-teacher-app/README.md) |
 | [[t-86] Replace Window Event With Editor Command](../initiatives/[i-11]-editor-performance-optimization/[t-86]-replace-window-event-with-editor-command.md) | [[i-11] Editor Performance Optimization](../initiatives/[i-11]-editor-performance-optimization/README.md) |
-| [[t-112] Support Markdown In Ai Responses](../tasks/[t-112]-support-markdown-in-ai-responses.md) | — |
 | [[t-109] Tool Call Collapse Expand](../initiatives/[i-12]-transparent-ai-agent-for-document-editing/[t-109]-tool-call-collapse-expand.md) | [[i-12] Transparent Ai Agent For Document Editing](../initiatives/[i-12]-transparent-ai-agent-for-document-editing/README.md) |
 
 ### Low

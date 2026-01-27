@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@package/ui";
+import { convexQuery } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
@@ -69,12 +70,7 @@ function LibraryPage() {
   const [levelFilter, setLevelFilter] = useState<LevelFilter>("all");
 
   // Fetch all items (we filter client-side for flexibility)
-  const libraryQuery = useQuery({
-    queryKey: ["library"],
-    queryFn: async () => {
-      return await convex.query(api.library.getMyItems, {});
-    },
-  });
+  const libraryQuery = useQuery(convexQuery(api.library.getMyItems, {}));
 
   const deleteMutation = useMutation({
     mutationFn: async (itemId: string) => {

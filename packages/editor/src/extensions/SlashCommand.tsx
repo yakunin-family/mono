@@ -17,14 +17,22 @@ import {
   NotebookPen,
   Library,
 } from "lucide-react";
-import { SlashCommandMenu } from "../components/SlashCommandMenu";
+import {
+  SlashCommandMenu,
+  type SlashCommandMenuRef,
+} from "../components/SlashCommandMenu";
 import type {} from "@tiptap/extension-table";
 import type {} from "@tiptap/extension-image";
+import type { Range } from "@tiptap/core";
+import type {
+  SuggestionProps,
+  SuggestionKeyDownProps,
+} from "@tiptap/suggestion";
 
 export interface CommandItem {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  command: (props: { editor: Editor; range: any }) => void;
+  command: (props: { editor: Editor; range: Range }) => void;
 }
 
 export const SlashCommand = Extension.create({
@@ -36,7 +44,15 @@ export const SlashCommand = Extension.create({
       suggestion: {
         char: "/",
         startOfLine: false,
-        command: ({ editor, range, props }: any) => {
+        command: ({
+          editor,
+          range,
+          props,
+        }: {
+          editor: Editor;
+          range: Range;
+          props: CommandItem;
+        }) => {
           props.command({ editor, range });
         },
       },
@@ -231,11 +247,11 @@ export const SlashCommand = Extension.create({
           );
         },
         render: () => {
-          let component: ReactRenderer<any>;
+          let component: ReactRenderer<SlashCommandMenuRef>;
           let popup: HTMLElement;
 
           return {
-            onStart: (props: any) => {
+            onStart: (props: SuggestionProps<CommandItem>) => {
               component = new ReactRenderer(SlashCommandMenu, {
                 props,
                 editor: props.editor,
@@ -269,7 +285,7 @@ export const SlashCommand = Extension.create({
                 });
               }
             },
-            onUpdate(props: any) {
+            onUpdate(props: SuggestionProps<CommandItem>) {
               component.updateProps(props);
 
               if (!props.clientRect) {
@@ -292,12 +308,12 @@ export const SlashCommand = Extension.create({
                 });
               }
             },
-            onKeyDown(props: any) {
+            onKeyDown(props: SuggestionKeyDownProps) {
               if (props.event.key === "Escape") {
                 return true;
               }
 
-              return component.ref?.onKeyDown(props);
+              return component.ref?.onKeyDown?.(props);
             },
             onExit() {
               if (popup && popup.parentNode) {

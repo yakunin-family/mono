@@ -86,7 +86,7 @@ export const uploadChatFile = authedAction({
       ctx,
       components.agent,
       new Blob([args.bytes], { type: args.mimeType }),
-      args.filename,
+      { filename: args.filename },
     );
 
     // Get a URL for the file (for preview purposes)

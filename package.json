@@ -1,11 +1,6 @@
 {
   "name": "@mono/root",
   "private": true,
-  "pnpm": {
-    "patchedDependencies": {
-      "@convex-dev/agent@0.5.0-alpha.1": "patches/@convex-dev__agent@0.5.0-alpha.1.patch"
-    }
-  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",

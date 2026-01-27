@@ -10,9 +10,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@package/ui";
+import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useConvex } from "convex/react";
 import { ClockIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -26,17 +26,14 @@ export const Route = createFileRoute("/_protected/_app/")({
 });
 
 function DashboardPage() {
-  const convex = useConvex();
   const [showCreateInvite, setShowCreateInvite] = useState(false);
 
-  const pendingInvitesQuery = useQuery({
-    queryKey: ["spaceInvites"],
-    queryFn: async () => {
-      const result = await convex.query(api.spaceInvites.getMyInvites, {});
+  const allInvitesQuery = useQuery(
+    convexQuery(api.spaceInvites.getMyInvites, {}),
+  );
 
-      return result.filter((invite) => invite.isPending);
-    },
-  });
+  const pendingInvites =
+    allInvitesQuery.data?.filter((invite) => invite.isPending) ?? [];
 
   return (
     <>
@@ -50,28 +47,25 @@ function DashboardPage() {
             </BreadcrumbList>
           </Breadcrumb>
           <div className="flex gap-2">
-            {pendingInvitesQuery.isSuccess &&
-              pendingInvitesQuery.data.length > 0 && (
-                <Popover>
-                  <PopoverTrigger
-                    render={
-                      <Button variant="ghost">
-                        <ClockIcon className="mr-2 size-4" />
-                        Pending Invites
-                        <Badge variant="secondary" className="ml-2">
-                          {pendingInvitesQuery.data.length}
-                        </Badge>
-                      </Button>
-                    }
-                  />
-                  <PopoverContent align="end" className="w-80">
-                    <h3 className="mb-1 text-sm font-medium">
+            {allInvitesQuery.isSuccess && pendingInvites.length > 0 && (
+              <Popover>
+                <PopoverTrigger
+                  render={
+                    <Button variant="ghost">
+                      <ClockIcon className="mr-2 size-4" />
                       Pending Invites
-                    </h3>
-                    <InvitesList invites={pendingInvitesQuery.data} />
-                  </PopoverContent>
-                </Popover>
-              )}
+                      <Badge variant="secondary" className="ml-2">
+                        {pendingInvites.length}
+                      </Badge>
+                    </Button>
+                  }
+                />
+                <PopoverContent align="end" className="w-80">
+                  <h3 className="mb-1 text-sm font-medium">Pending Invites</h3>
+                  <InvitesList invites={pendingInvites} />
+                </PopoverContent>
+              </Popover>
+            )}
             <Button onClick={() => setShowCreateInvite(true)}>
               <PlusIcon className="mr-2 size-4" />
               Invite Student

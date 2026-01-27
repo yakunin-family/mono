@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 priority: medium
 description: Add markdown rendering support for AI chat responses
 tags: [feature, ai, chat, teacher-app]

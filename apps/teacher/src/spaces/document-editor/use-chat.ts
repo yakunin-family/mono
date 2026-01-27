@@ -119,8 +119,9 @@ export function useChat({
   const appliedMessageIds = useRef<Set<string>>(new Set());
 
   // Use the agent library's useThreadMessages hook with streaming support
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messagesResult = useThreadMessages(
-    api.chat.listThreadMessages,
+    api.chat.listThreadMessages as any,
     threadId ? { threadId } : "skip",
     { initialNumItems: 50, stream: true },
   );
@@ -218,19 +219,35 @@ export function useChat({
           const output = part.output as
             | {
                 success: boolean;
-                operations?: DocumentOperation[];
+                operationsJson?: string;
                 summary?: string;
                 error?: string;
               }
             | undefined;
 
-          if (!output?.operations || output.operations.length === 0) continue;
+          if (!output?.operationsJson) continue;
+
+          // Parse operations from JSON string (stored this way to avoid Convex nesting limits)
+          let operations: DocumentOperation[];
+          try {
+            operations = JSON.parse(
+              output.operationsJson,
+            ) as DocumentOperation[];
+          } catch {
+            console.error(
+              "Failed to parse operationsJson:",
+              output.operationsJson,
+            );
+            continue;
+          }
+
+          if (operations.length === 0) continue;
 
           // Mark as applied before attempting (to avoid double-application)
           appliedMessageIds.current.add(message.id);
 
           // Apply the operations
-          const result = applyDocumentOperations(output.operations);
+          const result = applyDocumentOperations(operations);
 
           // Store the results for UI display
           setOperationResults((prev) =>

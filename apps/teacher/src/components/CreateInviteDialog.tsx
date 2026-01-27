@@ -13,7 +13,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useConvex } from "convex/react";
 import { CheckIcon, CopyIcon, Loader2Icon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface CreateInviteDialogProps {
   open: boolean;
@@ -61,8 +61,13 @@ export function CreateInviteDialog({
     if (!inviteLink) return;
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const handleClose = () => {
     setLanguage("");

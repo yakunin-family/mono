@@ -73,6 +73,8 @@ function StudentLessonPage() {
 
   useEffect(() => {
     if (scrollToExercise && !scrolledRef.current) {
+      let highlightTimer: NodeJS.Timeout | null = null;
+
       const timer = setTimeout(() => {
         const exerciseElement = document.querySelector(
           `[data-exercise-instance-id="${scrollToExercise}"]`,
@@ -87,7 +89,7 @@ function StudentLessonPage() {
             "ring-primary",
             "ring-offset-2",
           );
-          setTimeout(() => {
+          highlightTimer = setTimeout(() => {
             exerciseElement.classList.remove(
               "ring-2",
               "ring-primary",
@@ -98,7 +100,10 @@ function StudentLessonPage() {
         scrolledRef.current = true;
       }, 500);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        if (highlightTimer) clearTimeout(highlightTimer);
+      };
     }
   }, [scrollToExercise]);
 
