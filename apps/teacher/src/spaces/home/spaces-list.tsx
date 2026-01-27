@@ -1,7 +1,7 @@
 import { api } from "@app/backend";
+import { convexQuery } from "@convex-dev/react-query";
 import { Button } from "@package/ui";
 import { Badge, Card, CardContent } from "@package/ui";
-import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PlusIcon, UsersIcon } from "lucide-react";
