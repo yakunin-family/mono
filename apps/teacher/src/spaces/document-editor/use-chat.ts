@@ -12,7 +12,7 @@ import {
 } from "@package/editor";
 import { useMutation } from "@tanstack/react-query";
 import { useConvex } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   useAIDocumentEdit,
@@ -21,6 +21,36 @@ import {
 import type { UploadedFile } from "./use-file-upload";
 
 export type { ApplyAIResponseResult, UploadedFile };
+
+/**
+ * Optimistic message stored locally while waiting for backend confirmation.
+ */
+interface OptimisticMessage {
+  id: string;
+  content: string;
+  timestamp: number;
+}
+
+/**
+ * Creates an optimistic UIMessage for immediate display while waiting for backend.
+ * Uses high order/stepOrder values to ensure it appears at the end of the list.
+ */
+function createOptimisticUIMessage(
+  optimistic: OptimisticMessage,
+  threadId: string,
+): UIMessage {
+  return {
+    id: optimistic.id,
+    role: "user",
+    parts: [{ type: "text", text: optimistic.content }],
+    // Required UIMessage fields from @convex-dev/agent
+    key: `${threadId}-optimistic-${optimistic.id}`,
+    order: Number.MAX_SAFE_INTEGER, // Ensure it appears at the end
+    stepOrder: 0,
+    status: "pending",
+    text: optimistic.content,
+  };
+}
 
 interface UseChatOptions {
   documentId: string;
@@ -70,6 +100,11 @@ export function useChat({
 
   const [isSending, setIsSending] = useState(false);
 
+  // Track optimistic messages for immediate UI feedback
+  const [optimisticMessages, setOptimisticMessages] = useState<
+    OptimisticMessage[]
+  >([]);
+
   // Track operation results per message (for patchDocument)
   const [operationResults, setOperationResults] = useState<OperationResultsMap>(
     () => new Map(),
@@ -91,7 +126,42 @@ export function useChat({
   );
 
   // Transform to UIMessage format using the library's helper
-  const messages = toUIMessages(messagesResult.results ?? []);
+  const serverMessages = toUIMessages(messagesResult.results ?? []);
+
+  // Merge server messages with optimistic messages, removing optimistic ones
+  // that have been confirmed (i.e., a server message with matching content exists)
+  const messages = useMemo(() => {
+    // If no optimistic messages, just return server messages
+    if (optimisticMessages.length === 0) {
+      return serverMessages;
+    }
+
+    // Find optimistic messages that haven't been confirmed yet
+    // We match by content since the server generates new IDs
+    const serverUserTexts = new Set(
+      serverMessages.filter((m) => m.role === "user").map((m) => m.text.trim()),
+    );
+
+    const pendingOptimistic = optimisticMessages.filter(
+      (opt) => !serverUserTexts.has(opt.content.trim()),
+    );
+
+    // If all optimistic messages have been confirmed, clear them
+    if (pendingOptimistic.length === 0 && optimisticMessages.length > 0) {
+      // Use setTimeout to avoid state update during render
+      setTimeout(() => setOptimisticMessages([]), 0);
+      return serverMessages;
+    }
+
+    // Convert pending optimistic messages to UIMessage format and append
+    // Use a placeholder threadId for first message case (before thread is created)
+    const effectiveThreadId = threadId ?? "pending-thread";
+    const optimisticUIMessages = pendingOptimistic.map((opt) =>
+      createOptimisticUIMessage(opt, effectiveThreadId),
+    );
+
+    return [...serverMessages, ...optimisticUIMessages];
+  }, [serverMessages, optimisticMessages, threadId]);
 
   // Apply document changes from assistant messages when they arrive
   useEffect(() => {
@@ -214,8 +284,15 @@ export function useChat({
         attachments,
       });
     },
-    onMutate: () => {
+    onMutate: ({ content }) => {
       setIsSending(true);
+      // Add optimistic message for immediate UI feedback
+      const optimisticMessage: OptimisticMessage = {
+        id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        content,
+        timestamp: Date.now(),
+      };
+      setOptimisticMessages((prev) => [...prev, optimisticMessage]);
     },
     onSettled: () => {
       setIsSending(false);
@@ -256,8 +333,17 @@ export function useChat({
 
       return newThreadId;
     },
-    onMutate: () => {
+    onMutate: ({ content }) => {
       setIsSending(true);
+      // Add optimistic message for immediate UI feedback
+      // Note: For first message, threadId is null, but the optimistic message
+      // will be cleared when the real message arrives after thread creation
+      const optimisticMessage: OptimisticMessage = {
+        id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        content,
+        timestamp: Date.now(),
+      };
+      setOptimisticMessages((prev) => [...prev, optimisticMessage]);
     },
     onSettled: () => {
       setIsSending(false);

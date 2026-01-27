@@ -1,7 +1,7 @@
 import { Agent, createTool } from "@convex-dev/agent";
 import {
-  DocumentOperationSchema,
   type DocumentOperation,
+  DocumentOperationSchema,
 } from "@package/ai-agent";
 import { gateway, stepCountIs } from "ai";
 import { z } from "zod";
@@ -18,6 +18,10 @@ import {
   getSkillTrueFalse,
   getSkillWritingExercises,
 } from "../_generated_prompts";
+import {
+  langfuseRawRequestResponseHandler,
+  langfuseUsageHandler,
+} from "../lib/langfuse";
 
 /**
  * Map skill names to their getter functions
@@ -346,12 +350,15 @@ EXAMPLE - horizontalRule:
  */
 export const documentEditorAgent = new Agent(components.agent, {
   name: "Document Editor",
-  chat: gateway("openai/gpt-4o-mini"),
+  chat: gateway("openai/gpt-5.2"),
   instructions: getChatBasePrompt(),
   tools: { loadSkill, editDocument, patchDocument },
   // Allow the agent to continue after tool calls (up to 10 steps)
   // Without this, the default is stepCountIs(1) which stops immediately
   stopWhen: stepCountIs(10),
+  // Langfuse observability handlers
+  usageHandler: langfuseUsageHandler,
+  rawRequestResponseHandler: langfuseRawRequestResponseHandler,
 });
 
 /**

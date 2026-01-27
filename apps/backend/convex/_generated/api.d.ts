@@ -17,6 +17,7 @@ import type * as documents from "../documents.js";
 import type * as functions from "../functions.js";
 import type * as homework from "../homework.js";
 import type * as http from "../http.js";
+import type * as lib_langfuse from "../lib/langfuse.js";
 import type * as library from "../library.js";
 import type * as spaceInvites from "../spaceInvites.js";
 import type * as spaces from "../spaces.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   functions: typeof functions;
   homework: typeof homework;
   http: typeof http;
+  "lib/langfuse": typeof lib_langfuse;
   library: typeof library;
   spaceInvites: typeof spaceInvites;
   spaces: typeof spaces;
