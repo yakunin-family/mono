@@ -57,6 +57,7 @@ import {
 } from "@/spaces/document-editor/chat-sidebar";
 import type { ThreadInfo } from "@/spaces/document-editor/thread-selector";
 import { useChat } from "@/spaces/document-editor/use-chat";
+import { useImageUpload } from "@/spaces/document-editor/use-image-upload";
 
 export const Route = createFileRoute(
   "/_protected/spaces/$id_/lesson/$lessonId",
@@ -157,6 +158,9 @@ function LessonEditorPage() {
     threadId: activeThreadId,
   });
 
+  // Image upload handler
+  const { uploadImage } = useImageUpload();
+
   // Handle sending message - creates thread if needed
   const handleSendMessage = useCallback(
     async (
@@ -195,6 +199,36 @@ function LessonEditorPage() {
   useEffect(() => {
     localStorage.setItem("chat-sidebar-open", String(chatSidebarOpen));
   }, [chatSidebarOpen]);
+
+  // Handle image upload events from editor
+  useEffect(() => {
+    const handleUploadImage = async (e: Event) => {
+      const event = e as CustomEvent<{
+        file: File;
+        editor: {
+          commands: {
+            insertImage: (attrs: {
+              storageId: string;
+              caption: string | null;
+              alt: string;
+            }) => void;
+          };
+        };
+        range: number | null;
+      }>;
+      const { file, editor: editorFromEvent } = event.detail;
+
+      try {
+        const { storageId, alt } = await uploadImage(file);
+        editorFromEvent.commands.insertImage({ storageId, caption: null, alt });
+      } catch (error) {
+        console.error("Image upload failed:", error);
+      }
+    };
+
+    window.addEventListener("uploadImage", handleUploadImage);
+    return () => window.removeEventListener("uploadImage", handleUploadImage);
+  }, [uploadImage]);
 
   const userColor = useMemo(() => getRandomUserColor(), []);
   const userName = session?.user?.name || session?.user?.email || "Anonymous";
