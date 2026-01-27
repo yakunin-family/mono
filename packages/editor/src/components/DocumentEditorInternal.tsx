@@ -1,7 +1,6 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import type { Editor, JSONContent } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
-import { Image } from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
@@ -35,6 +34,7 @@ import { BlockSelectionCommands } from "../extensions/block-selection-commands";
 import { DocumentContext } from "../extensions/DocumentContext";
 import { Exercise } from "../extensions/Exercise";
 import { Group } from "../extensions/Group";
+import { Image } from "../extensions/image";
 import { MarqueeSelection } from "../extensions/MarqueeSelection";
 import { NoteBlock } from "../extensions/NoteBlock";
 import { SelectionSave } from "../extensions/SelectionSave";
@@ -102,10 +102,7 @@ export function DocumentEditorInternal({
       TableRow,
       TableHeader,
       TableCell,
-      Image.configure({
-        inline: true,
-        allowBase64: true,
-      }),
+      Image,
       Underline,
       Blank,
       Exercise,
@@ -129,6 +126,7 @@ export function DocumentEditorInternal({
           "group",
           "writingArea",
           "noteBlock",
+          "image",
           // Inline nodes
           "blank",
         ],
