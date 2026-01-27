@@ -3,7 +3,9 @@ import {
   toUIMessages,
   type UIMessage,
   useThreadMessages,
+  type ThreadMessagesQuery,
 } from "@convex-dev/agent/react";
+import type { MessageDoc } from "@convex-dev/agent";
 import {
   type Editor,
   toXML,
@@ -118,10 +120,19 @@ export function useChat({
   // Track which messages we've already applied to avoid re-applying on re-renders
   const appliedMessageIds = useRef<Set<string>>(new Set());
 
+  // Clear state when switching threads to prevent memory leak
+  useEffect(() => {
+    appliedMessageIds.current.clear();
+    setOperationResults(new Map());
+    setEditResults(new Map());
+  }, [threadId]);
+
   // Use the agent library's useThreadMessages hook with streaming support
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messagesResult = useThreadMessages(
-    api.chat.listThreadMessages as any,
+    api.chat.listThreadMessages as ThreadMessagesQuery<
+      Record<string, never>,
+      MessageDoc
+    >,
     threadId ? { threadId } : "skip",
     { initialNumItems: 50, stream: true },
   );
