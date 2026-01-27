@@ -5,6 +5,7 @@ import {
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
+  ImageIcon,
   ItalicIcon,
   ListIcon,
   ListOrderedIcon,
@@ -91,6 +92,35 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         isActive={editor.isActive("orderedList")}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       />
+
+      {/* Image Group - Teacher Editor Only */}
+      {editor.storage.editorMode === "teacher-editor" && (
+        <>
+          <Separator orientation="vertical" className="mx-1 h-6" />
+          <ToolbarButton
+            icon={ImageIcon}
+            tooltip="Insert Image"
+            onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = "image/*";
+
+              input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+
+                window.dispatchEvent(
+                  new CustomEvent("uploadImage", {
+                    detail: { file, editor, range: null },
+                  }),
+                );
+              };
+
+              input.click();
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
