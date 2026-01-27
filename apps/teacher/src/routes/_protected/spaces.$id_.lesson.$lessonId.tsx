@@ -48,6 +48,7 @@ import {
   StandalonePageShell,
 } from "@/components/standalone-page-shell";
 import { useSession } from "@/lib/auth-client";
+import { ChatErrorBoundary } from "@/spaces/document-editor/chat-error-boundary";
 import { ChatInput } from "@/spaces/document-editor/chat-input";
 import { ChatMessages } from "@/spaces/document-editor/chat-messages";
 import {
@@ -581,19 +582,21 @@ function LessonEditorPage() {
           onDeleteThread={handleDeleteThread}
           isLoadingThreads={threadsData === undefined}
         >
-          <div className="relative flex-1 overflow-hidden">
-            <ChatMessages
-              messages={chatMessages}
-              operationResults={operationResults}
-              editResults={editResults}
+          <ChatErrorBoundary>
+            <div className="relative flex-1 overflow-hidden">
+              <ChatMessages
+                messages={chatMessages}
+                operationResults={operationResults}
+                editResults={editResults}
+                isLoading={isChatLoading}
+              />
+            </div>
+            <ChatInput
+              onSend={handleSendMessage}
+              onCancel={cancelGeneration}
               isLoading={isChatLoading}
             />
-          </div>
-          <ChatInput
-            onSend={handleSendMessage}
-            onCancel={cancelGeneration}
-            isLoading={isChatLoading}
-          />
+          </ChatErrorBoundary>
         </ChatSidebar>
       </StandalonePageShell>
     </div>
