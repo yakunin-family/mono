@@ -1,8 +1,8 @@
 {
-  "active_plan": "/Users/nikita.yakunin/personal/mono/.sisyphus/plans/ai-chat-quick-fixes.md",
-  "started_at": "2026-01-27T18:34:11.444Z",
-  "completed_at": "2026-01-27T19:45:00.000Z",
-  "session_ids": ["ses_3ff5205ebffe9xkq7T04YjT1fW"],
-  "plan_name": "ai-chat-quick-fixes",
-  "status": "complete"
+  "active_plan": "/Users/nikita.yakunin/personal/mono/.sisyphus/plans/image-extension.md",
+  "started_at": "2026-01-27T19:30:04.887Z",
+  "session_ids": [
+    "ses_3ff3216eeffer3H8qFtC2bqgaU"
+  ],
+  "plan_name": "image-extension"
 }

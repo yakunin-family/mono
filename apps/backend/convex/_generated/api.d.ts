@@ -17,6 +17,7 @@ import type * as documents from "../documents.js";
 import type * as functions from "../functions.js";
 import type * as homework from "../homework.js";
 import type * as http from "../http.js";
+import type * as images from "../images.js";
 import type * as library from "../library.js";
 import type * as playground from "../playground.js";
 import type * as spaceInvites from "../spaceInvites.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   functions: typeof functions;
   homework: typeof homework;
   http: typeof http;
+  images: typeof images;
   library: typeof library;
   playground: typeof playground;
   spaceInvites: typeof spaceInvites;
