@@ -5,11 +5,12 @@ import {
   storeFile,
   vStreamArgs,
 } from "@convex-dev/agent";
+import { generateText, gateway } from "ai";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { components, internal } from "./_generated/api";
-import { internalQuery } from "./_generated/server";
+import { internalQuery, type ActionCtx } from "./_generated/server";
 import { hasDocumentAccess } from "./accessControl";
 import { documentEditorAgent } from "./agents/documentEditor";
 import { authedAction, authedMutation, authedQuery } from "./functions";
@@ -493,6 +494,121 @@ export const sendMessage = authedAction({
     await result.consumeStream();
 
     return { success: true };
+  },
+});
+
+// ============================================
+// IMAGE ANALYSIS
+// ============================================
+
+/**
+ * Analyzes images using a vision-capable model and returns text summaries.
+ * Uses gpt-4o-mini for cost efficiency — returns text only, not raw images.
+ */
+async function analyzeImagesWithVision(
+  ctx: ActionCtx,
+  storageIds: string[],
+): Promise<string[]> {
+  const imageUrls: string[] = [];
+  for (const storageId of storageIds) {
+    const url = await ctx.storage.getUrl(storageId);
+    if (url) {
+      imageUrls.push(url);
+    }
+  }
+
+  if (imageUrls.length === 0) {
+    return [];
+  }
+
+  const { text } = await generateText({
+    model: gateway("openai/gpt-4o-mini"),
+    messages: [
+      {
+        role: "user",
+        content: [
+          ...imageUrls.map((url) => ({
+            type: "image" as const,
+            image: url,
+          })),
+          {
+            type: "text" as const,
+            text: "Describe what you see in each image. Be concise and factual. If there are multiple images, number each description.",
+          },
+        ],
+      },
+    ],
+  });
+
+  return [text];
+}
+
+/**
+ * Resolve an image analysis request (approve or deny).
+ * When approved: analyzes images with vision model, saves result, resumes AI.
+ * When denied: saves rejection, AI waits for user's next message.
+ */
+export const resolveImageAnalysis = authedAction({
+  args: {
+    threadId: v.string(),
+    toolCallId: v.string(),
+    messageId: v.string(),
+    approved: v.boolean(),
+    storageIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Verify thread ownership
+    const threadLink = await ctx.runQuery(internal.chat.getThreadLinkInternal, {
+      threadId: args.threadId,
+    });
+
+    if (!threadLink || threadLink.userId !== ctx.user.id) {
+      throw new ConvexError("Not authorized to access this thread");
+    }
+
+    let result: string;
+
+    if (args.approved) {
+      // Analyze images with vision model
+      const summaries = await analyzeImagesWithVision(ctx, args.storageIds);
+      result = JSON.stringify({ summaries });
+    } else {
+      result = "User declined image analysis";
+    }
+
+    // Save tool result to thread
+    await documentEditorAgent.saveMessage(ctx, {
+      threadId: args.threadId,
+      message: {
+        role: "tool",
+        content: [
+          {
+            type: "tool-result",
+            result,
+            toolCallId: args.toolCallId,
+            toolName: "analyzeImages",
+          },
+        ],
+      },
+    });
+
+    // Resume AI generation only if approved
+    if (args.approved) {
+      const { thread } = await documentEditorAgent.continueThread(ctx, {
+        threadId: args.threadId,
+        userId: ctx.user.id,
+      });
+
+      await thread.streamText(
+        { promptMessageId: args.messageId },
+        {
+          storageOptions: { saveMessages: "promptAndOutput" },
+          saveStreamDeltas: true,
+        },
+      );
+    }
+
+    return { success: true, approved: args.approved };
   },
 });
 
