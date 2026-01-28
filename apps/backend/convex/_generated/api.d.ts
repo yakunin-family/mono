@@ -14,6 +14,7 @@ import type * as agents_documentEditor from "../agents/documentEditor.js";
 import type * as auth from "../auth.js";
 import type * as chat from "../chat.js";
 import type * as documents from "../documents.js";
+import type * as evalHelpers from "../evalHelpers.js";
 import type * as functions from "../functions.js";
 import type * as homework from "../homework.js";
 import type * as http from "../http.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   chat: typeof chat;
   documents: typeof documents;
+  evalHelpers: typeof evalHelpers;
   functions: typeof functions;
   homework: typeof homework;
   http: typeof http;

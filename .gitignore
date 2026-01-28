@@ -27,6 +27,8 @@ out/
 build
 dist
 
+# AI
+.omc
 
 # Debug
 npm-debug.log*
