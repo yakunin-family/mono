@@ -2,6 +2,10 @@ import type { Editor } from "@tiptap/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { ColumnHandle } from "./column-handle";
+import { QuickAddButton } from "./quick-add-button";
+import { RowHandle } from "./row-handle";
+
 export interface ColumnHandleProps {
   editor: Editor;
   columnIndex: number;
@@ -269,115 +273,41 @@ export function TableControls({ editor }: TableControlsProps) {
   return createPortal(
     <div className="pointer-events-none">
       {columnPositions.map((pos) => (
-        <div
+        <ColumnHandle
           key={`col-${pos.index}`}
-          data-handle="column"
-          data-column-index={pos.index}
-          className="pointer-events-auto fixed z-50 flex items-center justify-center"
-          style={{
-            left: `${pos.x - 12}px`,
-            top: `${pos.y - 12}px`,
-            width: "24px",
-            height: "24px",
-          }}
-        >
-          <div className="flex items-center justify-center w-5 h-5 rounded bg-muted border border-border hover:bg-accent hover:border-primary transition-colors cursor-pointer">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="currentColor"
-              className="text-muted-foreground"
-            >
-              <circle cx="4" cy="6" r="1" />
-              <circle cx="8" cy="6" r="1" />
-            </svg>
-          </div>
-        </div>
+          editor={editor}
+          columnIndex={pos.index}
+          position={{ x: pos.x, y: pos.y }}
+          isLastColumn={totalColumns <= 1}
+          tableElement={activeTable}
+        />
       ))}
 
       {rowPositions.map((pos) => (
-        <div
+        <RowHandle
           key={`row-${pos.index}`}
-          data-handle="row"
-          data-row-index={pos.index}
-          className="pointer-events-auto fixed z-50 flex items-center justify-center"
-          style={{
-            left: `${pos.x - 12}px`,
-            top: `${pos.y - 12}px`,
-            width: "24px",
-            height: "24px",
-          }}
-        >
-          <div className="flex items-center justify-center w-5 h-5 rounded bg-muted border border-border hover:bg-accent hover:border-primary transition-colors cursor-pointer">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="currentColor"
-              className="text-muted-foreground"
-            >
-              <circle cx="6" cy="4" r="1" />
-              <circle cx="6" cy="8" r="1" />
-            </svg>
-          </div>
-        </div>
+          editor={editor}
+          rowIndex={pos.index}
+          position={{ x: pos.x, y: pos.y }}
+          isLastRow={totalRows <= 1}
+          tableElement={activeTable}
+        />
       ))}
 
       {addRowPosition && (
-        <div
-          data-handle="add-row"
-          className="pointer-events-auto fixed z-50 flex items-center justify-center"
-          style={{
-            left: `${addRowPosition.x - 12}px`,
-            top: `${addRowPosition.y - 4}px`,
-            width: "24px",
-            height: "16px",
-          }}
-        >
-          <div className="flex items-center justify-center w-5 h-4 rounded-sm bg-muted/60 border border-border/50 hover:bg-accent hover:border-primary transition-colors cursor-pointer opacity-60 hover:opacity-100">
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className="text-muted-foreground"
-            >
-              <line x1="5" y1="2" x2="5" y2="8" />
-              <line x1="2" y1="5" x2="8" y2="5" />
-            </svg>
-          </div>
-        </div>
+        <QuickAddButton
+          editor={editor}
+          variant="row"
+          position={addRowPosition}
+        />
       )}
 
       {addColumnPosition && (
-        <div
-          data-handle="add-column"
-          className="pointer-events-auto fixed z-50 flex items-center justify-center"
-          style={{
-            left: `${addColumnPosition.x - 4}px`,
-            top: `${addColumnPosition.y - 12}px`,
-            width: "16px",
-            height: "24px",
-          }}
-        >
-          <div className="flex items-center justify-center w-4 h-5 rounded-sm bg-muted/60 border border-border/50 hover:bg-accent hover:border-primary transition-colors cursor-pointer opacity-60 hover:opacity-100">
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className="text-muted-foreground"
-            >
-              <line x1="5" y1="2" x2="5" y2="8" />
-              <line x1="2" y1="5" x2="8" y2="5" />
-            </svg>
-          </div>
-        </div>
+        <QuickAddButton
+          editor={editor}
+          variant="column"
+          position={addColumnPosition}
+        />
       )}
     </div>,
     document.body,
