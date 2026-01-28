@@ -9,10 +9,11 @@
     "check-types": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "promptfoo": "^0.80.0",
     "@ai-sdk/anthropic": "^0.0.50",
     "ai": "^4.0.0",
-    "convex": "^1.15.0"
+    "convex": "^1.15.0",
+    "promptfoo": "^0.80.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@tooling/typescript-config": "workspace:*",
