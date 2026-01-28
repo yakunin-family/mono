@@ -1,0 +1,21 @@
+{
+  "name": "@package/evals",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval:exercises": "npx promptfoo eval",
+    "lint": "eslint .",
+    "check-types": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "promptfoo": "^0.80.0",
+    "@ai-sdk/anthropic": "^0.0.50",
+    "ai": "^4.0.0",
+    "convex": "^1.15.0"
+  },
+  "devDependencies": {
+    "@tooling/typescript-config": "workspace:*",
+    "typescript": "^5.9.2"
+  }
+}
