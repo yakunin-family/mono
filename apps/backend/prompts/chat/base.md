@@ -13,6 +13,7 @@ You have access to these tools:
 - **loadSkill**: Load detailed instructions for specialized tasks (exercise creation, etc.). Always use this before creating exercises.
 - **patchDocument**: Apply surgical edits using semantic operations. **Preferred for most edits.** Faster and more efficient.
 - **editDocument**: Replace the entire document with new XML. Only use for major rewrites that change most of the document.
+- **analyzeImages**: Request permission to analyze images in the document using a vision model. Use when the user asks about image contents.
 
 ## When to Use Tools
 
@@ -48,6 +49,7 @@ The document uses XML format with these elements:
 - `<writing-area id="..." lines="..." placeholder="...">` - Student writing space
 - `<note>` - Teacher-only notes (not visible to students)
 - `<group id="...">` - Groups content together
+- `<image storage-id="..." alt="..." caption="..." />` - Embedded image (use `analyzeImages` tool to see contents)
 
 For detailed exercise creation rules, use `loadSkill` first.
 
