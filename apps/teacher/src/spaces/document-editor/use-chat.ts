@@ -34,6 +34,16 @@ interface OptimisticMessage {
 }
 
 /**
+ * Represents a pending image analysis approval request from the AI.
+ */
+export interface PendingImageApproval {
+  messageId: string;
+  toolCallId: string;
+  storageIds: string[];
+  reason: string;
+}
+
+/**
  * Creates an optimistic UIMessage for immediate display while waiting for backend.
  * Uses high order/stepOrder values to ensure it appears at the end of the list.
  */
@@ -84,6 +94,10 @@ interface UseChatReturn {
     attachments?: UploadedFile[],
   ) => Promise<string>;
   cancelGeneration: () => void;
+  pendingImageApproval: PendingImageApproval | null;
+  approveImageAnalysis: () => void;
+  denyImageAnalysis: () => void;
+  isResolvingApproval: boolean;
 }
 
 /**
@@ -174,6 +188,40 @@ export function useChat({
 
     return [...serverMessages, ...optimisticUIMessages];
   }, [serverMessages, optimisticMessages, threadId]);
+
+  // Detect pending analyzeImages approval request
+  const pendingImageApproval = useMemo((): PendingImageApproval | null => {
+    for (const message of messages) {
+      if (message.role !== "assistant") continue;
+      for (const part of message.parts) {
+        const partType = part.type as string;
+        const toolName =
+          partType === "dynamic-tool"
+            ? (part as { toolName: string }).toolName
+            : partType.replace("tool-", "");
+
+        if (toolName === "analyzeImages") {
+          const state = "state" in part ? (part.state as string) : undefined;
+          // Tool call generated but no result yet = pending approval
+          if (state === "input-available") {
+            const input =
+              "input" in part
+                ? (part.input as { storageIds?: string[]; reason?: string })
+                : undefined;
+            const toolCallId =
+              "toolCallId" in part ? (part.toolCallId as string) : "";
+            return {
+              messageId: message.id,
+              toolCallId,
+              storageIds: input?.storageIds ?? [],
+              reason: input?.reason ?? "",
+            };
+          }
+        }
+      }
+    }
+    return null;
+  }, [messages]);
 
   // Apply document changes from assistant messages when they arrive
   useEffect(() => {
@@ -409,6 +457,30 @@ export function useChat({
     cancelMutation.mutate();
   }, [threadId, cancelMutation]);
 
+  // Resolve image analysis approval/denial
+  const resolveApprovalMutation = useMutation({
+    mutationFn: async ({ approved }: { approved: boolean }) => {
+      if (!pendingImageApproval || !threadId) {
+        throw new Error("No pending approval or thread");
+      }
+      return await convex.action(api.chat.resolveImageAnalysis, {
+        threadId,
+        toolCallId: pendingImageApproval.toolCallId,
+        messageId: pendingImageApproval.messageId,
+        approved,
+        storageIds: pendingImageApproval.storageIds,
+      });
+    },
+  });
+
+  const approveImageAnalysis = useCallback(() => {
+    resolveApprovalMutation.mutate({ approved: true });
+  }, [resolveApprovalMutation]);
+
+  const denyImageAnalysis = useCallback(() => {
+    resolveApprovalMutation.mutate({ approved: false });
+  }, [resolveApprovalMutation]);
+
   return {
     messages,
     operationResults,
@@ -418,6 +490,10 @@ export function useChat({
     sendMessage,
     sendFirstMessage,
     cancelGeneration,
+    pendingImageApproval,
+    approveImageAnalysis,
+    denyImageAnalysis,
+    isResolvingApproval: resolveApprovalMutation.isPending,
   };
 }
 
