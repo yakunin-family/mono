@@ -326,13 +326,21 @@ function ToolCallPart({
     if (isBackendError) {
       const backendError =
         errorText ||
-        (output && "error" in output ? output.error : null) ||
+        (output && typeof output === "object" && "error" in output
+          ? output.error
+          : null) ||
         "Operation failed";
       return backendError;
     }
 
     // Complete with output summary
-    if (isComplete && output && "summary" in output && output.summary) {
+    if (
+      isComplete &&
+      output &&
+      typeof output === "object" &&
+      "summary" in output &&
+      output.summary
+    ) {
       return output.summary;
     }
 
