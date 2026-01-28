@@ -33,6 +33,17 @@ const nodeSerializers: Record<string, NodeSerializer> = {
   noteBlock: serializeNote,
   writingArea: serializeWritingArea,
   group: serializeGroup,
+  image: (node) => {
+    const attrs = node.attrs || {};
+    const storageId = attrs.storageId
+      ? ` storage-id="${escapeXml(String(attrs.storageId))}"`
+      : "";
+    const alt = attrs.alt ? ` alt="${escapeXml(String(attrs.alt))}"` : "";
+    const caption = attrs.caption
+      ? ` caption="${escapeXml(String(attrs.caption))}"`
+      : "";
+    return `<image${storageId}${alt}${caption} />`;
+  },
 };
 
 /**

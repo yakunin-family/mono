@@ -150,7 +150,6 @@ export const EXCLUDED_NODES = [
   "tableRow",
   "tableHeader",
   "tableCell",
-  "image",
 ] as const;
 
 /**
