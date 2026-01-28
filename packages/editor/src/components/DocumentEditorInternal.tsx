@@ -44,6 +44,7 @@ import { EditorStatusBar } from "./EditorStatusBar";
 import { EditorToolbar } from "./editor-toolbar";
 import { LibraryDrawer, type LibraryItemWithMetadata } from "./LibraryDrawer";
 import { MarqueeOverlay } from "./MarqueeOverlay";
+import { TableControls } from "./table/table-controls";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
 import { SelectionSaveButton } from "./SelectionSaveButton";
@@ -284,6 +285,7 @@ export function DocumentEditorInternal({
 
       <SelectionSaveButton editor={editor} />
       <MarqueeOverlay editor={editor} />
+      <TableControls editor={editor} />
     </div>
   );
 }
