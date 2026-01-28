@@ -8,7 +8,7 @@ import {
   SparklesIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { type ReactNode, useEffect, useMemo, useRef } from "react";
 
 import { ChatMarkdown } from "./chat-markdown";
 import type {
@@ -411,6 +411,60 @@ function ToolCallPart({
           Failed to apply: {editResult.error}
         </div>
       )}
+
+      {/* Image analysis results */}
+      {toolName === "analyzeImages" && isComplete && (
+        <AnalyzeImagesOutput
+          rawOutput={"output" in part ? part.output : undefined}
+        />
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// AnalyzeImagesOutput - Renders image analysis summaries or denial message
+// =============================================================================
+
+function AnalyzeImagesOutput({ rawOutput }: { rawOutput: unknown }): ReactNode {
+  if (typeof rawOutput !== "string") return null;
+
+  if (rawOutput === "User declined image analysis") {
+    return (
+      <div className="border-t border-border/50 px-3 py-1.5">
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">
+            Image analysis declined
+          </p>
+          <p className="text-xs italic text-muted-foreground">
+            Send a message to continue the conversation
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  let summaries: string[] = [];
+  try {
+    const parsed = JSON.parse(rawOutput);
+    if (parsed && typeof parsed === "object" && "summaries" in parsed) {
+      summaries = parsed.summaries as string[];
+    }
+  } catch {
+    // If parsing fails, show nothing — raw output is not structured
+  }
+
+  if (summaries.length === 0) return null;
+
+  return (
+    <div className="border-t border-border/50 px-3 py-1.5">
+      <div className="space-y-1">
+        {summaries.map((summary, i) => (
+          <p key={i} className="text-xs text-muted-foreground">
+            {summary}
+          </p>
+        ))}
+      </div>
     </div>
   );
 }
@@ -502,6 +556,7 @@ function getStreamingLabel(toolName: string): string {
     editDocument: "Rewriting document...",
     patchDocument: "Applying changes...",
     loadSkill: "Loading instructions...",
+    analyzeImages: "Analyzing images...",
   };
   return streamingLabels[toolName] ?? `Running ${toolName}...`;
 }

@@ -56,6 +56,7 @@ import {
   ChatSidebarTrigger,
 } from "@/spaces/document-editor/chat-sidebar";
 import type { ThreadInfo } from "@/spaces/document-editor/thread-selector";
+import { ImageApprovalUI } from "@/spaces/document-editor/image-approval";
 import { useChat } from "@/spaces/document-editor/use-chat";
 import { useImageUpload } from "@/spaces/document-editor/use-image-upload";
 
@@ -152,6 +153,10 @@ function LessonEditorPage() {
     sendMessage,
     sendFirstMessage,
     cancelGeneration,
+    pendingImageApproval,
+    approveImageAnalysis,
+    denyImageAnalysis,
+    isResolvingApproval,
   } = useChat({
     documentId: lessonId,
     editor,
@@ -625,6 +630,14 @@ function LessonEditorPage() {
                 isLoading={isChatLoading}
               />
             </div>
+            {pendingImageApproval && (
+              <ImageApprovalUI
+                pendingApproval={pendingImageApproval}
+                onApprove={approveImageAnalysis}
+                onDeny={denyImageAnalysis}
+                isResolving={isResolvingApproval}
+              />
+            )}
             <ChatInput
               onSend={handleSendMessage}
               onCancel={cancelGeneration}
