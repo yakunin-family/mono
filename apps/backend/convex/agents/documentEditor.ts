@@ -1,6 +1,6 @@
 import { Agent, createTool } from "@convex-dev/agent";
 import { DocumentOperationSchema } from "@package/ai-agent";
-import { gateway, stepCountIs } from "ai";
+import { gateway, stepCountIs, tool } from "ai";
 import { z } from "zod";
 
 import { components } from "../_generated/api";
@@ -337,6 +337,29 @@ EXAMPLE - horizontalRule:
 });
 
 /**
+ * Tool to analyze images in the document.
+ *
+ * This tool has no execute function, implementing the human-in-the-loop pattern
+ * from Convex Agent docs. When the agent calls this tool, the framework saves
+ * the tool call but does not execute it, waiting for human intervention to
+ * provide the analysis results.
+ */
+const analyzeImages = tool({
+  description:
+    "Analyze images in the document to understand their visual content. Use when the user's question requires understanding what's in an image.",
+  inputSchema: z.object({
+    storageIds: z
+      .array(z.string())
+      .describe("Storage IDs of images to analyze"),
+    reason: z
+      .string()
+      .describe(
+        "Explain to the user why you need to analyze these images and what you're looking for",
+      ),
+  }),
+});
+
+/**
  * Document Editor Agent
  *
  * An AI assistant that helps language teachers create and edit educational documents.
@@ -347,7 +370,7 @@ export const documentEditorAgent = new Agent(components.agent, {
   name: "Document Editor",
   languageModel: gateway("openai/gpt-5.2"),
   instructions: getChatBasePrompt(),
-  tools: { loadSkill, editDocument, patchDocument },
+  tools: { loadSkill, editDocument, patchDocument, analyzeImages },
   // Allow the agent to continue after tool calls (up to 10 steps)
   // Without this, the default is stepCountIs(1) which stops immediately
   stopWhen: stepCountIs(10),
