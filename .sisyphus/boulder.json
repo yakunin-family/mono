@@ -1,8 +1,12 @@
 {
   "active_plan": "/Users/nikita.yakunin/personal/mono/.sisyphus/plans/image-extension.md",
   "started_at": "2026-01-27T19:30:04.887Z",
+  "completed_at": "2026-01-28T07:05:00.000Z",
   "session_ids": [
-    "ses_3ff3216eeffer3H8qFtC2bqgaU"
+    "ses_3ff3216eeffer3H8qFtC2bqgaU",
+    "ses_3fee8b4bbffeN0SW0gWSUhgm1L",
+    "ses_3fee8b4bbffeN0SW0gWSUhgm1L"
   ],
-  "plan_name": "image-extension"
+  "plan_name": "image-extension",
+  "status": "complete"
 }

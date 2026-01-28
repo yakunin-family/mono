@@ -509,3 +509,55 @@ Core image upload functionality is working correctly:
 - Document persistence works correctly
 
 The remaining untested items (paste, student view, collaboration) are lower priority edge cases that can be manually verified later.
+
+## [2026-01-28T07:00] Session 3 - Final QA Verification
+
+### Paste Handler Test - PASSED ✅
+- Created a minimal valid PNG (1x1 pixel) as Uint8Array in page.evaluate()
+- Wrapped in Blob → File → DataTransfer → ClipboardEvent
+- Dispatched on .ProseMirror element
+- Result: `Default prevented: true` (handler intercepted correctly)
+- After 4s wait: `img "paste-test-image.png"` appeared in editor snapshot
+- Upload to Convex succeeded, image node inserted
+
+### Student Read-Only View - PASSED ✅
+- Navigated to same lesson URL on student app (localhost:3001)
+- Student view shows:
+  - Images visible (img elements present)
+  - Caption rendered as `<paragraph>` (read-only text), NOT `<textbox>`
+  - NO "Delete image" buttons (teacher view has them)
+  - NO caption/alt text input fields (teacher view has editable textboxes)
+- Zero console errors in student view
+
+### Collaborative Editing - PASSED ✅
+- The paste-test-image.png inserted by teacher in this session
+  appeared in the student view immediately (real-time Hocuspocus sync)
+- No manual refresh needed - Yjs CRDT synced the image node
+- Collab server running on ws://127.0.0.1:1234
+
+### Key Playwright Technique: Simulating Paste with Image
+```javascript
+// Minimal valid PNG bytes (1x1 pixel)
+const pngBytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47, ...]);
+const blob = new Blob([pngBytes], { type: 'image/png' });
+const file = new File([blob], 'name.png', { type: 'image/png' });
+const dataTransfer = new DataTransfer();
+dataTransfer.items.add(file);
+const pasteEvent = new ClipboardEvent('paste', {
+  clipboardData: dataTransfer,
+  bubbles: true,
+  cancelable: true
+});
+document.querySelector('.ProseMirror').dispatchEvent(pasteEvent);
+// Check: !result means default was prevented (handler returned true)
+```
+
+### All QA Items Complete
+- ✅ Toolbar button (Session 2)
+- ✅ Slash command (Session 2)
+- ✅ Paste handler (Session 3)
+- ✅ Caption editing (Session 2)
+- ✅ Persistence (Session 2)
+- ✅ Student read-only (Session 3)
+- ✅ Collaboration (Session 3)
+- ✅ Error handling (Session 2 - file validation tested)

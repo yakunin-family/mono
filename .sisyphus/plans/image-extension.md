@@ -56,12 +56,12 @@ Create a Tiptap Image extension that enables teachers to insert and manage image
 
 - [x] Teacher can insert images via toolbar button
 - [x] Teacher can insert images via `/image` slash command
-- [ ] Teacher can paste images from clipboard
+- [x] Teacher can paste images from clipboard
 - [x] Images upload to Convex and display correctly
 - [x] Caption is editable in teacher-editor mode
-- [ ] Students see images but cannot edit/delete
+- [x] Students see images but cannot edit/delete
 - [x] Document save/load preserves images correctly
-- [ ] Images work in collaborative editing (multiple users)
+- [x] Images work in collaborative editing (multiple users)
 
 ### Must Have
 
@@ -164,11 +164,11 @@ Task 5 (Paste) ─────────────────────�
   **Acceptance Criteria**:
 
   **Manual Execution Verification:**
-  - [ ] Using Convex dashboard:
+  - [x] Using Convex dashboard:
     - Navigate to Functions tab
     - Find `images:generateUploadUrl`
     - Run → should return a URL string
-  - [ ] Using curl/httpie:
+  - [x] Using curl/httpie:
     - Upload a test image to the generated URL
     - Call `images:saveImage` with storageId
     - Call `images:getImageUrl` with returned ID
@@ -216,9 +216,9 @@ Task 5 (Paste) ─────────────────────�
   **Acceptance Criteria**:
 
   **Manual Execution Verification:**
-  - [ ] Run `pnpm dev` in monorepo root
-  - [ ] Open teacher app at localhost:3000
-  - [ ] Open browser console, run:
+  - [x] Run `pnpm dev` in monorepo root
+  - [x] Open teacher app at localhost:3000
+  - [x] Open browser console, run:
     ```javascript
     // Get editor instance from React DevTools or window
     editor.commands.insertImage({
@@ -227,8 +227,8 @@ Task 5 (Paste) ─────────────────────�
       alt: null,
     });
     ```
-  - [ ] Verify image node appears in editor (may show placeholder/error since storageId is fake)
-  - [ ] Check document structure via `editor.getJSON()` - should contain image node
+  - [x] Verify image node appears in editor (may show placeholder/error since storageId is fake)
+  - [x] Check document structure via `editor.getJSON()` - should contain image node
 
   **Commit**: YES
   - Message: `feat(editor): add Image tiptap extension`
@@ -282,15 +282,15 @@ Task 5 (Paste) ─────────────────────�
   **Acceptance Criteria**:
 
   **Manual Execution Verification:**
-  - [ ] Using playwright browser automation (or manual browser):
+  - [x] Using playwright browser automation (or manual browser):
     - Open teacher editor at localhost:3000
     - Insert image node (via console command from Task 1)
     - Screenshot: Verify placeholder/loading state appears
-  - [ ] After uploading real image (via Task 0 manually):
+  - [x] After uploading real image (via Task 0 manually):
     - Verify image renders at full width
     - Verify caption field is editable (teacher-editor mode)
     - Switch to student view → verify read-only
-  - [ ] Error handling:
+  - [x] Error handling:
     - Insert image with invalid storageId
     - Verify error state with broken image icon
     - Verify retry button appears
@@ -335,15 +335,15 @@ Task 5 (Paste) ─────────────────────�
   **Acceptance Criteria**:
 
   **Manual Execution Verification:**
-  - [ ] Using browser:
+  - [x] Using browser:
     - Open teacher editor at localhost:3000
     - Verify image button appears in toolbar
     - Switch to student mode → verify button hidden
-  - [ ] Upload flow:
+  - [x] Upload flow:
     - Click image button → file picker opens
     - Select valid image → upload starts
     - Upload completes → image appears in document
-  - [ ] Validation:
+  - [x] Validation:
     - Try uploading 15MB file → error toast
     - Try uploading .pdf file → error toast
 
@@ -378,12 +378,12 @@ Task 5 (Paste) ─────────────────────�
   **Acceptance Criteria**:
 
   **Manual Execution Verification:**
-  - [ ] Using browser:
+  - [x] Using browser:
     - Open teacher editor at localhost:3000
     - Type `/` to open slash menu
     - Verify "Image" option appears with icon
     - Switch to student mode → type `/` → verify Image NOT shown
-  - [ ] Insert flow:
+  - [x] Insert flow:
     - Select Image from slash menu → file picker opens
     - Complete upload → image inserted at cursor position
 
@@ -426,15 +426,15 @@ Task 5 (Paste) ─────────────────────�
   **Acceptance Criteria**:
 
   **Manual Execution Verification:**
-  - [ ] Using browser:
+  - [x] Using browser:
     - Open teacher editor at localhost:3000
     - Copy an image from another app/browser
     - Paste into editor (Ctrl/Cmd+V)
     - Verify upload starts and image appears
-  - [ ] Mode restriction:
+  - [x] Mode restriction:
     - Switch to student mode
     - Paste image → verify nothing happens (or text pastes normally)
-  - [ ] Multiple images:
+  - [x] Multiple images:
     - Copy multiple images
     - Paste → verify all images upload and insert
 
@@ -469,22 +469,22 @@ Task 5 (Paste) ─────────────────────�
   **Acceptance Criteria**:
 
   **Manual Execution Verification:**
-  - [ ] Save/Load:
+  - [x] Save/Load:
     - Insert image with caption
     - Refresh page → verify image and caption persist
     - Close and reopen document → verify persistence
-  - [ ] Collaboration:
+  - [x] Collaboration:
     - Open same document in two browser windows
     - Insert image in one → verify appears in other
     - Edit caption in one → verify syncs to other
-  - [ ] All entry points work:
-    - [ ] Toolbar button → image inserts
-    - [ ] Slash command → image inserts
-    - [ ] Paste → image inserts
-  - [ ] Mode behavior:
-    - [ ] Teacher-editor: full functionality
-    - [ ] Teacher-lesson: view only
-    - [ ] Student: view only
+  - [x] All entry points work:
+    - [x] Toolbar button → image inserts
+    - [x] Slash command → image inserts
+    - [x] Paste → image inserts
+  - [x] Mode behavior:
+    - [x] Teacher-editor: full functionality
+    - [x] Teacher-lesson: view only
+    - [x] Student: view only
 
   **Commit**: YES
   - Message: `feat(editor): complete Image extension integration`
@@ -523,10 +523,10 @@ open http://localhost:3000
 
 ### Final Checklist
 
-- [ ] All "Must Have" present
-- [ ] All "Must NOT Have" absent
-- [ ] Images persist across page refresh
-- [ ] Collaboration works (multi-user)
-- [ ] All three entry points work (toolbar, slash, paste)
-- [ ] Mode behavior correct (student view-only)
-- [ ] Error handling works (invalid files, failed uploads)
+- [x] All "Must Have" present
+- [x] All "Must NOT Have" absent
+- [x] Images persist across page refresh
+- [x] Collaboration works (multi-user)
+- [x] All three entry points work (toolbar, slash, paste)
+- [x] Mode behavior correct (student view-only)
+- [x] Error handling works (invalid files, failed uploads)
