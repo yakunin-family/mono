@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import '@package/ui/src/styles.css';
+@import "tailwindcss";
+@import "@package/ui/src/styles.css";
 
 @source "./src/**/*.{js,ts,jsx,tsx}";
 
@@ -7,7 +7,7 @@
 .tiptap {
   @apply text-foreground px-4 sm:px-6 md:px-8;
 
-  >* {
+  > * {
     @apply max-w-4xl mx-auto;
   }
 
@@ -64,7 +64,7 @@
     @apply my-1;
   }
 
-  li>p {
+  li > p {
     @apply my-1;
   }
 
@@ -94,6 +94,31 @@
 
   td {
     @apply border border-border px-3 py-2;
+  }
+
+  /* Table hover state */
+  table {
+    @apply hover:border-primary/30 transition-colors;
+  }
+
+  /* Column resize handle */
+  .column-resize-handle {
+    @apply absolute right-0 top-0 bottom-0 w-1 bg-primary pointer-events-none;
+  }
+
+  /* Selected cell highlight */
+  .selectedCell {
+    @apply bg-primary/10;
+  }
+
+  /* Table wrapper for horizontal scroll */
+  .tableWrapper {
+    @apply overflow-x-auto;
+  }
+
+  /* Resize cursor */
+  .resize-cursor {
+    @apply cursor-col-resize;
   }
 
   /* Images */
@@ -137,7 +162,6 @@
 
 /* Writing Area Styles */
 .writing-area-content {
-
   /* Remove paragraph margins inside writing areas for continuous lines */
   & p {
     margin-block: 0;
