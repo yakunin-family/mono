@@ -1,6 +1,6 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
-import type { Editor, JSONContent } from "@tiptap/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { Editor, JSONContent } from "@tiptap/core";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import {
   createContext,
@@ -16,7 +16,6 @@ import * as Y from "yjs";
 import { ConnectionStatus, EditorMode } from "@/types";
 
 import { DocumentEditorInternal } from "./DocumentEditorInternal";
-
 import type { LibraryItemWithMetadata } from "./LibraryDrawer";
 
 export interface DocumentEditorHandle {
