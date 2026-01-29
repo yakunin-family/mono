@@ -1,33 +1,30 @@
+prompts:
+  - "{{prompt}}"
+
 providers:
-  - id: convex-agent
-    config:
-      # Provider reads these from environment variables
-      convexUrl: ${CONVEX_URL}
-      evalApiKey: ${EVAL_API_KEY}
-      timeoutMs: 60000
-    # Points to our custom TypeScript provider
-    # The provider file will be created in a separate task
-    file: ./providers/convex-agent.ts
+  - id: file://./dist/providers/convex-agent.js
+    label: convex-agent
 
-# Default assertions applied to all tests unless overridden
-defaultAsserts:
-  - type: llm-rubric
-    value: |
-      Evaluate this educational exercise output. Score each dimension 0.0-1.0:
+tests: file://./cases/fill-blanks.yaml
 
-      1. STRUCTURAL VALIDITY: Is the XML well-formed with proper <exercise> container, correct element nesting, and required attributes (like student-answer="" on blanks)?
+# Custom grader using Vercel AI Gateway
+defaultTest:
+  assert:
+    - type: llm-rubric
+      value: |
+        Evaluate this educational exercise output. Score each dimension 0.0-1.0:
 
-      2. DIFFICULTY MATCH: Is the difficulty appropriate for the stated CEFR level? Consider vocabulary complexity, grammar structures, and cognitive demand.
+        1. STRUCTURAL VALIDITY: Is the XML well-formed with proper <exercise> container, correct element nesting, and required attributes (like student-answer="" on blanks)?
 
-      3. INSTRUCTION CLARITY: Are the exercise instructions clear and unambiguous? Would a student know exactly what to do?
+        2. DIFFICULTY MATCH: Is the difficulty appropriate for the stated CEFR level? Consider vocabulary complexity, grammar structures, and cognitive demand.
 
-      4. LEARNING OBJECTIVE ALIGNMENT: Does the exercise effectively test the skill or concept mentioned in the instruction?
+        3. INSTRUCTION CLARITY: Are the exercise instructions clear and unambiguous? Would a student know exactly what to do?
 
-      Provide reasoning for each dimension BEFORE giving the score.
-      Output as JSON: { "reasoning": { "structural_validity": "...", "difficulty_match": "...", "instruction_clarity": "...", "learning_objective_alignment": "..." }, "scores": { "structural_validity": 0.0, "difficulty_match": 0.0, "instruction_clarity": 0.0, "learning_objective_alignment": 0.0 } }
-    threshold: 0.70
-    # Use Claude as the judge
-    grader: anthropic:claude-sonnet-4-5
+        4. LEARNING OBJECTIVE ALIGNMENT: Does the exercise effectively test the skill or concept mentioned in the instruction?
 
-# Output configuration
+        Provide reasoning for each dimension BEFORE giving the score.
+        Output as JSON: { "reasoning": { "structural_validity": "...", "difficulty_match": "...", "instruction_clarity": "...", "learning_objective_alignment": "..." }, "scores": { "structural_validity": 0.0, "difficulty_match": 0.0, "instruction_clarity": 0.0, "learning_objective_alignment": 0.0 } }
+      threshold: 0.70
+      provider: file://./dist/providers/vercel-ai-grader.js
+
 outputPath: ./results/latest.json

@@ -6,7 +6,7 @@
     "composite": true,
     "incremental": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": false,
@@ -17,5 +17,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "providers", "scorers"]
 }

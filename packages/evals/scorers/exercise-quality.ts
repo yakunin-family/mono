@@ -1,4 +1,3 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -209,7 +208,7 @@ function buildJudgePrompt(input: ScoreInput): string {
 
 async function runLLMJudge(input: ScoreInput): Promise<JudgeOutput> {
   const { object } = await generateObject({
-    model: anthropic("claude-sonnet-4-5"),
+    model: "deepseek/deepseek-v3.2",
     schema: judgeSchema,
     prompt: buildJudgePrompt(input),
   });

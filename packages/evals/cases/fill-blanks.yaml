@@ -1,193 +1,202 @@
 # Fill-in-the-Blank Exercise Eval Test Cases
 # Tests the AI agent's ability to create fill-blanks exercises across CEFR levels
-# Provider: convex-agent (defined in promptfooconfig.yaml)
-# Scorer: llm-rubric (defined in promptfooconfig.yaml defaultAsserts)
 
-tests:
-  # === A2 LEVEL (simple-paragraph fixture) ===
+# === A2 LEVEL (simple-paragraph fixture) ===
 
-  - prompt: "Create a fill-in-the-blank exercise for A2 level students targeting common vocabulary words like nouns and verbs from this text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-title">My Daily Routine</h2><p id="p-intro">Every morning, I wake up at seven o''clock. I brush my teeth and take a shower before breakfast.</p><p id="p-body1">For breakfast, I usually eat toast with butter and a glass of orange juice. Sometimes I have cereal with milk instead.</p><p id="p-body2">After breakfast, I walk to school. The walk takes about fifteen minutes. I enjoy listening to music on the way.</p></lesson>'
-      cefrLevel: "A2"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this fill-in-the-blank exercise target common A2 vocabulary (nouns, verbs) from the source text? Are blanks placed with sufficient context?"
-        threshold: 0.70
+- description: "A2 - Target common vocabulary (nouns/verbs)"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for A2 level students targeting common vocabulary words like nouns and verbs from this text."
+    documentXml: '<lesson><h2 id="h2-title">My Daily Routine</h2><p id="p-intro">Every morning, I wake up at seven o''clock. I brush my teeth and take a shower before breakfast.</p><p id="p-body1">For breakfast, I usually eat toast with butter and a glass of orange juice. Sometimes I have cereal with milk instead.</p><p id="p-body2">After breakfast, I walk to school. The walk takes about fifteen minutes. I enjoy listening to music on the way.</p></lesson>'
+    cefrLevel: "A2"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this fill-in-the-blank exercise target common A2 vocabulary (nouns, verbs) from the source text? Are blanks placed with sufficient context?"
+      threshold: 0.70
 
-  - prompt: "Create a fill-in-the-blank exercise for A2 students focusing on time expressions and daily routine vocabulary."
-    vars:
-      documentXml: '<lesson><h2 id="h2-title">My Daily Routine</h2><p id="p-intro">Every morning, I wake up at seven o''clock. I brush my teeth and take a shower before breakfast.</p><p id="p-body1">For breakfast, I usually eat toast with butter and a glass of orange juice. Sometimes I have cereal with milk instead.</p><p id="p-body2">After breakfast, I walk to school. The walk takes about fifteen minutes. I enjoy listening to music on the way.</p></lesson>'
-      cefrLevel: "A2"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target time expressions (morning, breakfast, fifteen minutes) or routine vocabulary? Are the blanks appropriate for A2 level?"
-        threshold: 0.70
+- description: "A2 - Time expressions and daily routine"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for A2 students focusing on time expressions and daily routine vocabulary."
+    documentXml: '<lesson><h2 id="h2-title">My Daily Routine</h2><p id="p-intro">Every morning, I wake up at seven o''clock. I brush my teeth and take a shower before breakfast.</p><p id="p-body1">For breakfast, I usually eat toast with butter and a glass of orange juice. Sometimes I have cereal with milk instead.</p><p id="p-body2">After breakfast, I walk to school. The walk takes about fifteen minutes. I enjoy listening to music on the way.</p></lesson>'
+    cefrLevel: "A2"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target time expressions (morning, breakfast, fifteen minutes) or routine vocabulary? Are the blanks appropriate for A2 level?"
+      threshold: 0.70
 
-  - prompt: "Create a fill-in-the-blank exercise with at least 3 blanks across different sentences for A2 students."
-    vars:
-      documentXml: '<lesson><h2 id="h2-title">My Daily Routine</h2><p id="p-intro">Every morning, I wake up at seven o''clock. I brush my teeth and take a shower before breakfast.</p><p id="p-body1">For breakfast, I usually eat toast with butter and a glass of orange juice. Sometimes I have cereal with milk instead.</p><p id="p-body2">After breakfast, I walk to school. The walk takes about fifteen minutes. I enjoy listening to music on the way.</p></lesson>'
-      cefrLevel: "A2"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const blankCount = (output.match(/<blank/g) || []).length;
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: blankCount >= 3 && hasExercise, reason: `Blank count: ${blankCount} (need 3+), Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Are the 3+ blanks spread across different sentences? Does each blank have sufficient surrounding context for an A2 student to determine the answer?"
-        threshold: 0.70
+- description: "A2 - At least 3 blanks across sentences"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise with at least 3 blanks across different sentences for A2 students."
+    documentXml: '<lesson><h2 id="h2-title">My Daily Routine</h2><p id="p-intro">Every morning, I wake up at seven o''clock. I brush my teeth and take a shower before breakfast.</p><p id="p-body1">For breakfast, I usually eat toast with butter and a glass of orange juice. Sometimes I have cereal with milk instead.</p><p id="p-body2">After breakfast, I walk to school. The walk takes about fifteen minutes. I enjoy listening to music on the way.</p></lesson>'
+    cefrLevel: "A2"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const blankCount = (output.match(/<blank/g) || []).length;
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: blankCount >= 3 && hasExercise, reason: `Blank count: ${blankCount} (need 3+), Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Are the 3+ blanks spread across different sentences? Does each blank have sufficient surrounding context for an A2 student to determine the answer?"
+      threshold: 0.70
 
-  # === B1 LEVEL (vocabulary-text fixture) ===
+# === B1 LEVEL (vocabulary-text fixture) ===
 
-  - prompt: "Create a fill-in-the-blank exercise for B1 students targeting scientific and nature vocabulary from this ocean text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-nature">The Wonders of the Ocean</h2><p id="p-intro">The ocean covers approximately seventy percent of the Earth''s surface. It is home to an extraordinary diversity of marine life, from microscopic plankton to magnificent whales.</p><p id="p-body1">Coral reefs are particularly fascinating ecosystems. These underwater structures are built by tiny organisms called coral polyps. They provide shelter and sustenance for countless species of fish and invertebrates.</p><p id="p-body2">Unfortunately, rising ocean temperatures and pollution are threatening these delicate habitats. Many scientists are now dedicated to studying ways to preserve and restore coral reef ecosystems around the globe.</p><p id="p-body3">The deep ocean remains largely unexplored. Researchers continue to discover remarkable species that have adapted to withstand the extreme pressure and darkness of the ocean floor.</p></lesson>'
-      cefrLevel: "B1"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target B1-appropriate scientific vocabulary (ecosystem, organisms, diversity, etc.)? Are hints provided for harder words?"
-        threshold: 0.70
+- description: "B1 - Scientific and nature vocabulary"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for B1 students targeting scientific and nature vocabulary from this ocean text."
+    documentXml: '<lesson><h2 id="h2-nature">The Wonders of the Ocean</h2><p id="p-intro">The ocean covers approximately seventy percent of the Earth''s surface. It is home to an extraordinary diversity of marine life, from microscopic plankton to magnificent whales.</p><p id="p-body1">Coral reefs are particularly fascinating ecosystems. These underwater structures are built by tiny organisms called coral polyps. They provide shelter and sustenance for countless species of fish and invertebrates.</p><p id="p-body2">Unfortunately, rising ocean temperatures and pollution are threatening these delicate habitats. Many scientists are now dedicated to studying ways to preserve and restore coral reef ecosystems around the globe.</p><p id="p-body3">The deep ocean remains largely unexplored. Researchers continue to discover remarkable species that have adapted to withstand the extreme pressure and darkness of the ocean floor.</p></lesson>'
+    cefrLevel: "B1"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target B1-appropriate scientific vocabulary (ecosystem, organisms, diversity, etc.)? Are hints provided for harder words?"
+      threshold: 0.70
 
-  - prompt: "Create a fill-in-the-blank exercise for B1 level focusing on collocations and word pairs from the ocean text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-nature">The Wonders of the Ocean</h2><p id="p-intro">The ocean covers approximately seventy percent of the Earth''s surface. It is home to an extraordinary diversity of marine life, from microscopic plankton to magnificent whales.</p><p id="p-body1">Coral reefs are particularly fascinating ecosystems. These underwater structures are built by tiny organisms called coral polyps. They provide shelter and sustenance for countless species of fish and invertebrates.</p><p id="p-body2">Unfortunately, rising ocean temperatures and pollution are threatening these delicate habitats. Many scientists are now dedicated to studying ways to preserve and restore coral reef ecosystems around the globe.</p><p id="p-body3">The deep ocean remains largely unexplored. Researchers continue to discover remarkable species that have adapted to withstand the extreme pressure and darkness of the ocean floor.</p></lesson>'
-      cefrLevel: "B1"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target collocations or word pairs (rising temperatures, coral reefs, marine life)? Are the blanks testing word knowledge rather than guessing?"
-        threshold: 0.70
+- description: "B1 - Collocations and word pairs"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for B1 level focusing on collocations and word pairs from the ocean text."
+    documentXml: '<lesson><h2 id="h2-nature">The Wonders of the Ocean</h2><p id="p-intro">The ocean covers approximately seventy percent of the Earth''s surface. It is home to an extraordinary diversity of marine life, from microscopic plankton to magnificent whales.</p><p id="p-body1">Coral reefs are particularly fascinating ecosystems. These underwater structures are built by tiny organisms called coral polyps. They provide shelter and sustenance for countless species of fish and invertebrates.</p><p id="p-body2">Unfortunately, rising ocean temperatures and pollution are threatening these delicate habitats. Many scientists are now dedicated to studying ways to preserve and restore coral reef ecosystems around the globe.</p><p id="p-body3">The deep ocean remains largely unexplored. Researchers continue to discover remarkable species that have adapted to withstand the extreme pressure and darkness of the ocean floor.</p></lesson>'
+    cefrLevel: "B1"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target collocations or word pairs (rising temperatures, coral reefs, marine life)? Are the blanks testing word knowledge rather than guessing?"
+      threshold: 0.70
 
-  - prompt: "Create a fill-in-the-blank exercise for B1 students targeting verb forms and tenses from the ocean text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-nature">The Wonders of the Ocean</h2><p id="p-intro">The ocean covers approximately seventy percent of the Earth''s surface. It is home to an extraordinary diversity of marine life, from microscopic plankton to magnificent whales.</p><p id="p-body1">Coral reefs are particularly fascinating ecosystems. These underwater structures are built by tiny organisms called coral polyps. They provide shelter and sustenance for countless species of fish and invertebrates.</p><p id="p-body2">Unfortunately, rising ocean temperatures and pollution are threatening these delicate habitats. Many scientists are now dedicated to studying ways to preserve and restore coral reef ecosystems around the globe.</p><p id="p-body3">The deep ocean remains largely unexplored. Researchers continue to discover remarkable species that have adapted to withstand the extreme pressure and darkness of the ocean floor.</p></lesson>'
-      cefrLevel: "B1"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target verb forms or tenses (covers, are built, have adapted)? Are the blanks testing grammar knowledge appropriate for B1?"
-        threshold: 0.70
+- description: "B1 - Verb forms and tenses"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for B1 students targeting verb forms and tenses from the ocean text."
+    documentXml: '<lesson><h2 id="h2-nature">The Wonders of the Ocean</h2><p id="p-intro">The ocean covers approximately seventy percent of the Earth''s surface. It is home to an extraordinary diversity of marine life, from microscopic plankton to magnificent whales.</p><p id="p-body1">Coral reefs are particularly fascinating ecosystems. These underwater structures are built by tiny organisms called coral polyps. They provide shelter and sustenance for countless species of fish and invertebrates.</p><p id="p-body2">Unfortunately, rising ocean temperatures and pollution are threatening these delicate habitats. Many scientists are now dedicated to studying ways to preserve and restore coral reef ecosystems around the globe.</p><p id="p-body3">The deep ocean remains largely unexplored. Researchers continue to discover remarkable species that have adapted to withstand the extreme pressure and darkness of the ocean floor.</p></lesson>'
+    cefrLevel: "B1"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target verb forms or tenses (covers, are built, have adapted)? Are the blanks testing grammar knowledge appropriate for B1?"
+      threshold: 0.70
 
-  # === B2 LEVEL (grammar-text fixture) ===
+# === B2 LEVEL (grammar-text fixture) ===
 
-  - prompt: "Create a fill-in-the-blank exercise for B2 students targeting conditional structures and hypothetical language from this technology text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-tech">Technology in Our Lives</h2><p id="p-intro">Technology has changed the way we live and work over the past two decades. If we had not invented smartphones, many aspects of daily life would be completely different today.</p><p id="p-body1">People used to visit libraries to find information, but now they can search for anything online in seconds. By next year, artificial intelligence will have transformed how we interact with computers.</p><p id="p-body2">Some experts believe that if current trends continue, robots might replace many jobs within the next decade. However, others argue that humans will always be needed for creative and emotional tasks.</p><p id="p-body3">Whether we like it or not, we have already become dependent on technology. The question is not whether it will keep advancing, but how we can use it responsibly.</p></lesson>'
-      cefrLevel: "B2"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target conditional structures (if...had not, would be) or hypothetical language? Is the difficulty appropriate for B2 students?"
-        threshold: 0.70
+- description: "B2 - Conditional structures and hypothetical language"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for B2 students targeting conditional structures and hypothetical language from this technology text."
+    documentXml: '<lesson><h2 id="h2-tech">Technology in Our Lives</h2><p id="p-intro">Technology has changed the way we live and work over the past two decades. If we had not invented smartphones, many aspects of daily life would be completely different today.</p><p id="p-body1">People used to visit libraries to find information, but now they can search for anything online in seconds. By next year, artificial intelligence will have transformed how we interact with computers.</p><p id="p-body2">Some experts believe that if current trends continue, robots might replace many jobs within the next decade. However, others argue that humans will always be needed for creative and emotional tasks.</p><p id="p-body3">Whether we like it or not, we have already become dependent on technology. The question is not whether it will keep advancing, but how we can use it responsibly.</p></lesson>'
+    cefrLevel: "B2"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target conditional structures (if...had not, would be) or hypothetical language? Is the difficulty appropriate for B2 students?"
+      threshold: 0.70
 
-  - prompt: "Create a fill-in-the-blank exercise for B2 level focusing on modal verbs (might, could, would, will have) from the technology text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-tech">Technology in Our Lives</h2><p id="p-intro">Technology has changed the way we live and work over the past two decades. If we had not invented smartphones, many aspects of daily life would be completely different today.</p><p id="p-body1">People used to visit libraries to find information, but now they can search for anything online in seconds. By next year, artificial intelligence will have transformed how we interact with computers.</p><p id="p-body2">Some experts believe that if current trends continue, robots might replace many jobs within the next decade. However, others argue that humans will always be needed for creative and emotional tasks.</p><p id="p-body3">Whether we like it or not, we have already become dependent on technology. The question is not whether it will keep advancing, but how we can use it responsibly.</p></lesson>'
-      cefrLevel: "B2"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target modal verbs (might replace, will have transformed, could, would)? Are the blanks testing understanding of modality at B2 level?"
-        threshold: 0.70
+- description: "B2 - Modal verbs"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for B2 level focusing on modal verbs (might, could, would, will have) from the technology text."
+    documentXml: '<lesson><h2 id="h2-tech">Technology in Our Lives</h2><p id="p-intro">Technology has changed the way we live and work over the past two decades. If we had not invented smartphones, many aspects of daily life would be completely different today.</p><p id="p-body1">People used to visit libraries to find information, but now they can search for anything online in seconds. By next year, artificial intelligence will have transformed how we interact with computers.</p><p id="p-body2">Some experts believe that if current trends continue, robots might replace many jobs within the next decade. However, others argue that humans will always be needed for creative and emotional tasks.</p><p id="p-body3">Whether we like it or not, we have already become dependent on technology. The question is not whether it will keep advancing, but how we can use it responsibly.</p></lesson>'
+    cefrLevel: "B2"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target modal verbs (might replace, will have transformed, could, would)? Are the blanks testing understanding of modality at B2 level?"
+      threshold: 0.70
 
-  - prompt: "Create a fill-in-the-blank exercise for B2 students targeting discourse markers and connecting words (however, whether, but) from the technology text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-tech">Technology in Our Lives</h2><p id="p-intro">Technology has changed the way we live and work over the past two decades. If we had not invented smartphones, many aspects of daily life would be completely different today.</p><p id="p-body1">People used to visit libraries to find information, but now they can search for anything online in seconds. By next year, artificial intelligence will have transformed how we interact with computers.</p><p id="p-body2">Some experts believe that if current trends continue, robots might replace many jobs within the next decade. However, others argue that humans will always be needed for creative and emotional tasks.</p><p id="p-body3">Whether we like it or not, we have already become dependent on technology. The question is not whether it will keep advancing, but how we can use it responsibly.</p></lesson>'
-      cefrLevel: "B2"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target discourse markers or connecting words (however, whether, but, although)? Are the blanks testing cohesion skills at B2 level?"
-        threshold: 0.70
+- description: "B2 - Discourse markers"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for B2 students targeting discourse markers and connecting words (however, whether, but) from the technology text."
+    documentXml: '<lesson><h2 id="h2-tech">Technology in Our Lives</h2><p id="p-intro">Technology has changed the way we live and work over the past two decades. If we had not invented smartphones, many aspects of daily life would be completely different today.</p><p id="p-body1">People used to visit libraries to find information, but now they can search for anything online in seconds. By next year, artificial intelligence will have transformed how we interact with computers.</p><p id="p-body2">Some experts believe that if current trends continue, robots might replace many jobs within the next decade. However, others argue that humans will always be needed for creative and emotional tasks.</p><p id="p-body3">Whether we like it or not, we have already become dependent on technology. The question is not whether it will keep advancing, but how we can use it responsibly.</p></lesson>'
+    cefrLevel: "B2"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target discourse markers or connecting words (however, whether, but, although)? Are the blanks testing cohesion skills at B2 level?"
+      threshold: 0.70
 
-  # === C1 LEVEL (complex-document fixture) ===
+# === C1 LEVEL (complex-document fixture) ===
 
-  - prompt: "Create a fill-in-the-blank exercise for C1 students targeting academic and sophisticated vocabulary from this education text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-education">The Future of Education</h2><p id="p-intro">Education systems around the world are undergoing significant transformation. The traditional classroom model, which has dominated for centuries, is being challenged by new technologies and pedagogical approaches.</p><h3 id="h3-online">Online Learning</h3><p id="p-online1">The rise of online learning platforms has democratized access to education. Students in remote areas can now attend courses taught by professors at prestigious universities worldwide.</p><p id="p-online2">However, online learning is not without its challenges. Many students struggle with self-discipline and motivation when studying independently. The lack of face-to-face interaction can also hinder collaborative learning.</p><h3 id="h3-ai">The Role of Artificial Intelligence</h3><p id="p-ai1">Artificial intelligence is beginning to play a significant role in education. Adaptive learning systems can now tailor content to individual student needs, identifying areas of weakness and providing targeted practice.</p><p id="p-ai2">Critics argue that over-reliance on technology could diminish critical thinking skills. They advocate for a balanced approach that combines technological innovation with traditional teaching methods.</p><h3 id="h3-future">Looking Ahead</h3><p id="p-future">The most successful educational institutions will likely be those that embrace change while maintaining high standards. The goal should not be to replace teachers with technology, but to empower educators with better tools.</p></lesson>'
-      cefrLevel: "C1"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target C1-level academic vocabulary (pedagogical, democratized, adaptive, diminish)? Are the blanks challenging but solvable with context?"
-        threshold: 0.70
+- description: "C1 - Academic vocabulary"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for C1 students targeting academic and sophisticated vocabulary from this education text."
+    documentXml: '<lesson><h2 id="h2-education">The Future of Education</h2><p id="p-intro">Education systems around the world are undergoing significant transformation. The traditional classroom model, which has dominated for centuries, is being challenged by new technologies and pedagogical approaches.</p><h3 id="h3-online">Online Learning</h3><p id="p-online1">The rise of online learning platforms has democratized access to education. Students in remote areas can now attend courses taught by professors at prestigious universities worldwide.</p><p id="p-online2">However, online learning is not without its challenges. Many students struggle with self-discipline and motivation when studying independently. The lack of face-to-face interaction can also hinder collaborative learning.</p><h3 id="h3-ai">The Role of Artificial Intelligence</h3><p id="p-ai1">Artificial intelligence is beginning to play a significant role in education. Adaptive learning systems can now tailor content to individual student needs, identifying areas of weakness and providing targeted practice.</p><p id="p-ai2">Critics argue that over-reliance on technology could diminish critical thinking skills. They advocate for a balanced approach that combines technological innovation with traditional teaching methods.</p><h3 id="h3-future">Looking Ahead</h3><p id="p-future">The most successful educational institutions will likely be those that embrace change while maintaining high standards. The goal should not be to replace teachers with technology, but to empower educators with better tools.</p></lesson>'
+    cefrLevel: "C1"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target C1-level academic vocabulary (pedagogical, democratized, adaptive, diminish)? Are the blanks challenging but solvable with context?"
+      threshold: 0.70
 
-  - prompt: "Create a fill-in-the-blank exercise for C1 students targeting idiomatic or figurative expressions from the education text."
-    vars:
-      documentXml: '<lesson><h2 id="h2-education">The Future of Education</h2><p id="p-intro">Education systems around the world are undergoing significant transformation. The traditional classroom model, which has dominated for centuries, is being challenged by new technologies and pedagogical approaches.</p><h3 id="h3-online">Online Learning</h3><p id="p-online1">The rise of online learning platforms has democratized access to education. Students in remote areas can now attend courses taught by professors at prestigious universities worldwide.</p><p id="p-online2">However, online learning is not without its challenges. Many students struggle with self-discipline and motivation when studying independently. The lack of face-to-face interaction can also hinder collaborative learning.</p><h3 id="h3-ai">The Role of Artificial Intelligence</h3><p id="p-ai1">Artificial intelligence is beginning to play a significant role in education. Adaptive learning systems can now tailor content to individual student needs, identifying areas of weakness and providing targeted practice.</p><p id="p-ai2">Critics argue that over-reliance on technology could diminish critical thinking skills. They advocate for a balanced approach that combines technological innovation with traditional teaching methods.</p><h3 id="h3-future">Looking Ahead</h3><p id="p-future">The most successful educational institutions will likely be those that embrace change while maintaining high standards. The goal should not be to replace teachers with technology, but to empower educators with better tools.</p></lesson>'
-      cefrLevel: "C1"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise target figurative or idiomatic language (embrace change, not without its challenges, play a significant role)? Is the difficulty appropriate for C1?"
-        threshold: 0.70
+- description: "C1 - Idiomatic expressions"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for C1 students targeting idiomatic or figurative expressions from the education text."
+    documentXml: '<lesson><h2 id="h2-education">The Future of Education</h2><p id="p-intro">Education systems around the world are undergoing significant transformation. The traditional classroom model, which has dominated for centuries, is being challenged by new technologies and pedagogical approaches.</p><h3 id="h3-online">Online Learning</h3><p id="p-online1">The rise of online learning platforms has democratized access to education. Students in remote areas can now attend courses taught by professors at prestigious universities worldwide.</p><p id="p-online2">However, online learning is not without its challenges. Many students struggle with self-discipline and motivation when studying independently. The lack of face-to-face interaction can also hinder collaborative learning.</p><h3 id="h3-ai">The Role of Artificial Intelligence</h3><p id="p-ai1">Artificial intelligence is beginning to play a significant role in education. Adaptive learning systems can now tailor content to individual student needs, identifying areas of weakness and providing targeted practice.</p><p id="p-ai2">Critics argue that over-reliance on technology could diminish critical thinking skills. They advocate for a balanced approach that combines technological innovation with traditional teaching methods.</p><h3 id="h3-future">Looking Ahead</h3><p id="p-future">The most successful educational institutions will likely be those that embrace change while maintaining high standards. The goal should not be to replace teachers with technology, but to empower educators with better tools.</p></lesson>'
+    cefrLevel: "C1"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const hasBlank = output.includes('<blank') && output.includes('answer=') && output.includes('student-answer=""');
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: hasBlank && hasExercise, reason: `Blank: ${hasBlank}, Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise target figurative or idiomatic language (embrace change, not without its challenges, play a significant role)? Is the difficulty appropriate for C1?"
+      threshold: 0.70
 
-  - prompt: "Create a fill-in-the-blank exercise for C1 students with a mix of easy and challenging blanks to test range of vocabulary knowledge."
-    vars:
-      documentXml: '<lesson><h2 id="h2-education">The Future of Education</h2><p id="p-intro">Education systems around the world are undergoing significant transformation. The traditional classroom model, which has dominated for centuries, is being challenged by new technologies and pedagogical approaches.</p><h3 id="h3-online">Online Learning</h3><p id="p-online1">The rise of online learning platforms has democratized access to education. Students in remote areas can now attend courses taught by professors at prestigious universities worldwide.</p><p id="p-online2">However, online learning is not without its challenges. Many students struggle with self-discipline and motivation when studying independently. The lack of face-to-face interaction can also hinder collaborative learning.</p><h3 id="h3-ai">The Role of Artificial Intelligence</h3><p id="p-ai1">Artificial intelligence is beginning to play a significant role in education. Adaptive learning systems can now tailor content to individual student needs, identifying areas of weakness and providing targeted practice.</p><p id="p-ai2">Critics argue that over-reliance on technology could diminish critical thinking skills. They advocate for a balanced approach that combines technological innovation with traditional teaching methods.</p><h3 id="h3-future">Looking Ahead</h3><p id="p-future">The most successful educational institutions will likely be those that embrace change while maintaining high standards. The goal should not be to replace teachers with technology, but to empower educators with better tools.</p></lesson>'
-      cefrLevel: "C1"
-      exerciseType: "fill-blanks"
-    assert:
-      - type: javascript
-        value: |
-          const blankCount = (output.match(/<blank/g) || []).length;
-          const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
-          return { pass: blankCount >= 3 && hasExercise, reason: `Blank count: ${blankCount} (need 3+), Container: ${hasExercise}` };
-      - type: llm-rubric
-        value: "Does this exercise include both easier and harder blanks? Is there a progression of difficulty? Are hints provided for the more challenging vocabulary?"
-        threshold: 0.70
+- description: "C1 - Mixed difficulty blanks"
+  vars:
+    prompt: "Create a fill-in-the-blank exercise for C1 students with a mix of easy and challenging blanks to test range of vocabulary knowledge."
+    documentXml: '<lesson><h2 id="h2-education">The Future of Education</h2><p id="p-intro">Education systems around the world are undergoing significant transformation. The traditional classroom model, which has dominated for centuries, is being challenged by new technologies and pedagogical approaches.</p><h3 id="h3-online">Online Learning</h3><p id="p-online1">The rise of online learning platforms has democratized access to education. Students in remote areas can now attend courses taught by professors at prestigious universities worldwide.</p><p id="p-online2">However, online learning is not without its challenges. Many students struggle with self-discipline and motivation when studying independently. The lack of face-to-face interaction can also hinder collaborative learning.</p><h3 id="h3-ai">The Role of Artificial Intelligence</h3><p id="p-ai1">Artificial intelligence is beginning to play a significant role in education. Adaptive learning systems can now tailor content to individual student needs, identifying areas of weakness and providing targeted practice.</p><p id="p-ai2">Critics argue that over-reliance on technology could diminish critical thinking skills. They advocate for a balanced approach that combines technological innovation with traditional teaching methods.</p><h3 id="h3-future">Looking Ahead</h3><p id="p-future">The most successful educational institutions will likely be those that embrace change while maintaining high standards. The goal should not be to replace teachers with technology, but to empower educators with better tools.</p></lesson>'
+    cefrLevel: "C1"
+    exerciseType: "fill-blanks"
+  assert:
+    - type: javascript
+      value: |
+        const blankCount = (output.match(/<blank/g) || []).length;
+        const hasExercise = output.includes('<exercise') && output.includes('</exercise>');
+        return { pass: blankCount >= 3 && hasExercise, reason: `Blank count: ${blankCount} (need 3+), Container: ${hasExercise}` };
+    - type: llm-rubric
+      value: "Does this exercise include both easier and harder blanks? Is there a progression of difficulty? Are hints provided for the more challenging vocabulary?"
+      threshold: 0.70
