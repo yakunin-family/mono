@@ -1,5 +1,4 @@
 import { httpAction } from "./_generated/server";
-
 import { documentEditorAgent } from "./agents/documentEditor";
 
 interface CapturedToolCall {
@@ -59,13 +58,13 @@ export const runAgentEval = httpAction(async (ctx, request) => {
   }
 
   const { threadId } = await documentEditorAgent.createThread(ctx, {
-    userId: "eval-test-user",
+    userId: "eval-teacher",
   });
 
   try {
     const { thread } = await documentEditorAgent.continueThread(ctx, {
       threadId,
-      userId: "eval-test-user",
+      userId: "eval-teacher",
     });
 
     const toolCalls: CapturedToolCall[] = [];
