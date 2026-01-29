@@ -5,7 +5,8 @@ import {
   DropdownMenuTrigger,
 } from "@package/ui";
 import type { Editor } from "@tiptap/core";
-import { ArrowLeft, ArrowRight, Copy, Eraser, Trash2 } from "lucide-react";
+import { CellSelection, TableMap } from "@tiptap/pm/tables";
+import { ArrowLeft, ArrowRight, GripHorizontal, Trash2 } from "lucide-react";
 
 interface ColumnHandleProps {
   editor: Editor;
@@ -33,25 +34,35 @@ function selectColumn(
   const pos = view.posAtDOM(firstCell, 0);
   const resolvedPos = view.state.doc.resolve(pos);
 
-  const { CellSelection } = require("@tiptap/pm/tables");
-  const tablePos = resolvedPos.before(resolvedPos.depth - 1);
-  const tableNode = view.state.doc.nodeAt(tablePos);
-  if (!tableNode) return;
+  // Find the table node by walking up the tree
+  let tableDepth = resolvedPos.depth;
+  while (tableDepth > 0 && resolvedPos.node(tableDepth).type.name !== "table") {
+    tableDepth--;
+  }
+  if (tableDepth === 0) return;
 
-  const map = require("@tiptap/pm/tables").TableMap.get(tableNode);
+  const tablePos = resolvedPos.before(tableDepth);
+  const tableNode = resolvedPos.node(tableDepth);
+  if (!tableNode || tableNode.type.name !== "table") return;
+
+  const map = TableMap.get(tableNode);
   if (!map) return;
 
   const cellsInColumn = map.cellsInRect({
     left: columnIndex,
     right: columnIndex + 1,
     top: 0,
-    bottom: map.rows,
+    bottom: map.height,
   });
 
   if (cellsInColumn.length === 0) return;
 
-  const anchorCell = tablePos + 1 + cellsInColumn[0];
-  const headCell = tablePos + 1 + cellsInColumn[cellsInColumn.length - 1];
+  const firstCellPos = cellsInColumn[0];
+  const lastCellPos = cellsInColumn[cellsInColumn.length - 1];
+  if (firstCellPos === undefined || lastCellPos === undefined) return;
+
+  const anchorCell = tablePos + 1 + firstCellPos;
+  const headCell = tablePos + 1 + lastCellPos;
 
   const selection = new CellSelection(
     view.state.doc.resolve(anchorCell),
@@ -61,36 +72,6 @@ function selectColumn(
   view.dispatch(view.state.tr.setSelection(selection));
 }
 
-function clearColumn(
-  editor: Editor,
-  tableElement: HTMLTableElement,
-  columnIndex: number,
-) {
-  selectColumn(editor, tableElement, columnIndex);
-  editor.chain().focus().setContent("").run();
-}
-
-function duplicateColumn(
-  editor: Editor,
-  tableElement: HTMLTableElement,
-  columnIndex: number,
-) {
-  selectColumn(editor, tableElement, columnIndex);
-  editor.chain().focus().addColumnAfter().run();
-
-  const rows = Array.from(tableElement.querySelectorAll("tr"));
-  for (let row = 0; row < rows.length; row++) {
-    const currentRow = rows[row];
-    if (!currentRow) continue;
-    const cells = Array.from(currentRow.querySelectorAll("th, td"));
-    const sourceCell = cells[columnIndex];
-    const targetCell = cells[columnIndex + 1];
-    if (sourceCell && targetCell) {
-      targetCell.innerHTML = sourceCell.innerHTML;
-    }
-  }
-}
-
 export function ColumnHandle({
   editor,
   columnIndex,
@@ -98,54 +79,42 @@ export function ColumnHandle({
   isLastColumn,
   tableElement,
 }: ColumnHandleProps) {
+  const runCommand = (command: () => void) => {
+    // Re-focus editor and select the column before running command
+    editor.commands.focus();
+    // Small delay to ensure focus is restored
+    requestAnimationFrame(() => {
+      selectColumn(editor, tableElement, columnIndex);
+      command();
+    });
+  };
+
   const handleInsertLeft = () => {
-    selectColumn(editor, tableElement, columnIndex);
-    editor.chain().focus().addColumnBefore().run();
+    runCommand(() => editor.chain().focus().addColumnBefore().run());
   };
 
   const handleInsertRight = () => {
-    selectColumn(editor, tableElement, columnIndex);
-    editor.chain().focus().addColumnAfter().run();
+    runCommand(() => editor.chain().focus().addColumnAfter().run());
   };
 
   const handleDelete = () => {
-    selectColumn(editor, tableElement, columnIndex);
-    editor.chain().focus().deleteColumn().run();
-  };
-
-  const handleDuplicate = () => {
-    duplicateColumn(editor, tableElement, columnIndex);
-  };
-
-  const handleClear = () => {
-    clearColumn(editor, tableElement, columnIndex);
+    runCommand(() => editor.chain().focus().deleteColumn().run());
   };
 
   return (
     <div
-      className="pointer-events-auto fixed z-50 flex items-center justify-center"
+      className="pointer-events-auto fixed z-50"
       style={{
         left: `${position.x - 12}px`,
         top: `${position.y - 12}px`,
-        width: "24px",
-        height: "24px",
       }}
     >
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="flex items-center justify-center w-5 h-5 rounded bg-muted border border-border hover:bg-accent hover:border-primary transition-colors cursor-pointer"
+          className="flex size-6 items-center justify-center rounded-md border border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
           aria-label={`Column ${columnIndex + 1} options`}
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="currentColor"
-            className="text-muted-foreground"
-          >
-            <circle cx="4" cy="6" r="1" />
-            <circle cx="8" cy="6" r="1" />
-          </svg>
+          <GripHorizontal className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" side="top">
           <DropdownMenuItem onClick={handleInsertLeft}>
@@ -155,14 +124,6 @@ export function ColumnHandle({
           <DropdownMenuItem onClick={handleInsertRight}>
             <ArrowRight className="mr-2 size-4" />
             Insert Right
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDuplicate}>
-            <Copy className="mr-2 size-4" />
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleClear}>
-            <Eraser className="mr-2 size-4" />
-            Clear
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleDelete}

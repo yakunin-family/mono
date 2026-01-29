@@ -5,7 +5,8 @@ import {
   DropdownMenuTrigger,
 } from "@package/ui";
 import type { Editor } from "@tiptap/core";
-import { ArrowDown, ArrowUp, Copy, Eraser, Trash2 } from "lucide-react";
+import { CellSelection } from "@tiptap/pm/tables";
+import { ArrowDown, ArrowUp, GripVertical, Trash2 } from "lucide-react";
 
 interface RowHandleProps {
   editor: Editor;
@@ -30,7 +31,6 @@ function selectRow(
   if (!firstCell || !lastCell) return;
 
   const view = editor.view;
-  const { CellSelection } = require("@tiptap/pm/tables");
 
   const anchorPos = view.posAtDOM(firstCell, 0);
   const headPos = view.posAtDOM(lastCell, 0);
@@ -43,40 +43,6 @@ function selectRow(
   view.dispatch(view.state.tr.setSelection(selection));
 }
 
-function clearRow(
-  editor: Editor,
-  tableElement: HTMLTableElement,
-  rowIndex: number,
-) {
-  selectRow(editor, tableElement, rowIndex);
-  editor.chain().focus().setContent("").run();
-}
-
-function duplicateRow(
-  editor: Editor,
-  tableElement: HTMLTableElement,
-  rowIndex: number,
-) {
-  selectRow(editor, tableElement, rowIndex);
-  editor.chain().focus().addRowAfter().run();
-
-  const rows = Array.from(tableElement.querySelectorAll("tr"));
-  const sourceRow = rows[rowIndex];
-  const targetRow = rows[rowIndex + 1];
-  if (!sourceRow || !targetRow) return;
-
-  const sourceCells = Array.from(sourceRow.querySelectorAll("th, td"));
-  const targetCells = Array.from(targetRow.querySelectorAll("th, td"));
-
-  for (let col = 0; col < sourceCells.length; col++) {
-    const source = sourceCells[col];
-    const target = targetCells[col];
-    if (source && target) {
-      target.innerHTML = source.innerHTML;
-    }
-  }
-}
-
 export function RowHandle({
   editor,
   rowIndex,
@@ -84,56 +50,44 @@ export function RowHandle({
   isLastRow,
   tableElement,
 }: RowHandleProps) {
+  const runCommand = (command: () => void) => {
+    // Re-focus editor and select the row before running command
+    editor.commands.focus();
+    // Small delay to ensure focus is restored
+    requestAnimationFrame(() => {
+      selectRow(editor, tableElement, rowIndex);
+      command();
+    });
+  };
+
   const handleInsertAbove = () => {
-    selectRow(editor, tableElement, rowIndex);
-    editor.chain().focus().addRowBefore().run();
+    runCommand(() => editor.chain().focus().addRowBefore().run());
   };
 
   const handleInsertBelow = () => {
-    selectRow(editor, tableElement, rowIndex);
-    editor.chain().focus().addRowAfter().run();
+    runCommand(() => editor.chain().focus().addRowAfter().run());
   };
 
   const handleDelete = () => {
-    selectRow(editor, tableElement, rowIndex);
-    editor.chain().focus().deleteRow().run();
-  };
-
-  const handleDuplicate = () => {
-    duplicateRow(editor, tableElement, rowIndex);
-  };
-
-  const handleClear = () => {
-    clearRow(editor, tableElement, rowIndex);
+    runCommand(() => editor.chain().focus().deleteRow().run());
   };
 
   return (
     <div
-      className="pointer-events-auto fixed z-50 flex items-center justify-center"
+      className="pointer-events-auto fixed z-50"
       style={{
         left: `${position.x - 12}px`,
         top: `${position.y - 12}px`,
-        width: "24px",
-        height: "24px",
       }}
     >
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="flex items-center justify-center w-5 h-5 rounded bg-muted border border-border hover:bg-accent hover:border-primary transition-colors cursor-pointer"
+          className="flex size-6 items-center justify-center rounded-md border border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
           aria-label={`Row ${rowIndex + 1} options`}
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="currentColor"
-            className="text-muted-foreground"
-          >
-            <circle cx="6" cy="4" r="1" />
-            <circle cx="6" cy="8" r="1" />
-          </svg>
+          <GripVertical className="size-4" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="right">
+        <DropdownMenuContent align="start" side="left">
           <DropdownMenuItem onClick={handleInsertAbove}>
             <ArrowUp className="mr-2 size-4" />
             Insert Above
@@ -141,14 +95,6 @@ export function RowHandle({
           <DropdownMenuItem onClick={handleInsertBelow}>
             <ArrowDown className="mr-2 size-4" />
             Insert Below
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDuplicate}>
-            <Copy className="mr-2 size-4" />
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleClear}>
-            <Eraser className="mr-2 size-4" />
-            Clear
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleDelete}

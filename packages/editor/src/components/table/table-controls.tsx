@@ -102,7 +102,7 @@ function calculatePositions(table: HTMLTableElement) {
       const rect = cell.getBoundingClientRect();
       columnPositions.push({
         x: rect.left + rect.width / 2,
-        y: rect.top - 16,
+        y: rect.top,
         index: col,
       });
     }
@@ -112,11 +112,11 @@ function calculatePositions(table: HTMLTableElement) {
     const currentRow = rows[row];
     if (!currentRow) continue;
     const cells = Array.from(currentRow.querySelectorAll("th, td"));
-    const lastCell = cells[cells.length - 1];
-    if (lastCell) {
-      const rect = lastCell.getBoundingClientRect();
+    const firstCell = cells[0];
+    if (firstCell) {
+      const rect = firstCell.getBoundingClientRect();
       rowPositions.push({
-        x: rect.right + 16,
+        x: rect.left,
         y: rect.top + rect.height / 2,
         index: row,
       });
@@ -140,9 +140,13 @@ export function TableControls({ editor }: TableControlsProps) {
   } | null>(null);
   const [totalRows, setTotalRows] = useState(0);
   const [totalColumns, setTotalColumns] = useState(0);
+  const [selectedColumn, setSelectedColumn] = useState<number | null>(null);
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
 
   const rafRef = useRef<number | null>(null);
   const mousePositionRef = useRef({ x: 0, y: 0 });
+  const controlsRef = useRef<HTMLDivElement | null>(null);
+  const isOverControlsRef = useRef(false);
 
   const isTeacherEditor = editor.storage.editorMode === "teacher-editor";
 
@@ -181,6 +185,78 @@ export function TableControls({ editor }: TableControlsProps) {
     recalculatePositions();
   }, [recalculatePositions]);
 
+  // Track selected cell's column and row
+  useEffect(() => {
+    if (!isTeacherEditor || !activeTable) {
+      setSelectedColumn(null);
+      setSelectedRow(null);
+      return;
+    }
+
+    const updateSelectedCell = () => {
+      const { selection } = editor.state;
+      const { $anchor } = selection;
+
+      // Find if we're in a table cell
+      let depth = $anchor.depth;
+      while (depth > 0) {
+        const node = $anchor.node(depth);
+        if (node.type.name === "tableCell" || node.type.name === "tableHeader") {
+          break;
+        }
+        depth--;
+      }
+
+      if (depth === 0) {
+        setSelectedColumn(null);
+        setSelectedRow(null);
+        return;
+      }
+
+      // Get the DOM element for the cell
+      const cellPos = $anchor.before(depth);
+      const cellDom = editor.view.nodeDOM(cellPos);
+      if (!cellDom || !(cellDom instanceof HTMLElement)) {
+        setSelectedColumn(null);
+        setSelectedRow(null);
+        return;
+      }
+
+      // Check if this cell is in the active table
+      const cellTable = cellDom.closest("table");
+      if (cellTable !== activeTable) {
+        setSelectedColumn(null);
+        setSelectedRow(null);
+        return;
+      }
+
+      // Find row and column index
+      const row = cellDom.closest("tr");
+      if (!row) {
+        setSelectedColumn(null);
+        setSelectedRow(null);
+        return;
+      }
+
+      const rows = Array.from(activeTable.querySelectorAll("tr"));
+      const rowIndex = rows.indexOf(row);
+      const cells = Array.from(row.querySelectorAll("th, td"));
+      const colIndex = cells.indexOf(cellDom as HTMLTableCellElement);
+
+      setSelectedRow(rowIndex >= 0 ? rowIndex : null);
+      setSelectedColumn(colIndex >= 0 ? colIndex : null);
+    };
+
+    updateSelectedCell();
+    editor.on("selectionUpdate", updateSelectedCell);
+    editor.on("focus", updateSelectedCell);
+
+    return () => {
+      editor.off("selectionUpdate", updateSelectedCell);
+      editor.off("focus", updateSelectedCell);
+    };
+  }, [editor, isTeacherEditor, activeTable]);
+
   useEffect(() => {
     if (!isTeacherEditor) return;
 
@@ -207,7 +283,18 @@ export function TableControls({ editor }: TableControlsProps) {
       });
     };
 
-    const handleMouseLeave = () => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      // Don't hide if mouse moved to the controls
+      if (isOverControlsRef.current) {
+        return;
+      }
+
+      // Check if the related target is within the controls
+      const relatedTarget = e.relatedTarget as Node | null;
+      if (relatedTarget && controlsRef.current?.contains(relatedTarget)) {
+        return;
+      }
+
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
@@ -270,29 +357,68 @@ export function TableControls({ editor }: TableControlsProps) {
 
   if (!isTeacherEditor || !activeTable) return null;
 
+  const handleControlsMouseEnter = () => {
+    isOverControlsRef.current = true;
+  };
+
+  const handleControlsMouseLeave = (e: React.MouseEvent) => {
+    isOverControlsRef.current = false;
+
+    // Check if we're leaving to somewhere outside both controls and editor
+    const relatedTarget = e.relatedTarget as Node | null;
+    const editorDom = editor.view.dom;
+    if (relatedTarget && !editorDom.contains(relatedTarget)) {
+      // Check if we're still near the table
+      const tables = Array.from(
+        editorDom.querySelectorAll<HTMLTableElement>("table"),
+      );
+      const closest = findClosestTable(
+        mousePositionRef.current.x,
+        mousePositionRef.current.y,
+        tables,
+      );
+      if (!closest) {
+        setActiveTable(null);
+      }
+    }
+  };
+
+  // Only show handle for the selected column/row
+  const selectedColumnPosition = columnPositions.find(
+    (pos) => pos.index === selectedColumn,
+  );
+  const selectedRowPosition = rowPositions.find(
+    (pos) => pos.index === selectedRow,
+  );
+
   return createPortal(
-    <div className="pointer-events-none">
-      {columnPositions.map((pos) => (
+    <div
+      ref={controlsRef}
+      className="pointer-events-none"
+      onMouseEnter={handleControlsMouseEnter}
+      onMouseLeave={handleControlsMouseLeave}
+    >
+      {selectedColumnPosition && (
         <ColumnHandle
-          key={`col-${pos.index}`}
+          key={`col-${selectedColumnPosition.index}`}
           editor={editor}
-          columnIndex={pos.index}
-          position={{ x: pos.x, y: pos.y }}
+          columnIndex={selectedColumnPosition.index}
+          position={{ x: selectedColumnPosition.x, y: selectedColumnPosition.y }}
           isLastColumn={totalColumns <= 1}
           tableElement={activeTable}
         />
-      ))}
+      )}
 
-      {rowPositions.map((pos) => (
+      {selectedRowPosition && (
         <RowHandle
-          key={`row-${pos.index}`}
+          key={`row-${selectedRowPosition.index}`}
           editor={editor}
-          rowIndex={pos.index}
-          position={{ x: pos.x, y: pos.y }}
+          rowIndex={selectedRowPosition.index}
+          position={{ x: selectedRowPosition.x, y: selectedRowPosition.y }}
           isLastRow={totalRows <= 1}
           tableElement={activeTable}
         />
-      ))}
+      )}
 
       {addRowPosition && (
         <QuickAddButton

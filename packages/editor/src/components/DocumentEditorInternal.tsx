@@ -1,13 +1,13 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import type { Editor, JSONContent } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
+import { isChangeOrigin } from "@tiptap/extension-collaboration";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableRow } from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
-import { isChangeOrigin } from "@tiptap/extension-collaboration";
 import UniqueID from "@tiptap/extension-unique-id";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -18,19 +18,9 @@ import * as Y from "yjs";
 
 import type { EditorMode } from "@/types";
 
-export interface LibraryStorage {
-  saveExercise?: (title: string, content: string) => Promise<void>;
-}
-
-declare module "@tiptap/core" {
-  interface Storage {
-    library: LibraryStorage;
-  }
-}
-
 import { Blank } from "../extensions/Blank";
-import { BlockHover } from "../extensions/BlockHover";
 import { BlockSelectionCommands } from "../extensions/block-selection-commands";
+import { BlockHover } from "../extensions/BlockHover";
 import { DocumentContext } from "../extensions/DocumentContext";
 import { Exercise } from "../extensions/Exercise";
 import { Group } from "../extensions/Group";
@@ -40,14 +30,24 @@ import { NoteBlock } from "../extensions/NoteBlock";
 import { SelectionSave } from "../extensions/SelectionSave";
 import { SlashCommand } from "../extensions/SlashCommand";
 import { WritingArea } from "../extensions/WritingArea";
-import { EditorStatusBar } from "./EditorStatusBar";
 import { EditorToolbar } from "./editor-toolbar";
+import { EditorStatusBar } from "./EditorStatusBar";
 import { LibraryDrawer, type LibraryItemWithMetadata } from "./LibraryDrawer";
 import { MarqueeOverlay } from "./MarqueeOverlay";
-import { TableControls } from "./table/table-controls";
 import { MouseTracker } from "./MouseTracker";
 import { RemoteCursors } from "./RemoteCursors";
 import { SelectionSaveButton } from "./SelectionSaveButton";
+import { TableControls } from "./table/table-controls";
+
+export interface LibraryStorage {
+  saveExercise?: (title: string, content: string) => Promise<void>;
+}
+
+declare module "@tiptap/core" {
+  interface Storage {
+    library: LibraryStorage;
+  }
+}
 
 interface DocumentEditorInternalProps {
   provider: HocuspocusProvider;
@@ -104,7 +104,6 @@ export function DocumentEditorInternal({
       TableHeader,
       TableCell,
       Image,
-      Underline,
       Blank,
       Exercise,
       UniqueID.configure({

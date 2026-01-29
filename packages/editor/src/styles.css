@@ -106,9 +106,15 @@
     @apply absolute right-0 top-0 bottom-0 w-1 bg-primary pointer-events-none;
   }
 
-  /* Selected cell highlight */
+  /* Selected cell highlight (multi-cell selection) */
   .selectedCell {
-    @apply bg-primary/10;
+    @apply outline outline-2 outline-primary/50 outline-offset-[-2px];
+  }
+
+  /* Single cell with cursor - highlight when cell contains focus */
+  td:has(.ProseMirror-trailingBreak),
+  th:has(.ProseMirror-trailingBreak) {
+    @apply outline outline-2 outline-primary/30 outline-offset-[-2px];
   }
 
   /* Table wrapper for horizontal scroll */
