@@ -28,7 +28,7 @@ Create `convex/library/embeddings.ts`:
 
 ## Environment Variables
 
-Requires `OPENAI_API_KEY` in Convex environment
+<!-- Requires `OPENAI_API_KEY` in Convex environment -->
 
 ## Acceptance Criteria
 

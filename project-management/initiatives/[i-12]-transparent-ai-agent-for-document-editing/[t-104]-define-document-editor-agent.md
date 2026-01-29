@@ -40,7 +40,7 @@ Create the main document editor agent definition using Convex Agent Component.
 ```ts
 import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
-import { openai } from "@ai-sdk/openai";
+
 
 const loadSkill = createTool({
   name: "loadSkill",

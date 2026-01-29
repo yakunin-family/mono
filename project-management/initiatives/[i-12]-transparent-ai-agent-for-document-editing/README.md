@@ -517,7 +517,7 @@ apps/teacher/src/spaces/document-editor/use-ai-document-edit.ts
 Using Vercel AI SDK's model router:
 
 ```typescript
-import { openai } from "@ai-sdk/openai";
+
 
 // In agent definition
 chat: openai("gpt-4o-mini"),

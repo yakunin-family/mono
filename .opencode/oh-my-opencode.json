@@ -1,0 +1,55 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": {
+      "model": "vercel/minimax/minimax-m2.1"
+    },
+    "oracle": {
+      "model": "vercel/deepseek/deepseek-v3.2-thinking"
+    },
+    "librarian": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    },
+    "explore": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    },
+    "multimodal-looker": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    },
+    "prometheus": {
+      "model": "vercel/minimax/minimax-m2.1"
+    },
+    "metis": {
+      "model": "vercel/deepseek/deepseek-v3.2-thinking"
+    },
+    "momus": {
+      "model": "vercel/deepseek/deepseek-v3.2-thinking"
+    },
+    "atlas": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    },
+    "ultrabrain": {
+      "model": "vercel/deepseek/deepseek-v3.2-thinking"
+    },
+    "artistry": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    },
+    "quick": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    },
+    "unspecified-low": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    },
+    "unspecified-high": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    },
+    "writing": {
+      "model": "vercel/kwaipilot/kat-coder-pro-v1"
+    }
+  }
+}
