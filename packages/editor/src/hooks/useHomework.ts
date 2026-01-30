@@ -1,5 +1,5 @@
-import { useConvex } from "convex/react";
 import { api, type Id } from "@app/backend";
+import { useConvex } from "convex/react";
 import { useCallback, useEffect, useState } from "react";
 
 export interface HomeworkStatus {
@@ -22,11 +22,11 @@ export interface UseHomeworkReturn {
 export function useHomework(
   documentId: string | undefined,
   exerciseInstanceId: string | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseHomeworkReturn {
   const convex = useConvex();
   const [homeworkStatus, setHomeworkStatus] = useState<HomeworkStatus | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isToggling, setIsToggling] = useState(false);

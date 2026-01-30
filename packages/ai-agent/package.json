@@ -2,12 +2,24 @@
   "name": "@package/ai-agent",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "compile-prompts": "node ./bin/compile-prompts.js"
+    "build": "tsup"
   },
   "dependencies": {
-    "js-yaml": "^4.1.0",
-    "zod": "^3.22.2"
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tooling/typescript-config": "workspace:*",
+    "tsup": "^8.5.1"
   }
 }

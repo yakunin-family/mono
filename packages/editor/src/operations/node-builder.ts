@@ -5,26 +5,22 @@
  * into Tiptap JSONContent format.
  */
 
+import type { latest } from "@package/ai-agent";
 import type { JSONContent } from "@tiptap/core";
-
-import type {
-  BlockNode,
-  InlineContent,
-  ListItem,
-  MarkType,
-} from "@package/ai-agent";
 
 /**
  * Convert a MarkType to Tiptap mark format
  */
-function markToJSON(mark: MarkType): { type: string } {
+function markToJSON(mark: latest.types.MarkType): { type: string } {
   return { type: mark };
 }
 
 /**
  * Convert InlineContent array to Tiptap JSONContent array
  */
-export function inlineContentToJSON(content: InlineContent[]): JSONContent[] {
+export function inlineContentToJSON(
+  content: latest.types.InlineContent[],
+): JSONContent[] {
   return content.map((item): JSONContent => {
     switch (item.type) {
       case "text":
@@ -56,7 +52,7 @@ export function inlineContentToJSON(content: InlineContent[]): JSONContent[] {
 /**
  * Convert a ListItem to Tiptap listItem JSONContent
  */
-function listItemToJSON(item: ListItem): JSONContent {
+function listItemToJSON(item: latest.types.ListItem): JSONContent {
   return {
     type: "listItem",
     content: item.content.map(blockNodeToJSON),
@@ -66,7 +62,7 @@ function listItemToJSON(item: ListItem): JSONContent {
 /**
  * Convert a BlockNode to Tiptap JSONContent
  */
-export function blockNodeToJSON(block: BlockNode): JSONContent {
+export function blockNodeToJSON(block: latest.types.BlockNode): JSONContent {
   switch (block.type) {
     case "paragraph":
       return {
@@ -140,6 +136,8 @@ export function blockNodeToJSON(block: BlockNode): JSONContent {
 /**
  * Convert an array of BlockNodes to Tiptap JSONContent array
  */
-export function blockNodesToJSON(blocks: BlockNode[]): JSONContent[] {
+export function blockNodesToJSON(
+  blocks: latest.types.BlockNode[],
+): JSONContent[] {
   return blocks.map(blockNodeToJSON);
 }

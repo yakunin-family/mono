@@ -1,21 +1,21 @@
 import type { Editor, JSONContent } from "@tiptap/core";
 
-import type { NodeSerializer, ToXMLOptions } from "./types";
-import { EXCLUDED_NODES } from "./types";
 import {
-  serializeHeading,
-  serializeParagraph,
-  serializeBulletList,
-  serializeOrderedList,
-  serializeListItem,
   serializeBlockquote,
+  serializeBulletList,
+  serializeHeading,
   serializeHorizontalRule,
   serializeInlineContent,
+  serializeListItem,
+  serializeOrderedList,
+  serializeParagraph,
 } from "./node-handlers/blocks";
 import { serializeBlank, serializeExercise } from "./node-handlers/exercise";
+import { serializeGroup } from "./node-handlers/group";
 import { serializeNote } from "./node-handlers/note";
 import { serializeWritingArea } from "./node-handlers/writing-area";
-import { serializeGroup } from "./node-handlers/group";
+import type { NodeSerializer, ToXMLOptions } from "./types";
+import { EXCLUDED_NODES } from "./types";
 
 /**
  * Registry of node serializers by Tiptap node type

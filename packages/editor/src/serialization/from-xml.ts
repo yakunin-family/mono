@@ -1,21 +1,21 @@
 import type { Editor, JSONContent } from "@tiptap/core";
 
-import type { FromXMLOptions } from "./types";
-import { ALL_TAGS, TAG_TO_MARK } from "./types";
 import {
-  parseHeading,
-  parseParagraph,
-  parseBulletList,
-  parseOrderedList,
-  parseListItem,
   parseBlockquote,
+  parseBulletList,
+  parseHeading,
   parseHorizontalRule,
   parseInlineContent,
+  parseListItem,
+  parseOrderedList,
+  parseParagraph,
 } from "./node-handlers/blocks";
 import { parseBlank, parseExercise } from "./node-handlers/exercise";
+import { parseGroup } from "./node-handlers/group";
 import { parseNote } from "./node-handlers/note";
 import { parseWritingArea } from "./node-handlers/writing-area";
-import { parseGroup } from "./node-handlers/group";
+import type { FromXMLOptions } from "./types";
+import { ALL_TAGS, TAG_TO_MARK } from "./types";
 
 /**
  * Parse an XML element to Tiptap JSON content

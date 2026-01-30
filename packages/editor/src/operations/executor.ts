@@ -5,18 +5,12 @@
  * Each operation is applied independently with partial success semantics.
  */
 
+import type { latest } from "@package/ai-agent";
 import type { Editor } from "@tiptap/core";
 import { Fragment } from "@tiptap/pm/model";
 
 import { findNodeById, findNodesByIds } from "./id-resolver";
 import { blockNodeToJSON, inlineContentToJSON } from "./node-builder";
-import type {
-  BlockNode,
-  DocumentOperation,
-  InlineContent,
-  OperationResult,
-  WrapperType,
-} from "@package/ai-agent";
 
 /**
  * Error thrown when a node with the specified ID is not found
@@ -34,7 +28,7 @@ class NodeNotFoundError extends Error {
 function executeInsertAfter(
   editor: Editor,
   id: string,
-  block: BlockNode,
+  block: latest.types.BlockNode,
 ): void {
   const resolved = findNodeById(editor.state.doc, id);
   if (!resolved) {
@@ -54,7 +48,7 @@ function executeInsertAfter(
 function executeInsertBefore(
   editor: Editor,
   id: string,
-  block: BlockNode,
+  block: latest.types.BlockNode,
 ): void {
   const resolved = findNodeById(editor.state.doc, id);
   if (!resolved) {
@@ -73,7 +67,7 @@ function executeInsertBefore(
 function executeReplaceBlock(
   editor: Editor,
   id: string,
-  block: BlockNode,
+  block: latest.types.BlockNode,
 ): void {
   const resolved = findNodeById(editor.state.doc, id);
   if (!resolved) {
@@ -115,7 +109,7 @@ function executeDeleteBlock(editor: Editor, id: string): void {
 function executeSetContent(
   editor: Editor,
   id: string,
-  content: InlineContent[],
+  content: latest.types.InlineContent[],
 ): void {
   const resolved = findNodeById(editor.state.doc, id);
   if (!resolved) {
@@ -172,7 +166,7 @@ function executeSetAttrs(
 function executeWrap(
   editor: Editor,
   ids: string[],
-  wrapper: WrapperType,
+  wrapper: latest.types.WrapperType,
 ): void {
   if (ids.length === 0) {
     throw new Error("wrap operation requires at least one id");
@@ -239,7 +233,10 @@ function executeUnwrap(editor: Editor, id: string): void {
  *
  * @throws Error if the operation fails
  */
-function applyOperation(editor: Editor, op: DocumentOperation): void {
+function applyOperation(
+  editor: Editor,
+  op: latest.types.DocumentOperation,
+): void {
   switch (op.op) {
     case "insert_after":
       executeInsertAfter(editor, op.id, op.block);
@@ -277,7 +274,7 @@ function applyOperation(editor: Editor, op: DocumentOperation): void {
       // TypeScript exhaustiveness check
       const _exhaustive: never = op;
       throw new Error(
-        `Unknown operation: ${(_exhaustive as DocumentOperation).op}`,
+        `Unknown operation: ${(_exhaustive as latest.types.DocumentOperation).op}`,
       );
     }
   }
@@ -296,9 +293,9 @@ function applyOperation(editor: Editor, op: DocumentOperation): void {
  */
 export function applyOperations(
   editor: Editor,
-  operations: DocumentOperation[],
-): OperationResult[] {
-  const results: OperationResult[] = [];
+  operations: latest.types.DocumentOperation[],
+): latest.types.OperationResult[] {
+  const results: latest.types.OperationResult[] = [];
 
   for (const op of operations) {
     try {
@@ -323,7 +320,7 @@ export function applyOperations(
  */
 export function applySingleOperation(
   editor: Editor,
-  operation: DocumentOperation,
-): OperationResult {
+  operation: latest.types.DocumentOperation,
+): latest.types.OperationResult {
   return applyOperations(editor, [operation])[0]!;
 }

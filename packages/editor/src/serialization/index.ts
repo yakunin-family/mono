@@ -1,5 +1,4 @@
-export type { ToXMLOptions, FromXMLOptions, ValidationResult } from "./types";
-
-export { toXML, jsonToXML } from "./to-xml";
 export { fromXML, xmlToJSON } from "./from-xml";
+export { jsonToXML, toXML } from "./to-xml";
+export type { FromXMLOptions, ToXMLOptions, ValidationResult } from "./types";
 export { validateXML } from "./validate-xml";
