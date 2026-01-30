@@ -51,6 +51,7 @@ export { getRandomUserColor, getUserColorByIndex } from "./utils/user-colors";
 export type { Editor } from "@tiptap/core";
 
 // XML Serialization
+export { applyOperations } from "./operations/executor";
 export type {
   FromXMLOptions,
   ToXMLOptions,

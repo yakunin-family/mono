@@ -1,10 +1,9 @@
+import { latest } from "@package/ai-agent";
 import {
+  applyOperations,
   type Editor,
   fromXML,
   validateXML,
-  applyOperations,
-  type DocumentOperation,
-  type OperationResult,
 } from "@package/editor";
 import { useCallback } from "react";
 
@@ -15,7 +14,7 @@ export interface ApplyAIResponseResult {
 
 export interface ApplyOperationsResult {
   success: boolean;
-  results: OperationResult[];
+  results: latest.operationTypes.OperationResult[];
   failedCount: number;
 }
 
@@ -58,7 +57,9 @@ export function useAIDocumentEdit(editor: Editor | null) {
    * Apply surgical operations (for patchDocument tool)
    */
   const applyDocumentOperations = useCallback(
-    (operations: DocumentOperation[]): ApplyOperationsResult => {
+    (
+      operations: latest.operationTypes.DocumentOperation[],
+    ): ApplyOperationsResult => {
       if (!editor) {
         return {
           success: false,
