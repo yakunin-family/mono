@@ -11,7 +11,7 @@ export default defineConfig({
     },
   },
   clean: true,
-  external: ["zod"],
+  external: ["zod", "@convex-dev/agent", "ai"],
   esbuildOptions(options) {
     options.loader = {
       ...(options.loader ?? {}),

@@ -16,6 +16,8 @@
     "build": "tsup"
   },
   "dependencies": {
+    "@convex-dev/agent": "0.3.2",
+    "ai": "^5.0.82",
     "zod": "^4.3.6"
   },
   "devDependencies": {

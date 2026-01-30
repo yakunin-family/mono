@@ -15,16 +15,16 @@
       "outputs": ["convex/_generated_prompts.ts"]
     },
     "@app/backend#dev": {
-      "dependsOn": ["build:prompts"],
+      "dependsOn": ["^build", "build:prompts"],
       "cache": false,
       "persistent": true
     },
     "@app/backend#deploy": {
-      "dependsOn": ["build:prompts"],
+      "dependsOn": ["^build", "build:prompts"],
       "cache": false
     },
     "@app/backend#codegen": {
-      "dependsOn": ["build:prompts"],
+      "dependsOn": ["^build", "build:prompts"],
       "cache": true,
       "outputs": ["convex/_generated/**"]
     },
