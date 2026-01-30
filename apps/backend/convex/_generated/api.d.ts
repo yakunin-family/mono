@@ -15,6 +15,7 @@ import type * as auth from "../auth.js";
 import type * as chat from "../chat.js";
 import type * as documents from "../documents.js";
 import type * as evalHelpers from "../evalHelpers.js";
+import type * as evalSetup from "../evalSetup.js";
 import type * as functions from "../functions.js";
 import type * as homework from "../homework.js";
 import type * as http from "../http.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   chat: typeof chat;
   documents: typeof documents;
   evalHelpers: typeof evalHelpers;
+  evalSetup: typeof evalSetup;
   functions: typeof functions;
   homework: typeof homework;
   http: typeof http;

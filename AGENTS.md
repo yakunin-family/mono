@@ -36,7 +36,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Never use plain HTML tables or other table libraries for data display
    - Leverage TanStack Table's built-in sorting, filtering, and pagination features
 
-7. **TanStack Query for All Convex Data Fetching** - Always use TanStack Query wrappers (`@convex-dev/react-query`) for Convex queries and mutations in all frontend code (apps and packages).
+7. **AI Gateway for All LLM Calls** - All AI/LLM interactions must use Vercel AI Gateway with the `ai` package.
+
+   **Why**: AI Gateway provides a unified API to access hundreds of models through a single endpoint with built-in fallbacks, load balancing, and spend monitoring.
+
+   **For TypeScript/Node.js**, use the `ai` package with provider-prefixed model strings:
+
+   ```typescript
+   // ✅ CORRECT - Simple string model with provider prefix
+   import { generateText } from "ai";
+
+   const result = await generateText({
+     model: "anthropic/claude-opus-4.5", // or 'openai/gpt-5.2', 'google/gemini-2.5-flash', etc.
+     prompt: "Hello!",
+   });
+
+   // ❌ WRONG - Never use @ai-sdk provider functions
+   import { anthropic } from "@ai-sdk/anthropic";
+
+   const result = await generateText({
+     model: anthropic("claude-opus-4-5-20250414"), // Don't do this
+     prompt: "Hello!",
+   });
+   ```
+
+   **Model Naming**: Always use the provider-prefixed model format:
+   - `anthropic/claude-opus-4.5`
+   - `openai/gpt-4.5`
+   - `google/gemini-2.5-flash`
+   - `xai/grok-4`
+   - Format: `provider/model-name` (simple string, not a function call)
+
+   **Environment Variables**:
+   - Set `AI_GATEWAY_API_KEY` with your API key (supports BYOK for provider keys)
+   - Never hardcode provider-specific API keys in code
+
+8. **TanStack Query for All Convex Data Fetching** - Always use TanStack Query wrappers (`@convex-dev/react-query`) for Convex queries and mutations in all frontend code (apps and packages).
 
    **Why**: Convex uses WebSocket subscriptions for real-time data. When data changes on the server, Convex automatically pushes updates to all subscribed clients — no polling, no manual cache invalidation needed.
 
@@ -226,7 +261,7 @@ src/
 **Important Convex Patterns**:
 
 - All documents have `_id` and `_creationTime` system fields (automatically indexed)
-- Use `v.id("tableName")` for foreign key references
+- Use `v.id('tableName')` for foreign key references
 - Indexes must be explicitly defined (except for system fields)
 - Use `v.optional()` for optional fields
 - Complex types use `v.union()` and `v.object()`
@@ -281,7 +316,7 @@ Key points:
 - **Props**:
   - `documentId` - Unique document identifier for collaboration
   - `canEdit` - Boolean to control edit permissions
-  - `mode` - Editor mode: `"student"` | `"teacher-lesson"` | `"teacher-editor"`
+  - `mode` - Editor mode: `'student'` | `'teacher-lesson'` | `'teacher-editor'`
   - `websocketUrl` - Optional WebSocket server URL (default: ws://127.0.0.1:1234)
   - `onStatusChange` - Callback for connection status changes
   - `onConnectedUsersChange` - Callback for active users count
@@ -326,9 +361,9 @@ const mode = editor.storage.editorMode; // ✅ Type-safe!
 Follow this structure for custom nodes (see `Blank.ts` and `Exercise.ts` as examples):
 
 ```typescript
-import { mergeAttributes, Node } from "@tiptap/core";
-import { ReactNodeViewRenderer } from "@tiptap/react";
-import { MyNodeView } from "./MyNodeView";
+import { mergeAttributes, Node } from '@tiptap/core';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import { MyNodeView } from './MyNodeView';
 
 export interface MyNodeAttributes {
   // Define all node attributes with proper types
@@ -337,37 +372,37 @@ export interface MyNodeAttributes {
 }
 
 // Module augmentation for type safety (if using storage)
-declare module "@tiptap/core" {
+declare module '@tiptap/core' {
   interface Storage {
     myCustomStorage: string;
   }
 }
 
 export const MyNode = Node.create({
-  name: "myNode",
+  name: 'myNode',
 
   // For inline nodes (appear in text flow)
   inline: true,
   atom: true,
 
   // For block nodes (standalone blocks)
-  // group: "block",
-  // content: "block+",
+  // group: 'block',
+  // content: 'block+',
 
   addStorage() {
     return {
-      myCustomStorage: "default",
+      myCustomStorage: 'default',
     };
   },
 
   addAttributes() {
     return {
       id: {
-        default: "",
-        parseHTML: (element) => element.getAttribute("data-id"),
+        default: '',
+        parseHTML: (element) => element.getAttribute('data-id'),
         renderHTML: (attributes) => {
           if (!attributes.id) return {};
-          return { "data-id": attributes.id };
+          return { 'data-id': attributes.id };
         },
       },
       value: {
@@ -377,14 +412,14 @@ export const MyNode = Node.create({
   },
 
   parseHTML() {
-    return [{ tag: 'span[data-type="my-node"]' }];
+    return [{ tag: 'span[data-type='my-node']' }];
   },
 
   renderHTML({ HTMLAttributes }) {
     return [
-      "span",
-      mergeAttributes(HTMLAttributes, { "data-type": "my-node" }),
-      0, // 0 means "render content here" (for non-atom nodes)
+      'span',
+      mergeAttributes(HTMLAttributes, { 'data-type': 'my-node' }),
+      0, // 0 means 'render content here' (for non-atom nodes)
     ];
   },
 
@@ -397,11 +432,11 @@ export const MyNode = Node.create({
 **3. React NodeView Pattern**
 
 ```typescript
-import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import type { MyNodeAttributes } from "./MyNode";
+import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
+import type { MyNodeAttributes } from './MyNode';
 
 interface MyNodeViewProps extends NodeViewProps {
-  node: NodeViewProps["node"] & { attrs: MyNodeAttributes };
+  node: NodeViewProps['node'] & { attrs: MyNodeAttributes };
 }
 
 export function MyNodeView(props: NodeViewProps) {
@@ -419,7 +454,7 @@ export function MyNodeView(props: NodeViewProps) {
   };
 
   return (
-    <NodeViewWrapper as="span" className="inline-block">
+    <NodeViewWrapper as='span' className='inline-block'>
       {/* Your component UI */}
     </NodeViewWrapper>
   );
@@ -430,7 +465,7 @@ export function MyNodeView(props: NodeViewProps) {
 
 - **Inline vs Block**:
   - `inline: true, atom: true` - Inline element, no cursor inside (like Blank nodes)
-  - `group: "block", content: "block+"` - Block element with nested content (like Exercise nodes)
+  - `group: 'block', content: 'block+'` - Block element with nested content (like Exercise nodes)
 
 - **Module Augmentation**:
   - Always augment `Storage` interface when adding storage
@@ -441,7 +476,7 @@ export function MyNodeView(props: NodeViewProps) {
   - Store data in `data-*` attributes for HTML serialization
 
 - **React NodeViews**:
-  - Use `NodeViewWrapper` with appropriate `as` prop (`"span"` for inline, `"div"` for block)
+  - Use `NodeViewWrapper` with appropriate `as` prop (`'span'` for inline, `'div'` for block)
   - Type the props interface by extending `NodeViewProps`
   - Access `updateAttributes()` to modify node data
 

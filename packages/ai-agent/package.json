@@ -1,32 +1,13 @@
 {
   "name": "@package/ai-agent",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
+  "main": "dist/index.js",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite build --watch",
-    "lint": "eslint .",
-    "check-types": "tsc --project tsconfig.json --noEmit"
+    "compile-prompts": "node ./bin/compile-prompts.js"
   },
-  "peerDependencies": {
-    "zod": "^4.0.0"
-  },
-  "devDependencies": {
-    "@tooling/eslint": "workspace:*",
-    "@tooling/typescript-config": "workspace:*",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.7",
-    "vite-plugin-dts": "^4.5.4",
-    "zod": "^4.3.6"
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "zod": "^3.22.2"
   }
 }
