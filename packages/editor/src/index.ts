@@ -1,8 +1,6 @@
 import "./styles.css";
 
 // Re-export Editor type from tiptap for consumers
-export type { Editor } from "@tiptap/core";
-
 export type {
   DocumentEditorHandle,
   DocumentEditorProps,
@@ -50,6 +48,7 @@ export {
   suggestFiltersFromText,
 } from "./utils/searchQueryParser";
 export { getRandomUserColor, getUserColorByIndex } from "./utils/user-colors";
+export type { Editor } from "@tiptap/core";
 
 // XML Serialization
 export type {
@@ -64,26 +63,3 @@ export {
   validateXML,
   xmlToJSON,
 } from "./serialization";
-
-// Document Operations (for AI-driven editing)
-export type {
-  DocumentOperation,
-  BlockNode,
-  InlineContent,
-  ListItem,
-  MarkType,
-  WrapperType,
-  OperationResult,
-  OperationSuccess,
-  OperationFailure,
-} from "./operations";
-export {
-  DocumentOperationSchema,
-  DocumentOperationsSchema,
-  BlockNodeSchema,
-  InlineContentSchema,
-  applyOperations,
-  applySingleOperation,
-  findNodeById,
-  findNodesByIds,
-} from "./operations";

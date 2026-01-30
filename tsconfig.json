@@ -4,7 +4,6 @@
     { "path": "./packages/ai-agent" },
     { "path": "./packages/ui" },
     { "path": "./packages/editor" },
-    { "path": "./packages/evals" },
     { "path": "./apps/teacher" },
     { "path": "./apps/student" },
     { "path": "./apps/www" },

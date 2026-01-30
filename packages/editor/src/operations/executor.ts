@@ -28,7 +28,7 @@ class NodeNotFoundError extends Error {
 function executeInsertAfter(
   editor: Editor,
   id: string,
-  block: latest.types.BlockNode,
+  block: latest.operationTypes.BlockNode,
 ): void {
   const resolved = findNodeById(editor.state.doc, id);
   if (!resolved) {
@@ -48,7 +48,7 @@ function executeInsertAfter(
 function executeInsertBefore(
   editor: Editor,
   id: string,
-  block: latest.types.BlockNode,
+  block: latest.operationTypes.BlockNode,
 ): void {
   const resolved = findNodeById(editor.state.doc, id);
   if (!resolved) {
@@ -67,7 +67,7 @@ function executeInsertBefore(
 function executeReplaceBlock(
   editor: Editor,
   id: string,
-  block: latest.types.BlockNode,
+  block: latest.operationTypes.BlockNode,
 ): void {
   const resolved = findNodeById(editor.state.doc, id);
   if (!resolved) {
@@ -109,7 +109,7 @@ function executeDeleteBlock(editor: Editor, id: string): void {
 function executeSetContent(
   editor: Editor,
   id: string,
-  content: latest.types.InlineContent[],
+  content: latest.operationTypes.InlineContent[],
 ): void {
   const resolved = findNodeById(editor.state.doc, id);
   if (!resolved) {
@@ -166,7 +166,7 @@ function executeSetAttrs(
 function executeWrap(
   editor: Editor,
   ids: string[],
-  wrapper: latest.types.WrapperType,
+  wrapper: latest.operationTypes.WrapperType,
 ): void {
   if (ids.length === 0) {
     throw new Error("wrap operation requires at least one id");
@@ -235,7 +235,7 @@ function executeUnwrap(editor: Editor, id: string): void {
  */
 function applyOperation(
   editor: Editor,
-  op: latest.types.DocumentOperation,
+  op: latest.operationTypes.DocumentOperation,
 ): void {
   switch (op.op) {
     case "insert_after":
@@ -269,14 +269,6 @@ function applyOperation(
     case "unwrap":
       executeUnwrap(editor, op.id);
       break;
-
-    default: {
-      // TypeScript exhaustiveness check
-      const _exhaustive: never = op;
-      throw new Error(
-        `Unknown operation: ${(_exhaustive as latest.types.DocumentOperation).op}`,
-      );
-    }
   }
 }
 
@@ -293,9 +285,9 @@ function applyOperation(
  */
 export function applyOperations(
   editor: Editor,
-  operations: latest.types.DocumentOperation[],
-): latest.types.OperationResult[] {
-  const results: latest.types.OperationResult[] = [];
+  operations: latest.operationTypes.DocumentOperation[],
+): latest.operationTypes.OperationResult[] {
+  const results: latest.operationTypes.OperationResult[] = [];
 
   for (const op of operations) {
     try {
@@ -320,7 +312,7 @@ export function applyOperations(
  */
 export function applySingleOperation(
   editor: Editor,
-  operation: latest.types.DocumentOperation,
-): latest.types.OperationResult {
+  operation: latest.operationTypes.DocumentOperation,
+): latest.operationTypes.OperationResult {
   return applyOperations(editor, [operation])[0]!;
 }
